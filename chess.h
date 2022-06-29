@@ -33,5 +33,13 @@ static constexpr BB rank6 = 0xff0000000000;
 static constexpr BB rank7 = 0xff000000000000;
 static constexpr BB rank8 = 0xff00000000000000;
 
+static constexpr int rank(int square) {
+    return square / 8;
+}
+
+static constexpr int file(int square) {
+    return square % 8;
+}
+
 
 #endif //CHESSENGINE_CHESS_H
