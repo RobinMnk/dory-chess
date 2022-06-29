@@ -1,6 +1,13 @@
 #include <iostream>
+#include "board.h"
+#include "utils.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    std::cout << "Chess Engine" << std::endl;
+
+    Board start = STARTBOARD;
+
+    print_board(start);
+
     return 0;
 }
