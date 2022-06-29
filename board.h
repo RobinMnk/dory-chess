@@ -4,6 +4,7 @@
 
 #include "chess.h"
 
+#define CHECK_BIT(var, pos) (var & (1 << pos))
 #ifndef CHESSENGINE_BOARD_H
 #define CHESSENGINE_BOARD_H
 
@@ -32,6 +33,14 @@ public:
 
 
 constexpr Board STARTBOARD = Board(rank2, rank7, 0x42, 0x42ull << 7*8, 0x24, 0x24ull << 7*8, 0x81, 0x81ull << 7*8, 0x8, 0x8ull << 7*8, 0x10, 0x10ull << 7*8);
+
+
+
+
+// ---------- BITBOARD UTILS ----------
+
+constexpr BB FULL_BB = 0xffffffffffffffff;
+
 
 
 template<State state>
