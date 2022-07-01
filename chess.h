@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <immintrin.h>
+#include <bit>
 
 #ifndef CHESSENGINE_CHESS_H
 #define CHESSENGINE_CHESS_H
@@ -33,13 +34,48 @@ static constexpr BB rank6 = 0xff0000000000;
 static constexpr BB rank7 = 0xff000000000000;
 static constexpr BB rank8 = 0xff00000000000000;
 
-static constexpr int rank(int square) {
+static constexpr int rankOf(int square) {
     return square / 8;
 }
 
-static constexpr int file(int square) {
+static constexpr int fileOf(int square) {
     return square % 8;
 }
 
+template<bool whiteToMove>
+static constexpr int epRank() {
+    return whiteToMove ? 4 : 3;
+}
+
+
+// ---------- BIT OPERATIONS ----------
+
+static constexpr BB newMask(int index) {
+    return 1ull << index;
+}
+
+static constexpr void setBit(BB& board, int index) {
+    board |= newMask(index);
+}
+
+static constexpr BB withBit(BB board, int index) {
+    return board | newMask(index);
+}
+
+static constexpr int bitCount(BB number) {
+    return std::popcount(number);
+}
+
+static constexpr int firstBitOf(BB number) {
+    return __builtin_ctz(number);
+}
+
+static constexpr int lastBitOf(BB number) {
+    return 63 - firstBitOf(number);
+}
+
+static constexpr int singleBitOf(BB number) {
+    return firstBitOf(number);
+}
 
 #endif //CHESSENGINE_CHESS_H
