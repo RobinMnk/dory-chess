@@ -17,6 +17,14 @@ struct State {
     const BB enPassantField;
     const bool wCastleShort, bCastleShort;
     const bool wCastleLong, bCastleLong;
+
+    [[nodiscard]] constexpr bool canCastleShort() const {
+        return whiteToMove ? wCastleShort : bCastleShort;
+    }
+
+    [[nodiscard]] constexpr bool canCastleLong() const {
+        return whiteToMove ? wCastleLong : bCastleLong;
+    }
 };
 
 constexpr State STARTSTATE = State(true, 0, true, true, true, true);
@@ -72,6 +80,11 @@ public:
     template<bool whiteToMove>
     [[nodiscard]] constexpr BB enemyPieces() const {
         return allPieces<!whiteToMove>();
+    }
+
+    template<bool whiteToMove>
+    [[nodiscard]] constexpr BB enemyOrEmpty() const {
+        return ~allPieces<whiteToMove>();
     }
 
     template<bool whiteToMove, bool diag>

@@ -14,6 +14,26 @@
 using BB = uint64_t;
 using square = uint64_t;
 
+// ---------- PIECES ----------
+
+namespace Piece {
+    const uint8_t King = 1;
+    const uint8_t Queen = 2;
+    const uint8_t Rook = 3;
+    const uint8_t Bishop = 4;
+    const uint8_t Knight = 5;
+    const uint8_t Pawn = 6;
+}
+
+namespace MoveFlag {
+    const uint8_t Silent = 0;
+    const uint8_t RemoveShortCastling = 1;
+    const uint8_t RemoveLongCastling = 2;
+    const uint8_t RemoveAllCastling = 3;
+}
+
+
+
 // ---------- BOARD GEOMETRY ----------
 
 static constexpr BB file1 = 0x8080808080808080;
@@ -43,8 +63,18 @@ static constexpr int fileOf(int square) {
 }
 
 template<bool whiteToMove>
-static constexpr int epRank() {
+static constexpr int epRankNr() {
     return whiteToMove ? 4 : 3;
+}
+
+template<bool white>
+static constexpr int startingPosKingsideRook() {
+    return white ? 7 : 63;
+}
+
+template<bool white>
+static constexpr int startingPosQueensideRook() {
+    return white ? 0 : 56;
 }
 
 
@@ -60,6 +90,10 @@ static constexpr void setBit(BB& board, int index) {
 
 static constexpr BB withBit(BB board, int index) {
     return board | newMask(index);
+}
+
+static constexpr void deleteBitAt(BB& board, int index) {
+    board &= ~(1L << index);
 }
 
 static constexpr int bitCount(BB number) {

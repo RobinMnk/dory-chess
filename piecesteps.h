@@ -123,7 +123,6 @@ namespace PieceSteps {
         }
     }
 
-
     template<Board board, bool whiteToMove, bool diag, bool xrayking>
     static constexpr BB slideMask(int index) {
         BB mask = 0;

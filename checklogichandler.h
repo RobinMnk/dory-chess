@@ -26,18 +26,18 @@ class CheckLogicHandler {
                 int ix = dir_off > 0 ? firstBitOf(sol) : lastBitOf(sol);
                 BB kl = line & PieceSteps::FROM_TO[kingSquare][ix];
                 if(
-                        bitCount(kl & board.enemyPieces<state.whiteToMove>()) == 1             // only enemyPieces piece on line is the slider
-                        && bitCount(kl & board.myPieces<state.whiteToMove>()) == 1             // I only have one piece on line (excluding king)
-                        ) mask |= kl;
+                    bitCount(kl & board.enemyPieces<state.whiteToMove>()) == 1             // only enemyPieces piece on line is the slider
+                    && bitCount(kl & board.myPieces<state.whiteToMove>()) == 1             // I only have one piece on line (excluding king)
+                ) mask |= kl;
 
-                    // add special pin line through two pawns to prevent pinned en passant
+                // add special pin line through two pawns to prevent pinned en passant
                 else if(state.enPassantField
                         && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
-                        && rankOf(kingSquare) == epRank<state.whiteToMove>()
-                        && bitCount(kl & board.pawns<state.whiteToMove>()) == 1
-                        && bitCount(kl & board.enemyPawns<state.whiteToMove>()) == 1
-                        && bitCount(kl & board.occ()) == 3
-                        ) {
+                        && rankOf(kingSquare) == epRankNr<state.whiteToMove>()
+                        && bitCount(kl & board.pawns<state.whiteToMove>()) == 1         // one own pawn
+                        && bitCount(kl & board.enemyPawns<state.whiteToMove>()) == 1    // one enemy pawn
+                        && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
+                ) {
                     blockEP = true;
                 }
             }
@@ -140,6 +140,10 @@ public:
 
     [[nodiscard]] constexpr BB getCheckMask() const {
         return isCheck() ? checkMask : FULL_BB;
+    }
+
+    [[nodiscard]] constexpr BB allPins() const {
+        return pinsStraight | pinsDiagonal;
     }
 };
 
