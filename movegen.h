@@ -4,14 +4,10 @@
 
 #include <cstdint>
 #include "checklogichandler.h"
+#include "utils.h"
 
 #ifndef CHESSENGINE_MOVEGEN_H
 #define CHESSENGINE_MOVEGEN_H
-
-struct Move {
-    BB from{0}, to{0};
-    uint8_t piece{0}, flags{0};
-};
 
 class MoveList {
     int i{0};
@@ -22,11 +18,16 @@ class MoveList {
 
 public:
     void add(BB from, BB to, uint8_t piece, uint8_t flags) {
+        if(i >= 256) throw std::exception();
         moves[i].from = from;
         moves[i].to = to;
         moves[i].piece = piece;
         moves[i].flags = flags;
         i++;
+    }
+
+    void reset() {
+        i = 0;
     }
 
     std::array<Move, 256> moves{};
@@ -35,7 +36,7 @@ public:
 class MoveGenerator {
     const CheckLogicHandler clh;
     MoveList lst{};
-    BB checkMask{0}, targetSquares{0};
+    BB checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
 
 public:
     explicit MoveGenerator(CheckLogicHandler clh) : clh{clh} {}
@@ -44,17 +45,19 @@ public:
     const MoveList* generate() {
         checkMask = clh.getCheckMask();
         targetSquares = board.enemyOrEmpty<state.whiteToMove>() & checkMask;
+        pinsDiag = clh.pinsDiagonal;
+        pinsStr = clh.pinsStraight;
 
         if(!clh.isDoubleCheck) {
 //            pawnMoves();
             knightMoves<state, board>();
             bishopMoves<state, board>();
-//            rookMoves();
-//            queenMoves();
+            rookMoves<state, board>();
+            queenMoves<state, board>();
 //            castles();
         }
 
-//        kingMoves();
+        kingMoves<state, board>();
 
         return &lst;
     }
@@ -80,7 +83,7 @@ private:
     template<State state>
     void addToList(uint8_t piece, int from, BB targets) {
         while(targets != 0) {
-            int ix = firstBitOf(targets);
+            int ix = lastBitOf(targets);
             deleteBitAt(targets, ix);
             BB fromBB = newMask(from);
             BB toBB = newMask(ix);
@@ -97,7 +100,7 @@ private:
         BB movKnights = board.knights<state.whiteToMove>() & ~clh.allPins();
 
         while(movKnights != 0) {
-            int ix = firstBitOf(movKnights);
+            int ix = lastBitOf(movKnights);
             deleteBitAt(movKnights, ix);
 
             BB targets = PieceSteps::KNIGHT_MOVES[ix] & targetSquares;
@@ -107,30 +110,64 @@ private:
 
     template<State state, Board board>
     void bishopMoves() {
-        BB bishops = board.bishops<state.whiteToMove>() & ~clh.pinsStraight;
+        BB bishops = board.bishops<state.whiteToMove>() & ~pinsStr;
 
         while(bishops != 0) {
-            int ix = firstBitOf(bishops);
+            int ix = lastBitOf(bishops);
             deleteBitAt(bishops, ix);
 
             BB targets = PieceSteps::slideMask<board, state.whiteToMove, true, false>(ix) & targetSquares;
-            if(hasBitAt(clh.pinsDiagonal, ix)) targets &= clh.pinsDiagonal;
+            if(hasBitAt(pinsDiag, ix)) targets &= pinsDiag;
             addToList<state>(Piece::Bishop, ix, targets);
         }
     }
 
     template<State state, Board board>
     void rookMoves() {
-        BB rooks = board.rooks<state.whiteToMove>() & ~clh.pinsDiagonal;
+        BB rooks = board.rooks<state.whiteToMove>() & ~pinsDiag;
 
         while(rooks != 0) {
-            int ix = firstBitOf(rooks);
+            int ix = lastBitOf(rooks);
             deleteBitAt(rooks, ix);
 
             BB targets = PieceSteps::slideMask<board, state.whiteToMove, false, false>(ix) & targetSquares;
-            if(hasBitAt(clh.pinsStraight, ix)) targets &= clh.pinsStraight;
+            if(hasBitAt(pinsStr, ix)) targets &= pinsStr;
             addToList<state>(Piece::Rook, ix, targets);
         }
+    }
+
+    template<State state, Board board>
+    void queenMoves() {
+        BB queens = board.queens<state.whiteToMove>();
+        BB queensPinStr = queens & pinsStr & ~pinsDiag;
+        BB queensPinDiag = queens & pinsDiag & ~pinsStr;
+        BB queensNoPin = queens & ~(pinsDiag | pinsStr);
+
+        BB selector = 1;
+        for(int i = 0; i < 64; i++) {
+            if((queensPinStr & selector) != 0) {
+                BB targets = PieceSteps::slideMask<board, state.whiteToMove, false, false>(i) & targetSquares & pinsStr;
+                addToList<state>(Piece::Queen, i, targets);
+            }
+            else if((queensPinDiag & selector) != 0) {
+                BB targets = PieceSteps::slideMask<board, state.whiteToMove, true, false>(i) & targetSquares & pinsDiag;
+                addToList<state>(Piece::Queen, i, targets);
+            }
+            else if((queensNoPin & selector) != 0) {
+                BB targets = PieceSteps::slideMask<board, state.whiteToMove, false, false>(i) & targetSquares;
+                targets |= PieceSteps::slideMask<board, state.whiteToMove, true, false>(i) & targetSquares;
+                addToList<state>(Piece::Queen, i, targets);
+            }
+            selector <<= 1;
+        }
+    }
+
+    template<State state, Board board>
+    void kingMoves() {
+        long king = board.king<state.whiteToMove>();
+        int ix = singleBitOf(king);
+        long targets = PieceSteps::KING_MOVES[ix] & ~clh.attacked & board.enemyOrEmpty<state.whiteToMove>();
+        addToList<state>(Piece::King, ix, targets);
     }
 };
 

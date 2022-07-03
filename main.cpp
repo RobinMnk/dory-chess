@@ -1,4 +1,5 @@
 #include <iostream>
+#include <bitset>
 #include "utils.h"
 #include "movegen.h"
 
@@ -13,9 +14,7 @@ int main() {
 
     CheckLogicHandler clh{};
     clh.reload<STARTBOARD, STARTSTATE>();
-    std::cout << clh.checkMask << std::endl;
-
-    std::cout << (start.bQueens & clh.checkMask) << std::endl;
+    std::cout << std::bitset<64>(clh.getCheckMask()) << std::endl;
 
     MoveGenerator gen{clh};
 
@@ -24,7 +23,6 @@ int main() {
     for(Move m: lst->moves) {
         if(m.from == 0 && m.to == 0) break;
         printMove<true>(m);
-//        std::cout << ('0' + m.piece) << ": " << (m.from) << " -> " << singleBitOf(m.to) << std::endl;
     }
 
 

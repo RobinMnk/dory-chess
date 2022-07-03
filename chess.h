@@ -32,6 +32,10 @@ namespace MoveFlag {
     const uint8_t RemoveAllCastling = 3;
 }
 
+struct Move {
+    BB from{0}, to{0};
+    uint8_t piece{0}, flags{0};
+};
 
 
 // ---------- BOARD GEOMETRY ----------
@@ -93,11 +97,11 @@ static constexpr BB withBit(BB board, int index) {
 }
 
 static constexpr void deleteBitAt(BB& board, int index) {
-    board &= ~(1L << index);
+    board &= ~(1ull << index);
 }
 
 static constexpr bool hasBitAt(BB board, int index) {
-    return (board & (1L << index)) != 0;
+    return (board & (1ull << index)) != 0;
 }
 
 static constexpr int bitCount(BB number) {
@@ -105,15 +109,15 @@ static constexpr int bitCount(BB number) {
 }
 
 static constexpr int firstBitOf(BB number) {
-    return __builtin_ctz(number);
+    return __builtin_clzll(number);
 }
 
 static constexpr int lastBitOf(BB number) {
-    return 63 - firstBitOf(number);
+    return __builtin_ctzll(number);
 }
 
 static constexpr int singleBitOf(BB number) {
-    return firstBitOf(number);
+    return lastBitOf(number);
 }
 
 #endif //CHESSENGINE_CHESS_H

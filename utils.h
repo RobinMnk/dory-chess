@@ -5,7 +5,7 @@
 #include <array>
 #include <iostream>
 #include <sstream>
-#include "movegen.h"
+#include "board.h"
 
 #ifndef CHESSENGINE_UTILS_H
 #define CHESSENGINE_UTILS_H
