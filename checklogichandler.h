@@ -52,8 +52,6 @@ public:
     bool isDoubleCheck{}, blockEP{};
     BB attacked{}, checkMask{}, pinsStraight{}, pinsDiagonal{};
 
-    explicit CheckLogicHandler(BB t) : attacked{t} {}
-
     template<Board board, State state>
     void reload(){
         attacked = 0;

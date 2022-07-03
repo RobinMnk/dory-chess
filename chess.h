@@ -96,6 +96,10 @@ static constexpr void deleteBitAt(BB& board, int index) {
     board &= ~(1L << index);
 }
 
+static constexpr bool hasBitAt(BB board, int index) {
+    return (board & (1L << index)) != 0;
+}
+
 static constexpr int bitCount(BB number) {
     return std::popcount(number);
 }

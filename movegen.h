@@ -14,13 +14,13 @@ struct Move {
 };
 
 class MoveList {
-    std::array<Move, 256> moves{};
     int i{0};
 
     void add(Move m) {
         moves[i++] = m;
     }
 
+public:
     void add(BB from, BB to, uint8_t piece, uint8_t flags) {
         moves[i].from = from;
         moves[i].to = to;
@@ -29,25 +29,26 @@ class MoveList {
         i++;
     }
 
+    std::array<Move, 256> moves{};
 };
 
 class MoveGenerator {
     const CheckLogicHandler clh;
-    const MoveList lst{};
+    MoveList lst{};
     BB checkMask{0}, targetSquares{0};
 
 public:
-    explicit MoveGenerator(CheckLogicHandler c) : clh{c} {}
+    explicit MoveGenerator(CheckLogicHandler clh) : clh{clh} {}
 
-    template<State state>
-    const MoveList* generate(Board& board) {
+    template<State state, Board board>
+    const MoveList* generate() {
         checkMask = clh.getCheckMask();
         targetSquares = board.enemyOrEmpty<state.whiteToMove>() & checkMask;
 
         if(!clh.isDoubleCheck) {
 //            pawnMoves();
-            knightMoves<state>(board);
-//            bishopMoves();
+            knightMoves<state, board>();
+            bishopMoves<state, board>();
 //            rookMoves();
 //            queenMoves();
 //            castles();
@@ -84,15 +85,15 @@ private:
             BB fromBB = newMask(from);
             BB toBB = newMask(ix);
             lst.add(
-                piece, fromBB, toBB,
-                getMoveFlag<state>(piece, from, ix)
+                fromBB, toBB, piece,
+                getMoveFlag<state>(piece, from)
             );
         }
     }
 
 
-    template<State state>
-    void knightMoves(Board& board) {
+    template<State state, Board board>
+    void knightMoves() {
         BB movKnights = board.knights<state.whiteToMove>() & ~clh.allPins();
 
         while(movKnights != 0) {
@@ -101,6 +102,34 @@ private:
 
             BB targets = PieceSteps::KNIGHT_MOVES[ix] & targetSquares;
             addToList<state>(Piece::Knight, ix, targets);
+        }
+    }
+
+    template<State state, Board board>
+    void bishopMoves() {
+        BB bishops = board.bishops<state.whiteToMove>() & ~clh.pinsStraight;
+
+        while(bishops != 0) {
+            int ix = firstBitOf(bishops);
+            deleteBitAt(bishops, ix);
+
+            BB targets = PieceSteps::slideMask<board, state.whiteToMove, true, false>(ix) & targetSquares;
+            if(hasBitAt(clh.pinsDiagonal, ix)) targets &= clh.pinsDiagonal;
+            addToList<state>(Piece::Bishop, ix, targets);
+        }
+    }
+
+    template<State state, Board board>
+    void rookMoves() {
+        BB rooks = board.rooks<state.whiteToMove>() & ~clh.pinsDiagonal;
+
+        while(rooks != 0) {
+            int ix = firstBitOf(rooks);
+            deleteBitAt(rooks, ix);
+
+            BB targets = PieceSteps::slideMask<board, state.whiteToMove, false, false>(ix) & targetSquares;
+            if(hasBitAt(clh.pinsStraight, ix)) targets &= clh.pinsStraight;
+            addToList<state>(Piece::Rook, ix, targets);
         }
     }
 };
