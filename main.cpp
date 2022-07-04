@@ -8,23 +8,23 @@ int main() {
 
     PieceSteps::load();
 
-    Board start = STARTBOARD;
+    constexpr Board board = STARTBOARD;
+    constexpr State state = STARTSTATE;
 
-    print_board(start);
+    MoveGenerator gen{};
+    print_board(board);
 
-    CheckLogicHandler clh{};
-    clh.reload<STARTBOARD, STARTSTATE>();
-    std::cout << std::bitset<64>(clh.getCheckMask()) << std::endl;
+    auto lst = gen.generate<board, state>();
 
-    MoveGenerator gen{clh};
-
-    auto lst = gen.generate<STARTSTATE, STARTBOARD>();
-
+    std::cout << lst->size() << " legal moves:" << std::endl;
     for(Move m: lst->moves) {
         if(m.from == 0 && m.to == 0) break;
         printMove<true>(m);
     }
 
+
+    std::cout << "Applying the 10th move" << std::endl;
+    Move move = lst->moves[9];
 
     return 0;
 }

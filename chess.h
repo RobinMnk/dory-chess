@@ -68,6 +68,10 @@ static constexpr BB rank6 = 0xff0000000000;
 static constexpr BB rank7 = 0xff000000000000;
 static constexpr BB rank8 = 0xff00000000000000;
 
+// ---------- BITBOARD UTILS ----------
+
+constexpr BB FULL_BB = 0xffffffffffffffff;
+
 static constexpr int rankOf(int square) {
     return square / 8;
 }
@@ -79,16 +83,6 @@ static constexpr int fileOf(int square) {
 template<bool whiteToMove>
 static constexpr int epRankNr() {
     return whiteToMove ? 4 : 3;
-}
-
-template<bool white>
-static constexpr int startingPosKingsideRook() {
-    return white ? 7 : 63;
-}
-
-template<bool white>
-static constexpr int startingPosQueensideRook() {
-    return white ? 0 : 56;
 }
 
 

@@ -17,7 +17,7 @@ class MoveList {
     }
 
 public:
-    void add(BB from, BB to, uint8_t piece, uint8_t flags) {
+    void add(uint8_t piece, BB from, BB to, uint8_t flags) {
         if(i >= 256) throw std::exception();
         moves[i].from = from;
         moves[i].to = to;
@@ -26,23 +26,32 @@ public:
         i++;
     }
 
+    void add(uint8_t piece, BB from, BB to) {
+        add(piece, from, to, MoveFlag::Silent);
+    }
+
     void reset() {
         i = 0;
+    }
+
+    [[nodiscard]] constexpr int size() const {
+        return i;
     }
 
     std::array<Move, 256> moves{};
 };
 
 class MoveGenerator {
-    const CheckLogicHandler clh;
+    CheckLogicHandler clh{};
     MoveList lst{};
     BB checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
 
 public:
-    explicit MoveGenerator(CheckLogicHandler clh) : clh{clh} {}
-
-    template<State state, Board board>
+    template<Board board, State state>
     const MoveList* generate() {
+        clh.reload<board, state>();
+        lst.reset();
+
         checkMask = clh.getCheckMask();
         targetSquares = board.enemyOrEmpty<state.whiteToMove>() & checkMask;
         pinsDiag = clh.pinsDiagonal;
@@ -64,15 +73,15 @@ public:
 
 private:
     template<State state>
-    [[nodiscard]] constexpr uint8_t getMoveFlag(uint8_t piece, int from) const {
+    [[nodiscard]] constexpr uint8_t getMoveFlag(uint8_t piece, BB from) const {
         if(state.canCastleShort()
            && piece == Piece::Rook
-           && from == startingPosKingsideRook<state.whiteToMove>()
+           && startingKingsideRook<state.whiteToMove>() & from
         ) return MoveFlag::RemoveShortCastling;
 
         if(state.canCastleLong()
            && piece == Piece::Rook
-           && from == startingPosQueensideRook<state.whiteToMove>()
+           && startingQueensideRook<state.whiteToMove>() & from
         ) return MoveFlag::RemoveLongCastling;
 
         if(piece == Piece::King) return MoveFlag::RemoveAllCastling;
@@ -88,8 +97,8 @@ private:
             BB fromBB = newMask(from);
             BB toBB = newMask(ix);
             lst.add(
-                fromBB, toBB, piece,
-                getMoveFlag<state>(piece, from)
+                piece, fromBB, toBB,
+                getMoveFlag<state>(piece, fromBB)
             );
         }
     }
@@ -110,41 +119,41 @@ private:
         BB pawnCapt = board.pawns<white>() & ~pinsStr;
 
         // pawns that can move 1 or 2 squares
-        BB pwnMov = pawnsFwd & board.backward<white>(free);
-        BB pwnMov2 = pwnMov & board.backward2<white>(free & checkMask) & board.firstRank<white>();
-        pwnMov &= board.backward<white>(checkMask);
+        BB pwnMov = pawnsFwd & backward<white>(free);
+        BB pwnMov2 = pwnMov & backward2<white>(free & checkMask) & firstRank<white>();
+        pwnMov &= backward<white>(checkMask);
 
         // pawns that can capture Left or Right
-        BB pawnCapL = pawnCapt & board.pawnInvAtkLeft<white>(enemy & checkMask) & board.pawnCanGoLeft<white>();
-        BB pawnCapR = pawnCapt & board.pawnInvAtkRight<white>(enemy & checkMask) & board.pawnCanGoRight<white>();
+        BB pawnCapL = pawnCapt & pawnInvAtkLeft<white>(enemy & checkMask) & pawnCanGoLeft<white>();
+        BB pawnCapR = pawnCapt & pawnInvAtkRight<white>(enemy & checkMask) & pawnCanGoRight<white>();
 
         // remove pinned pawns
-        pwnMov      &= board.backward<white> (pinsStr) | ~pinsStr;
-        pwnMov2     &= board.backward2<white>(pinsStr) | ~pinsStr;
-        pawnCapL    &= board.pawnInvAtkLeft<white> (pinsDiag & board.pawnCanGoRight<white>()) | ~pinsDiag;
-        pawnCapR    &= board.pawnInvAtkRight<white>(pinsDiag & board.pawnCanGoLeft <white>()) | ~pinsDiag;
+        pwnMov      &= backward<white> (pinsStr) | ~pinsStr;
+        pwnMov2     &= backward2<white>(pinsStr) | ~pinsStr;
+        pawnCapL    &= pawnInvAtkLeft<white> (pinsDiag & pawnCanGoRight<white>()) | ~pinsDiag;
+        pawnCapR    &= pawnInvAtkRight<white>(pinsDiag & pawnCanGoLeft <white>()) | ~pinsDiag;
 
         // handle en passant pawns
         BB epPawnL = 0, epPawnR = 0;
         constexpr BB enPassant = state.enPassantField;
         if(enPassant != 0) {
             // left capture is ep square and is on checkmask
-            epPawnL = pawnCapt & board.pawnCanGoLeft<white>() & board.pawnInvAtkLeft<white>(enPassant & board.forward<white>(checkMask));
+            epPawnL = pawnCapt & pawnCanGoLeft<white>() & pawnInvAtkLeft<white>(enPassant & forward<white>(checkMask));
             // remove pinned ep pawns
-            epPawnL &= board.pawnInvAtkLeft<white>(pinsDiag & board.pawnCanGoLeft<white>()) | ~pinsDiag;
+            epPawnL &= pawnInvAtkLeft<white>(pinsDiag & pawnCanGoLeft<white>()) | ~pinsDiag;
             // handle very special case of two sideways pinned epPawns
             epPawnL = clh.pruneEpPin(epPawnL);
 
             // right capture is ep square and is on checkmask
-            epPawnR = pawnCapt & board.pawnCanGoRight<white>() & board.pawnInvAtkRight<white>(enPassant & board.forward<white>(checkMask));
+            epPawnR = pawnCapt & pawnCanGoRight<white>() & pawnInvAtkRight<white>(enPassant & forward<white>(checkMask));
             // remove pinned ep pawns
-            epPawnR &= board.pawnInvAtkRight<white>(pinsDiag & board.pawnCanGoRight<white>()) | ~pinsDiag;
+            epPawnR &= pawnInvAtkRight<white>(pinsDiag & pawnCanGoRight<white>()) | ~pinsDiag;
             // handle very special case of two sideways pinned epPawns
             epPawnR = clh.pruneEpPin(epPawnR);
         }
 
         // collect all promoting pawns in separate variables
-        BB lastRowMask = board.pawnOnLastRow<white>();
+        BB lastRowMask = pawnOnLastRow<white>();
         BB pwnPromoteFwd  = pwnMov   & lastRowMask;
         BB pwnPromoteL    = pawnCapL & lastRowMask;
         BB pwnPromoteR    = pawnCapR & lastRowMask;
@@ -158,35 +167,35 @@ private:
         for(int i = 0; i < 64; i++) {
             // non-promoting pawn moves
             if((pwnMov & fromBB) != 0) {    // straight push, 1 square
-                lst.add(Piece::Pawn, fromBB, board.forward<white>(fromBB));
+                lst.add(Piece::Pawn, fromBB, forward<white>(fromBB));
             }
             if((pawnCapL & fromBB) != 0) {  // capture towards left
-                lst.add(Piece::Pawn, fromBB, board.pawnAtkLeft<white>(fromBB));
+                lst.add(Piece::Pawn, fromBB, pawnAtkLeft<white>(fromBB));
             }
             if((pawnCapR & fromBB) != 0) {  // capture towards right
-                lst.add(Piece::Pawn, fromBB, board.pawnAtkRight<white>(fromBB));
+                lst.add(Piece::Pawn, fromBB, pawnAtkRight<white>(fromBB));
             }
 
             // promoting pawn moves
             if((pwnPromoteFwd & fromBB) != 0) {  // single push + promotion
-                handlePromotions(fromBB, board.forward<white>(fromBB));
+                handlePromotions(fromBB, forward<white>(fromBB));
             }
             if((pwnPromoteL & fromBB) != 0) {  // capture left + promotion
-                handlePromotions(fromBB, board.pawnAtkLeft<white>(fromBB));
+                handlePromotions(fromBB, pawnAtkLeft<white>(fromBB));
             }
             if((pwnPromoteR & fromBB) != 0) {  // capture right + promotion
-                handlePromotions(fromBB, board.pawnAtkRight<white>(fromBB));
+                handlePromotions(fromBB, pawnAtkRight<white>(fromBB));
             }
 
             // pawn moves that cannot be promotions
             if((pwnMov2 & fromBB) != 0) {   // pawn double push
-                lst.add(Piece::Pawn, fromBB, board.forward2<white>(fromBB), MoveFlag::PawnDoublePush);
+                lst.add(Piece::Pawn, fromBB, forward2<white>(fromBB), MoveFlag::PawnDoublePush);
             }
             if((epPawnL & fromBB) != 0) {   // pawn ep capture towards left
-                lst.add(Piece::Pawn, fromBB, board.pawnAtkLeft<white>(fromBB), MoveFlag::EnPassantCapture);
+                lst.add(Piece::Pawn, fromBB, pawnAtkLeft<white>(fromBB), MoveFlag::EnPassantCapture);
             }
             if((epPawnR & fromBB) != 0) {   // pawn ep capture towards right
-                lst.add(Piece::Pawn, fromBB, board.pawnAtkRight<white>(fromBB), MoveFlag::EnPassantCapture);
+                lst.add(Piece::Pawn, fromBB, pawnAtkRight<white>(fromBB), MoveFlag::EnPassantCapture);
             }
 
             fromBB <<= 1;
@@ -279,16 +288,16 @@ private:
 
         if(kingBB == startKing) {
             if(state.canCastleShort()
-               && board.rooks<white>() & getStartingPosKingsideRook<white>()
+               && board.rooks<white>() & startingKingsideRook<white>()
                && csMask & ~clh.attacked
                && (csMask & board.occ()) == kingBB
             ) lst.add(Piece::King, kingBB, kingBB << 2, MoveFlag::ShortCastling);
 
             if(state.canCastleLong()
-                && board.rooks<white>() & getStartingPosQueensideRook<white>()
+                && board.rooks<white>() & startingQueensideRook<white>()
                 && clMask & ~clh.attacked
                 && (clMask & board.occ()) == kingBB
-                && hasBitAt(board.free(), getStartingPosQueensideRook<white>() + 1)
+                && board.free() & (startingQueensideRook<white>() << 1)
             ) lst.add(Piece::King, kingBB, kingBB >> 2, MoveFlag::LongCastling);
         }
 
