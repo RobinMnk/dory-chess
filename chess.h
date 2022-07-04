@@ -16,20 +16,30 @@ using square = uint64_t;
 
 // ---------- PIECES ----------
 
+using Piece_t = uint8_t;
 namespace Piece {
-    const uint8_t King = 1;
-    const uint8_t Queen = 2;
-    const uint8_t Rook = 3;
-    const uint8_t Bishop = 4;
-    const uint8_t Knight = 5;
-    const uint8_t Pawn = 6;
+    const Piece_t King = 1;
+    const Piece_t Queen = 2;
+    const Piece_t Rook = 3;
+    const Piece_t Bishop = 4;
+    const Piece_t Knight = 5;
+    const Piece_t Pawn = 6;
 }
 
+using Flag_t = uint8_t;
 namespace MoveFlag {
-    const uint8_t Silent = 0;
-    const uint8_t RemoveShortCastling = 1;
-    const uint8_t RemoveLongCastling = 2;
-    const uint8_t RemoveAllCastling = 3;
+    const Flag_t Silent = 0;
+    const Flag_t RemoveShortCastling = 1;
+    const Flag_t RemoveLongCastling = 2;
+    const Flag_t RemoveAllCastling = 3;
+    const Flag_t PawnDoublePush = 4;
+    const Flag_t EnPassantCapture = 5;
+    const Flag_t PromoteQueen = 6;
+    const Flag_t PromoteRook = 7;
+    const Flag_t PromoteBishop = 8;
+    const Flag_t PromoteKnight = 9;
+    const Flag_t ShortCastling = 10;
+    const Flag_t LongCastling = 11;
 }
 
 struct Move {

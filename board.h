@@ -93,12 +93,57 @@ public:
     }
 
 
+template<bool whiteToMove> [[nodiscard]] constexpr BB forward(BB bb) {
+    return whiteToMove ? bb << 8 : bb >> 8;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB backward(BB bb) {
+    return whiteToMove ?  bb >> 8 : bb << 8;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB forward2(BB bb) {
+    return whiteToMove ? bb << 16 : bb >> 16;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB backward2(BB bb) {
+    return whiteToMove ?  bb >> 16 : bb << 16;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB pawnAtkLeft(BB bb) {
+    return whiteToMove ? bb << 7 : bb >> 7;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB pawnAtkRight(BB bb) {
+    return whiteToMove ? bb << 9 : bb >> 9;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB pawnInvAtkLeft(BB bb) {
+    return whiteToMove ? bb >> 7 : bb << 7;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB pawnInvAtkRight(BB bb) {
+    return whiteToMove ? bb >> 9 : bb << 9;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB pawnCanGoLeft() {
+    return whiteToMove ? ~file1 : ~file8;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB pawnCanGoRight() {
+    return whiteToMove ? ~file8 : ~file1;
+}
+template<bool whiteToMove> [[nodiscard]] constexpr BB pawnOnLastRow() {
+    return whiteToMove ? rank7 : rank2;
+}
+
+template<bool whiteToMove> [[nodiscard]] constexpr BB firstRank() {
+    return whiteToMove ? rank2 : rank7;
+}
 };
 
 
 constexpr Board STARTBOARD = Board(rank2, rank7, 0x42, 0x42ull << 7*8, 0x24, 0x24ull << 7*8, 0x81, 0x81ull << 7*8, 0x8, 0x8ull << 7*8, 0x10, 0x10ull << 7*8);
 
+template<bool isWhite>
+constexpr BB castleShortMask() {
+    return isWhite ? 0b111ull << singleBitOf(STARTBOARD.wKing) : 0b111ull << singleBitOf(STARTBOARD.bKing);
+}
 
+template<bool isWhite>
+constexpr BB castleLongMask() {
+    return isWhite ? 0b111ull << (singleBitOf(STARTBOARD.wKing)-2) : 0b111ull << (singleBitOf(STARTBOARD.bKing)-2);
+}
 
 // ---------- BITBOARD UTILS ----------
 
