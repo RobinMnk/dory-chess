@@ -11,11 +11,12 @@
 class CheckLogicHandler {
     int kingSquare{};
 
-    template<Board board, State state, bool diag>
-    BB addPins(){
+    template<State state, bool diag>
+    BB addPins(Board& board){
+        constexpr bool white = state.whiteToMove;
         std::array<BB, 8> kingLines = PieceSteps::LINES[kingSquare];
         auto dirs = diag ? PieceSteps::diagonal : PieceSteps::straight;
-        BB pieces = board.enemySliders<state.whiteToMove, diag>();
+        BB pieces = board.enemySliders<white, diag>();
         BB mask = 0;
 
         for(int dir_id: dirs) {
@@ -26,16 +27,16 @@ class CheckLogicHandler {
                 int ix = dir_off > 0 ? firstBitOf(sol) : lastBitOf(sol);
                 BB kl = line & PieceSteps::FROM_TO[kingSquare][ix];
                 if(
-                    bitCount(kl & board.enemyPieces<state.whiteToMove>()) == 1             // only enemyPieces piece on line is the slider
-                    && bitCount(kl & board.myPieces<state.whiteToMove>()) == 1             // I only have one piece on line (excluding king)
+                    bitCount(kl & board.enemyPieces<white>()) == 1             // only enemyPieces piece on line is the slider
+                    && bitCount(kl & board.myPieces<white>()) == 1             // I only have one piece on line (excluding king)
                 ) mask |= kl;
 
                 // add special pin line through two pawns to prevent pinned en passant
                 else if(state.enPassantField
                         && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
-                        && rankOf(kingSquare) == epRankNr<state.whiteToMove>()
-                        && bitCount(kl & board.pawns<state.whiteToMove>()) == 1         // one own pawn
-                        && bitCount(kl & board.enemyPawns<state.whiteToMove>()) == 1    // one enemy pawn
+                        && rankOf(kingSquare) == epRankNr<white>()
+                        && bitCount(kl & board.pawns<white>()) == 1         // one own pawn
+                        && bitCount(kl & board.enemyPawns<white>()) == 1    // one enemy pawn
                         && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
                 ) {
                     blockEP = true;
@@ -52,23 +53,24 @@ public:
     bool isDoubleCheck{}, blockEP{};
     BB attacked{}, checkMask{}, pinsStraight{}, pinsDiagonal{};
 
-    template<Board board, State state>
-    void reload(){
+    template<State state>
+    void reload(Board& board){
+        constexpr bool white = state.whiteToMove;
         attacked = 0;
         checkMask = 0;
         pinsStraight = 0;
         pinsDiagonal = 0;
         blockEP = false;
         isDoubleCheck = false;
-        kingSquare = board.kingSquare<state.whiteToMove>();
+        kingSquare = board.kingSquare<white>();
 
-        BB pawnBB = board.enemyPawns<state.whiteToMove>();
-        BB knightBB = board.enemyKnights<state.whiteToMove>();
-        BB bishopBB = board.enemyBishops<state.whiteToMove>();
-        BB rookBB = board.enemyRooks<state.whiteToMove>();
-        BB queenBB = board.enemyQueens<state.whiteToMove>();
-        BB kingBB = board.enemyKing<state.whiteToMove>();
-        BB myKingBB = board.king<state.whiteToMove>();
+        BB pawnBB = board.enemyPawns<white>();
+        BB knightBB = board.enemyKnights<white>();
+        BB bishopBB = board.enemyBishops<white>();
+        BB rookBB = board.enemyRooks<white>();
+        BB queenBB = board.enemyQueens<white>();
+        BB kingBB = board.enemyKing<white>();
+        BB myKingBB = board.king<white>();
 
         BB selector = 1;
         BB mask, atk;
@@ -81,7 +83,7 @@ public:
                 // PAWNS
                 mask = pawnBB & selector;
                 if(mask != 0) {
-                    atk = PieceSteps::PAWN_CAPTURES<!state.whiteToMove>[i];
+                    atk = PieceSteps::PAWN_CAPTURES<!white>[i];
                     if((atk & myKingBB) != 0) {
                         numChecks++;
                         checkMask |= mask;
@@ -100,7 +102,7 @@ public:
                 }
                 // BISHOPS & QUEENS
                 if(((bishopBB | queenBB) & selector) != 0) {
-                    atk = PieceSteps::slideMask<board, state.whiteToMove, true, true>(i);
+                    atk = PieceSteps::slideMask<white, true, true>(board, i);
                     if((atk & myKingBB) != 0) {
                         numChecks++;
                         checkMask |= PieceSteps::FROM_TO[kingSquare][i];
@@ -109,7 +111,7 @@ public:
                 }
                 // ROOKS & QUEENS
                 if(((rookBB | queenBB) & selector) != 0) {
-                    atk = PieceSteps::slideMask<board, state.whiteToMove, false, true>(i);
+                    atk = PieceSteps::slideMask< white, false, true>(board, i);
                     if((atk & myKingBB) != 0) {
                         numChecks++;
                         checkMask |= PieceSteps::FROM_TO[kingSquare][i];
@@ -124,8 +126,8 @@ public:
         isDoubleCheck = numChecks > 1;
         if(isDoubleCheck) checkMask = 0;
 
-        pinsDiagonal = addPins<board, state, true>();
-        pinsStraight = addPins<board, state, false>();
+        pinsDiagonal = addPins<state, true>(board);
+        pinsStraight = addPins<state, false>(board);
     }
 
     [[nodiscard]] constexpr BB pruneEpPin(BB epPawns) const {

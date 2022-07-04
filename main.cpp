@@ -8,13 +8,13 @@ int main() {
 
     PieceSteps::load();
 
-    constexpr Board board = STARTBOARD;
     constexpr State state = STARTSTATE;
+    Board board = STARTBOARD;
 
     MoveGenerator gen{};
     print_board(board);
 
-    auto lst = gen.generate<board, state>();
+    auto lst = gen.generate<state>(board);
 
     std::cout << lst->size() << " legal moves:" << std::endl;
     for(Move m: lst->moves) {
