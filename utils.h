@@ -20,7 +20,7 @@ static const std::array<char, 14> FILE_NAMES{
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'
 };
 
-void print_board(Board board);
+void print_board(Board& board);
 
 void print_board(ByteBoard&& byteboard);
 

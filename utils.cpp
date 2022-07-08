@@ -53,7 +53,7 @@ void print_board(ByteBoard&& byteboard) {
 }
 
 
-void print_board(Board board) {
+void print_board(Board& board) {
     print_board(to_byteboard(board));
 }
 

@@ -27,33 +27,42 @@ struct State {
         return whiteToMove ? wCastleLong : bCastleLong;
     }
 
-    template<Flag_t flag, BB epField>
-    constexpr State nextState() {
+    template<Flag_t flag = MoveFlag::Silent, BB epField = 0ull>
+    [[nodiscard]] constexpr State next() const {
         if(flag == MoveFlag::RemoveShortCastling) {
-            if(whiteToMove) return {!whiteToMove, epField, false, wCastleLong, bCastleShort, bCastleLong};
-            else return {!whiteToMove, epField, wCastleShort, wCastleLong, false, bCastleLong};
+            if(whiteToMove) return {!whiteToMove, 0ull, false, wCastleLong, bCastleShort, bCastleLong};
+            else return {!whiteToMove, 0ull, wCastleShort, wCastleLong, false, bCastleLong};
         }
 
         if(flag == MoveFlag::RemoveLongCastling) {
-            if(whiteToMove) return {!whiteToMove, epField, wCastleShort, false, bCastleShort, bCastleLong};
-            else return {!whiteToMove, epField, wCastleShort, wCastleLong, bCastleShort, false};
+            if(whiteToMove) return {!whiteToMove, 0ull, wCastleShort, false, bCastleShort, bCastleLong};
+            else return {!whiteToMove, 0ull, wCastleShort, wCastleLong, bCastleShort, false};
         }
 
         if(flag == MoveFlag::RemoveAllCastling || flag == MoveFlag::ShortCastling || flag == MoveFlag::LongCastling) {
-            if(whiteToMove) return {!whiteToMove, epField, false, false, bCastleShort, bCastleLong};
-            else return {!whiteToMove, epField, wCastleShort, wCastleLong, false, false};
+            if(whiteToMove) return {!whiteToMove, 0ull, false, false, bCastleShort, bCastleLong};
+            else return {!whiteToMove, 0ull, wCastleShort, wCastleLong, false, false};
         }
 
-        return {!whiteToMove, epField, wCastleShort, wCastleLong, bCastleShort, bCastleLong};
-    }
+        if(flag == MoveFlag::PawnDoublePush) {
+            return {!whiteToMove, epField, wCastleShort, wCastleLong, bCastleShort, bCastleLong};
+        }
 
-    template<Flag_t flag>
-    constexpr State nextState() {
-        return nextState<flag, 0ull>();
+        return {!whiteToMove, 0ull, wCastleShort, wCastleLong, bCastleShort, bCastleLong};
     }
 };
 
 constexpr State STARTSTATE = State(true, 0ull, true, true, true, true);
+
+// forward definitions of functions needed within Board
+template<bool>
+constexpr BB castleShortRookMove();
+
+template<bool>
+constexpr BB castleLongRookMove();
+
+template<bool whiteToMove>
+constexpr BB backward(BB bb);
 
 class Board {
 public:
@@ -119,7 +128,7 @@ public:
     }
 
     template<State state, Flag_t flags>
-    constexpr Board nextBoard(Piece_t piece, BB from, BB to) {
+    [[nodiscard]] constexpr Board next(Piece_t piece, BB from, BB to) const {
         constexpr bool whiteMoved = state.whiteToMove;
 
         // Promotions
@@ -147,7 +156,7 @@ public:
             if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleShortRookMove<whiteMoved>(), bRooks, wQueens, bQueens, wKing ^ change, bKing};
             return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleShortRookMove<whiteMoved>(), wQueens, bQueens, wKing, bKing ^ change};
         }
-        if(flags == MoveFlag::ShortCastling) {
+        if(flags == MoveFlag::LongCastling) {
             if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleLongRookMove<whiteMoved>(), bRooks, wQueens, bQueens, wKing ^ change, bKing};
             return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleLongRookMove<whiteMoved>(), wQueens, bQueens, wKing, bKing ^ change};
         }
@@ -178,6 +187,7 @@ public:
             if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing ^ change, bKing};
             return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing ^ change};
         }
+        throw std::exception();
     }
 };
 
