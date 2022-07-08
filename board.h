@@ -8,6 +8,53 @@
 #ifndef CHESSENGINE_BOARD_H
 #define CHESSENGINE_BOARD_H
 
+
+struct State {
+    constexpr State(bool white, BB ep, bool wcs, bool wcl, bool bcs, bool bcl) :
+            whiteToMove{white}, enPassantField{ep}, wCastleShort{wcs}, wCastleLong{wcl},
+            bCastleShort{bcs}, bCastleLong{bcl} {}
+
+    const bool whiteToMove;
+    const BB enPassantField;
+    const bool wCastleShort, bCastleShort;
+    const bool wCastleLong, bCastleLong;
+
+    [[nodiscard]] constexpr bool canCastleShort() const {
+        return whiteToMove ? wCastleShort : bCastleShort;
+    }
+
+    [[nodiscard]] constexpr bool canCastleLong() const {
+        return whiteToMove ? wCastleLong : bCastleLong;
+    }
+
+    template<Flag_t flag, BB epField>
+    constexpr State nextState() {
+        if(flag == MoveFlag::RemoveShortCastling) {
+            if(whiteToMove) return {!whiteToMove, epField, false, wCastleLong, bCastleShort, bCastleLong};
+            else return {!whiteToMove, epField, wCastleShort, wCastleLong, false, bCastleLong};
+        }
+
+        if(flag == MoveFlag::RemoveLongCastling) {
+            if(whiteToMove) return {!whiteToMove, epField, wCastleShort, false, bCastleShort, bCastleLong};
+            else return {!whiteToMove, epField, wCastleShort, wCastleLong, bCastleShort, false};
+        }
+
+        if(flag == MoveFlag::RemoveAllCastling || flag == MoveFlag::ShortCastling || flag == MoveFlag::LongCastling) {
+            if(whiteToMove) return {!whiteToMove, epField, false, false, bCastleShort, bCastleLong};
+            else return {!whiteToMove, epField, wCastleShort, wCastleLong, false, false};
+        }
+
+        return {!whiteToMove, epField, wCastleShort, wCastleLong, bCastleShort, bCastleLong};
+    }
+
+    template<Flag_t flag>
+    constexpr State nextState() {
+        return nextState<flag, 0ull>();
+    }
+};
+
+constexpr State STARTSTATE = State(true, 0ull, true, true, true, true);
+
 class Board {
 public:
     const BB wPawns{0}, bPawns{0}, wKnights{0}, bKnights{0}, wBishops{0}, bBishops{0}, wRooks{0}, bRooks{0}, wQueens{0}, bQueens{0}, wKing{0}, bKing{0};
@@ -69,6 +116,68 @@ public:
     template<bool whiteToMove, bool diag>
     [[nodiscard]] constexpr BB enemySliders() const {
         return whiteToMove ? bQueens | (diag ? bBishops : bRooks) : wQueens | (diag ? wBishops : wRooks);
+    }
+
+    template<State state, Flag_t flags>
+    constexpr Board nextBoard(Piece_t piece, BB from, BB to) {
+        constexpr bool whiteMoved = state.whiteToMove;
+
+        // Promotions
+        if(flags == MoveFlag::PromoteQueen) {
+            if(whiteMoved) return {wPawns & ~to, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens | to, bQueens, wKing, bKing};
+            return {wPawns, bPawns & ~to, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens | to, wKing, bKing};
+        }
+        if(flags == MoveFlag::PromoteRook) {
+            if(whiteMoved) return {wPawns & ~to, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks | to, bRooks, wQueens, bQueens, wKing, bKing};
+            return {wPawns, bPawns & ~to, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks | to, wQueens, bQueens, wKing, bKing};
+        }
+        if(flags == MoveFlag::PromoteBishop) {
+            if(whiteMoved) return {wPawns & ~to, bPawns, wKnights, bKnights, wBishops | to, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+            return {wPawns, bPawns & ~to, wKnights, bKnights, wBishops, bBishops | to, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+        }
+        if(flags == MoveFlag::PromoteKnight) {
+            if(whiteMoved) return {wPawns & ~to, bPawns, wKnights | to, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+            return {wPawns, bPawns & ~to, wKnights, bKnights | to, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+        }
+
+        BB change = from | to;
+
+        //Castles
+        if(flags == MoveFlag::ShortCastling) {
+            if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleShortRookMove<whiteMoved>(), bRooks, wQueens, bQueens, wKing ^ change, bKing};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleShortRookMove<whiteMoved>(), wQueens, bQueens, wKing, bKing ^ change};
+        }
+        if(flags == MoveFlag::ShortCastling) {
+            if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleLongRookMove<whiteMoved>(), bRooks, wQueens, bQueens, wKing ^ change, bKing};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleLongRookMove<whiteMoved>(), wQueens, bQueens, wKing, bKing ^ change};
+        }
+
+        // Silent Moves
+        if(piece == Piece::Pawn) {
+            BB epMask = flags == MoveFlag::EnPassantCapture ? ~backward<whiteMoved>(state.enPassantField) : FULL_BB;
+            if(whiteMoved) return {wPawns ^ change, bPawns & epMask, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+            return {wPawns & epMask, bPawns ^ change, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+        }
+        if(piece == Piece::Knight) {
+            if(whiteMoved) return {wPawns, bPawns, wKnights ^ change, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+            return {wPawns, bPawns, wKnights, bKnights ^ change, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+        }
+        if(piece == Piece::Bishop) {
+            if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops ^ change, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops ^ change, wRooks, bRooks, wQueens, bQueens, wKing, bKing};
+        }
+        if(piece == Piece::Rook) {
+            if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ change, bRooks, wQueens, bQueens, wKing, bKing};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ change, wQueens, bQueens, wKing, bKing};
+        }
+        if(piece == Piece::Queen) {
+            if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens ^ change, bQueens, wKing, bKing};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens ^ change, wKing, bKing};
+        }
+        if(piece == Piece::King) {
+            if(whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing ^ change, bKing};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing ^ change};
+        }
     }
 };
 
@@ -141,113 +250,6 @@ template<bool whiteToMove> constexpr BB pawnOnLastRow() {
 }
 template<bool whiteToMove> constexpr BB firstRank() {
     return whiteToMove ? rank2 : rank7;
-}
-
-struct State {
-    constexpr State(bool white, BB ep, bool wcs, bool wcl, bool bcs, bool bcl) :
-            whiteToMove{white}, enPassantField{ep}, wCastleShort{wcs}, wCastleLong{wcl},
-            bCastleShort{bcs}, bCastleLong{bcl} {}
-
-    const bool whiteToMove;
-    const BB enPassantField;
-    const bool wCastleShort, bCastleShort;
-    const bool wCastleLong, bCastleLong;
-
-    [[nodiscard]] constexpr bool canCastleShort() const {
-        return whiteToMove ? wCastleShort : bCastleShort;
-    }
-
-    [[nodiscard]] constexpr bool canCastleLong() const {
-        return whiteToMove ? wCastleLong : bCastleLong;
-    }
-};
-
-constexpr State STARTSTATE = State(true, 0ull, true, true, true, true);
-
-template<State state>
-constexpr State next(Move move) {
-    constexpr bool white = state.whiteToMove;
-
-    constexpr BB epField = move.flags == MoveFlag::PawnDoublePush ? forward<white>(move.from) : 0ull;
-
-    if(move.flags == MoveFlag::RemoveShortCastling) {
-        if(white) return {!white, epField, false, state.wCastleLong, state.bCastleShort, state.bCastleLong};
-        else return {!white, epField, state.wCastleShort, state.wCastleLong, false, state.bCastleLong};
-    }
-
-    if(move.flags == MoveFlag::RemoveLongCastling) {
-        if(white) return {!white, epField, state.wCastleShort, false, state.bCastleShort, state.bCastleLong};
-        else return {!white, epField, state.wCastleShort, state.wCastleLong, state.bCastleShort, false};
-    }
-
-    if(move.flags == MoveFlag::RemoveAllCastling || move.flags == MoveFlag::ShortCastling || move.flags == MoveFlag::LongCastling) {
-        if(white) return {!white, epField, false, false, state.bCastleShort, state.bCastleLong};
-        else return {!white, epField, state.wCastleShort, state.wCastleLong, false, false};
-    }
-
-    return {!white, epField, state.wCastleShort, state.wCastleLong, state.bCastleShort, state.bCastleLong};
-}
-
-template<Board board, State state>
-constexpr Board next(Move move) {
-    constexpr bool whiteMoved = state.whiteToMove;
-
-    // Promotions
-    if(move.flags == MoveFlag::PromoteQueen) {
-        if(whiteMoved) return {board.wPawns & ~move.to, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens | move.to, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns & ~move.to, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens | move.to, board.wKing, board.bKing};
-    }
-    if(move.flags == MoveFlag::PromoteRook) {
-        if(whiteMoved) return {board.wPawns & ~move.to, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks | move.to, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns & ~move.to, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks | move.to, board.wQueens, board.bQueens, board.wKing, board.bKing};
-    }
-    if(move.flags == MoveFlag::PromoteBishop) {
-        if(whiteMoved) return {board.wPawns & ~move.to, board.bPawns, board.wKnights, board.bKnights, board.wBishops | move.to, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns & ~move.to, board.wKnights, board.bKnights, board.wBishops, board.bBishops | move.to, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-    }
-    if(move.flags == MoveFlag::PromoteKnight) {
-        if(whiteMoved) return {board.wPawns & ~move.to, board.bPawns, board.wKnights | move.to, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns & ~move.to, board.wKnights, board.bKnights | move.to, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-    }
-
-    BB change = move.from | move.to;
-
-    //Castles
-    if(move.flags == MoveFlag::ShortCastling) {
-        if(whiteMoved) return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks ^ castleShortRookMove<whiteMoved>(), board.bRooks, board.wQueens, board.bQueens, board.wKing ^ change, board.bKing};
-        return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks ^ castleShortRookMove<whiteMoved>(), board.wQueens, board.bQueens, board.wKing, board.bKing ^ change};
-    }
-    if(move.flags == MoveFlag::ShortCastling) {
-        if(whiteMoved) return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks ^ castleLongRookMove<whiteMoved>(), board.bRooks, board.wQueens, board.bQueens, board.wKing ^ change, board.bKing};
-        return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks ^ castleLongRookMove<whiteMoved>(), board.wQueens, board.bQueens, board.wKing, board.bKing ^ change};
-    }
-
-    // Silent Moves
-    if(move.piece == Piece::Pawn) {
-        BB epMask = move.flags == MoveFlag::EnPassantCapture ? ~backward<whiteMoved>(state.enPassantField) : FULL_BB;
-        if(whiteMoved) return {board.wPawns ^ change, board.bPawns & epMask, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns & epMask, board.bPawns ^ change, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-    }
-    if(move.piece == Piece::Knight) {
-        if(whiteMoved) return {board.wPawns, board.bPawns, board.wKnights ^ change, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns, board.wKnights, board.bKnights ^ change, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-    }
-    if(move.piece == Piece::Bishop) {
-        if(whiteMoved) return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops ^ change, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops ^ change, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-    }
-    if(move.piece == Piece::Rook) {
-        if(whiteMoved) return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks ^ change, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks ^ change, board.wQueens, board.bQueens, board.wKing, board.bKing};
-    }
-    if(move.piece == Piece::Queen) {
-        if(whiteMoved) return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens ^ change, board.bQueens, board.wKing, board.bKing};
-        return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens ^ change, board.wKing, board.bKing};
-    }
-    if(move.piece == Piece::King) {
-        if(whiteMoved) return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing ^ change, board.bKing};
-        return {board.wPawns, board.bPawns, board.wKnights, board.bKnights, board.wBishops, board.bBishops, board.wRooks, board.bRooks, board.wQueens, board.bQueens, board.wKing, board.bKing ^ change};
-    }
 }
 
 #endif //CHESSENGINE_BOARD_H
