@@ -33,7 +33,7 @@ int main() {
     Board board = STARTBOARD;
 
     MoveGenerator gen{};
-    time_movegen<state, 4>(gen, board);
+    time_movegen<state, 6>(gen, board);
 
 
 //    Board second = board.next<state, MoveFlag::Silent>(Piece::Pawn, newMask(12), newMask(20));

@@ -38,7 +38,7 @@ class CheckLogicHandler {
                 ) mask |= kl;
 
                 // add special pin line through two pawns to prevent pinned en passant
-                else if(state.enPassantField
+                else if(board.enPassantField
                         && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
                         && rankOf(kingSquare) == epRankNr<white>()
                         && bitCount(kl & board.pawns<white>()) == 1         // one own pawn

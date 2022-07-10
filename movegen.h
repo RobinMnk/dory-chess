@@ -125,7 +125,7 @@ private:
 
         // handle en passant pawns
         BB epPawnL = 0, epPawnR = 0;
-        constexpr BB enPassant = state.enPassantField;
+        BB enPassant = board.enPassantField;
         if(enPassant != 0 && !pd.blockEP) {
             // left capture is ep square and is on checkmask
             epPawnL = pawnCapt & pawnCanGoLeft<white>() & pawnInvAtkLeft<white>(enPassant & forward<white>(pd.checkMask));

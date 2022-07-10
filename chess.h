@@ -124,4 +124,43 @@ static constexpr int singleBitOf(BB number) {
     return lastBitOf(number);
 }
 
+// ------------- PAWN MOVES -------------
+
+template<bool whiteToMove> constexpr BB forward(BB bb) {
+    return whiteToMove ? bb << 8 : bb >> 8;
+}
+template<bool whiteToMove> constexpr BB backward(BB bb) {
+    return whiteToMove ?  bb >> 8 : bb << 8;
+}
+template<bool whiteToMove> constexpr BB forward2(BB bb) {
+    return whiteToMove ? bb << 16 : bb >> 16;
+}
+template<bool whiteToMove> constexpr BB backward2(BB bb) {
+    return whiteToMove ?  bb >> 16 : bb << 16;
+}
+template<bool whiteToMove> constexpr BB pawnAtkLeft(BB bb) {
+    return whiteToMove ? bb << 7 : bb >> 7;
+}
+template<bool whiteToMove> constexpr BB pawnAtkRight(BB bb) {
+    return whiteToMove ? bb << 9 : bb >> 9;
+}
+template<bool whiteToMove> constexpr BB pawnInvAtkLeft(BB bb) {
+    return whiteToMove ? bb >> 7 : bb << 7;
+}
+template<bool whiteToMove> constexpr BB pawnInvAtkRight(BB bb) {
+    return whiteToMove ? bb >> 9 : bb << 9;
+}
+template<bool whiteToMove> constexpr BB pawnCanGoLeft() {
+    return whiteToMove ? ~file1 : ~file8;
+}
+template<bool whiteToMove> constexpr BB pawnCanGoRight() {
+    return whiteToMove ? ~file8 : ~file1;
+}
+template<bool whiteToMove> constexpr BB pawnOnLastRow() {
+    return whiteToMove ? rank7 : rank2;
+}
+template<bool whiteToMove> constexpr BB firstRank() {
+    return whiteToMove ? rank2 : rank7;
+}
+
 #endif //CHESSENGINE_CHESS_H
