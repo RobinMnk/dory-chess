@@ -46,7 +46,7 @@ public:
     unsigned long long nodesAtDepth{0};
 
     template<State state, int depth>
-    void generate(Board& board) {
+    constexpr void generate(Board& board) {
         if constexpr (depth > 0) {
             coll.reset();
 
@@ -66,36 +66,36 @@ public:
     }
 
 private:
-    template<State state, int depth, Flag_t flags = MoveFlag::Silent, BB epField = 0ull>
-    void generateSuccessorBoard(Board& board, Piece_t piece, BB from, BB to) {
+    template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+    void generateSuccessorBoard(Board& board, BB from, BB to) {
 //        coll.registerMove<flags, state.whiteToMove>(piece, from, to, depth);
-        constexpr State nextState = state.next<flags, epField>();
-        Board nextBoard = board.next<state, flags>(piece, from, to);
+        constexpr State nS = nextState<state, flags>();
+        Board nextBoard = board.next<state, piece, flags>(from, to);
 //        coll.update<nextState>(nextBoard);
 
         if(depth == 1) nodesAtDepth++;
-        generate<nextState, depth-1>(nextBoard);
+        generate<nS, depth-1>(nextBoard);
     }
 
     // - - - - - - Helper Functions - - - - - -
 
-    template<State state, int depth, Flag_t flags = MoveFlag::Silent>
-    void addToList(Board& board, Piece_t piece, int fromIndex, BB targets) {
+    template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+    void addToList(Board& board, int fromIndex, BB targets) {
         BB fromBB = newMask(fromIndex);
         while(targets != 0) {
             int ix = lastBitOf(targets);
             deleteBitAt(targets, ix);
             BB toBB = newMask(ix);
-            generateSuccessorBoard<state, depth, flags>(board, piece, fromBB, toBB);
+            generateSuccessorBoard<state, depth, piece, flags>(board, fromBB, toBB);
         }
     }
 
     template<State state, int depth>
     void handlePromotions(Board& board, BB from, BB to) {
-        generateSuccessorBoard<state, depth, MoveFlag::PromoteQueen>(board, Piece::Pawn, from, to);
-        generateSuccessorBoard<state, depth, MoveFlag::PromoteRook>(board, Piece::Pawn, from, to);
-        generateSuccessorBoard<state, depth, MoveFlag::PromoteBishop>(board, Piece::Pawn, from, to);
-        generateSuccessorBoard<state, depth, MoveFlag::PromoteKnight>(board, Piece::Pawn, from, to);
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteQueen>(board, from, to);
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteRook>(board, from, to);
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteBishop>(board, from, to);
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteKnight>(board, from, to);
     }
 
     // - - - - - - Individual Piece Moves - - - - - -
@@ -157,13 +157,13 @@ private:
         for(int i = 0; i < 64; i++) {
             // non-promoting pawn moves
             if((pwnMov & fromBB) != 0) {    // straight push, 1 square
-                generateSuccessorBoard<state, depth>(board, Piece::Pawn, fromBB, forward<white>(fromBB));
+                generateSuccessorBoard<state, depth, Piece::Pawn>(board, fromBB, forward<white>(fromBB));
             }
             if((pawnCapL & fromBB) != 0) {  // capture towards left
-                generateSuccessorBoard<state, depth> (board, Piece::Pawn, fromBB, pawnAtkLeft<white>(fromBB));
+                generateSuccessorBoard<state, depth, Piece::Pawn> (board, fromBB, pawnAtkLeft<white>(fromBB));
             }
             if((pawnCapR & fromBB) != 0) {  // capture towards right
-                generateSuccessorBoard<state, depth>(board, Piece::Pawn, fromBB, pawnAtkRight<white>(fromBB));
+                generateSuccessorBoard<state, depth, Piece::Pawn>(board, fromBB, pawnAtkRight<white>(fromBB));
             }
 
             // promoting pawn moves
@@ -179,49 +179,17 @@ private:
 
             // pawn moves that cannot be promotions
             if((pwnMov2 & fromBB) != 0) {   // pawn double push
-                helpPawnDoublePush<state, depth>(board, i);
+                generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PawnDoublePush>(board, fromBB, forward2<white>(fromBB));
             }
             if((epPawnL & fromBB) != 0) {   // pawn ep capture towards left
-                generateSuccessorBoard<state, depth, MoveFlag::EnPassantCapture>(board, Piece::Pawn, fromBB, pawnAtkLeft<white>(fromBB));
+                generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, fromBB, pawnAtkLeft<white>(fromBB));
             }
             if((epPawnR & fromBB) != 0) {   // pawn ep capture towards right
-                generateSuccessorBoard<state, depth, MoveFlag::EnPassantCapture>(board, Piece::Pawn, fromBB, pawnAtkRight<white>(fromBB));
+                generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, fromBB, pawnAtkRight<white>(fromBB));
             }
 
             fromBB <<= 1;
         }
-    }
-
-    template<State state, int depth>
-    constexpr void helpPawnDoublePush(Board& board, int fromIndex){
-        // TODO: This is really ugly, but we need to call generateSuccessorBoard with a constexpr as epField. Please find a better way!
-        if(state.whiteToMove) {
-            if(fromIndex == 8) addPawnDoublePush<state, depth, 8>(board);
-            if(fromIndex == 9) addPawnDoublePush<state, depth, 9>(board);
-            if(fromIndex == 10) addPawnDoublePush<state, depth, 10>(board);
-            if(fromIndex == 11) addPawnDoublePush<state, depth, 11>(board);
-            if(fromIndex == 12) addPawnDoublePush<state, depth, 12>(board);
-            if(fromIndex == 13) addPawnDoublePush<state, depth, 13>(board);
-            if(fromIndex == 14) addPawnDoublePush<state, depth, 14>(board);
-            if(fromIndex == 15) addPawnDoublePush<state, depth, 15>(board);
-        } else {
-            if(fromIndex == 48) addPawnDoublePush<state, depth, 48>(board);
-            if(fromIndex == 49) addPawnDoublePush<state, depth, 49>(board);
-            if(fromIndex == 50) addPawnDoublePush<state, depth, 50>(board);
-            if(fromIndex == 51) addPawnDoublePush<state, depth, 51>(board);
-            if(fromIndex == 52) addPawnDoublePush<state, depth, 52>(board);
-            if(fromIndex == 53) addPawnDoublePush<state, depth, 53>(board);
-            if(fromIndex == 54) addPawnDoublePush<state, depth, 54>(board);
-            if(fromIndex == 55) addPawnDoublePush<state, depth, 55>(board);
-        }
-    }
-
-    template<State state, int depth, int fromIndex>
-    constexpr void addPawnDoublePush(Board& board) {
-        constexpr BB fromBB = newMask(fromIndex);
-        generateSuccessorBoard<state, depth, MoveFlag::PawnDoublePush, forward<state.whiteToMove>(fromBB)>(
-            board, Piece::Pawn, fromBB, forward2<state.whiteToMove>(fromBB)
-        );
     }
 
     template<State state, int depth>
@@ -234,7 +202,7 @@ private:
             deleteBitAt(movKnights, ix);
 
             BB targets = PieceSteps::KNIGHT_MOVES[ix] & pd.targetSquares;
-            addToList<state, depth>(board, Piece::Knight, ix, targets);
+            addToList<state, depth, Piece::Knight>(board, ix, targets);
         }
     }
 
@@ -248,7 +216,7 @@ private:
 
             BB targets = PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares;
             if(hasBitAt(pd.pinsDiag, ix)) targets &= pd.pinsDiag;
-            addToList<state, depth>(board, Piece::Bishop, ix, targets);
+            addToList<state, depth, Piece::Bishop>(board, ix, targets);
         }
     }
 
@@ -264,11 +232,11 @@ private:
             if(hasBitAt(pd.pinsStr, ix)) targets &= pd.pinsStr;
 
             if(hasBitAt(startingKingsideRook<state.whiteToMove>(), ix))
-                addToList<state, depth, MoveFlag::RemoveShortCastling>(board, Piece::Rook, ix, targets);
+                addToList<state, depth, Piece::Rook, MoveFlag::RemoveShortCastling>(board, ix, targets);
             else if (hasBitAt(startingQueensideRook<state.whiteToMove>(), ix))
-                addToList<state, depth, MoveFlag::RemoveLongCastling>(board, Piece::Rook, ix, targets);
+                addToList<state, depth, Piece::Rook, MoveFlag::RemoveLongCastling>(board, ix, targets);
             else
-                addToList<state, depth>(board, Piece::Rook, ix, targets);
+                addToList<state, depth, Piece::Rook>(board, ix, targets);
         }
     }
 
@@ -283,16 +251,16 @@ private:
         for(int i = 0; i < 64; i++) {
             if((queensPinStr & selector) != 0) {
                 BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, i) & pd.targetSquares & pd.pinsStr;
-                addToList<state, depth>(board, Piece::Queen, i, targets);
+                addToList<state, depth, Piece::Queen>(board, i, targets);
             }
             else if((queensPinDiag & selector) != 0) {
                 BB targets = PieceSteps::slideMask<state.whiteToMove, true, false>(board, i) & pd.targetSquares & pd.pinsDiag;
-                addToList<state, depth>(board, Piece::Queen, i, targets);
+                addToList<state, depth, Piece::Queen>(board, i, targets);
             }
             else if((queensNoPin & selector) != 0) {
                 BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, i) & pd.targetSquares;
                 targets |= PieceSteps::slideMask<state.whiteToMove, true, false>(board, i) & pd.targetSquares;
-                addToList<state, depth>(board, Piece::Queen, i, targets);
+                addToList<state, depth, Piece::Queen>(board, i, targets);
             }
             selector <<= 1;
         }
@@ -303,7 +271,7 @@ private:
         BB king = board.king<state.whiteToMove>();
         int ix = singleBitOf(king);
         BB targets = PieceSteps::KING_MOVES[ix] & ~pd.attacked & board.enemyOrEmpty<state.whiteToMove>();
-        addToList<state, depth, MoveFlag::RemoveAllCastling>(board, Piece::King, ix, targets);
+        addToList<state, depth, Piece::King, MoveFlag::RemoveAllCastling>(board, ix, targets);
     }
 
     template<State state, int depth>
@@ -315,18 +283,18 @@ private:
         BB clMask = castleLongMask<white>();
 
         if(kingBB == startKing) {
-            if(state.canCastleShort()
+            if(canCastleShort<state>()
                && board.rooks<white>() & startingKingsideRook<white>()
                && csMask & ~pd.attacked
                && (csMask & board.occ()) == kingBB
-            ) generateSuccessorBoard<state, depth, MoveFlag::ShortCastling>(board, Piece::King, kingBB, kingBB << 2);
+            ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::ShortCastling>(board, kingBB, kingBB << 2);
 
-            if(state.canCastleLong()
+            if(canCastleLong<state>()
                 && board.rooks<white>() & startingQueensideRook<white>()
                 && clMask & ~pd.attacked
                 && (clMask & board.occ()) == kingBB
                 && board.free() & (startingQueensideRook<white>() << 1)
-            ) generateSuccessorBoard<state, depth, MoveFlag::LongCastling>(board, Piece::King, kingBB, kingBB >> 2);
+            ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);
         }
     }
 };

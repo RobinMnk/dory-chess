@@ -82,7 +82,8 @@ static constexpr int fileOf(int square) {
 
 template<bool whiteToMove>
 static constexpr int epRankNr() {
-    return whiteToMove ? 4 : 3;
+    if constexpr (whiteToMove) return 4;
+    else return 3;
 }
 
 
@@ -127,40 +128,52 @@ static constexpr int singleBitOf(BB number) {
 // ------------- PAWN MOVES -------------
 
 template<bool whiteToMove> constexpr BB forward(BB bb) {
-    return whiteToMove ? bb << 8 : bb >> 8;
+    if constexpr (whiteToMove) return bb << 8;
+    else return bb >> 8;
 }
 template<bool whiteToMove> constexpr BB backward(BB bb) {
-    return whiteToMove ?  bb >> 8 : bb << 8;
+    if constexpr (whiteToMove) return bb >> 8;
+    else return bb << 8;
 }
 template<bool whiteToMove> constexpr BB forward2(BB bb) {
-    return whiteToMove ? bb << 16 : bb >> 16;
+    if constexpr (whiteToMove) return bb << 16;
+    else return bb >> 16;
 }
 template<bool whiteToMove> constexpr BB backward2(BB bb) {
-    return whiteToMove ?  bb >> 16 : bb << 16;
+    if constexpr (whiteToMove) return bb >> 16;
+    else return bb << 16;
 }
 template<bool whiteToMove> constexpr BB pawnAtkLeft(BB bb) {
-    return whiteToMove ? bb << 7 : bb >> 7;
+    if constexpr (whiteToMove) return bb << 7;
+    else return bb >> 7;
 }
 template<bool whiteToMove> constexpr BB pawnAtkRight(BB bb) {
-    return whiteToMove ? bb << 9 : bb >> 9;
+    if constexpr (whiteToMove) return bb << 9;
+    else return bb >> 9;
 }
 template<bool whiteToMove> constexpr BB pawnInvAtkLeft(BB bb) {
-    return whiteToMove ? bb >> 7 : bb << 7;
+    if constexpr (whiteToMove) return bb >> 7;
+    else return bb << 7;
 }
 template<bool whiteToMove> constexpr BB pawnInvAtkRight(BB bb) {
-    return whiteToMove ? bb >> 9 : bb << 9;
+    if constexpr (whiteToMove) return bb >> 9;
+    else return bb << 9;
 }
 template<bool whiteToMove> constexpr BB pawnCanGoLeft() {
-    return whiteToMove ? ~file1 : ~file8;
+    if constexpr (whiteToMove) return ~file1;
+    else return ~file8;
 }
 template<bool whiteToMove> constexpr BB pawnCanGoRight() {
-    return whiteToMove ? ~file8 : ~file1;
+    if constexpr (whiteToMove) return ~file8;
+    else return ~file1;
 }
 template<bool whiteToMove> constexpr BB pawnOnLastRow() {
-    return whiteToMove ? rank7 : rank2;
+    if constexpr (whiteToMove) return rank7;
+    else return rank2;
 }
 template<bool whiteToMove> constexpr BB firstRank() {
-    return whiteToMove ? rank2 : rank7;
+    if constexpr (whiteToMove) return rank2;
+    else return rank7;
 }
 
 #endif //CHESSENGINE_CHESS_H

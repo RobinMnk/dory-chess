@@ -20,8 +20,12 @@ void time_movegen(MoveGenerator& gen, Board& board) {
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
 
-    std::cout << "Generated " << gen.nodesAtDepth << " nodes in " << ms_double.count() << "ms\n";
-    std::cout << ms_int.count() << "ms\n";
+    /* Getting number of milliseconds as a double. */
+    duration<double> seconds = t2 - t1;
+    double mnps = (static_cast<double>(gen.nodesAtDepth) / 1000000) / seconds.count();
+
+    std::cout << "Generated " << gen.nodesAtDepth << " nodes in " << ms_int.count() << "ms\n";
+    std::cout << mnps << " M nps\n";
 }
 
 int main() {
@@ -33,7 +37,7 @@ int main() {
     Board board = STARTBOARD;
 
     MoveGenerator gen{};
-    time_movegen<state, 6>(gen, board);
+    time_movegen<state, 4>(gen, board);
 
 
 //    Board second = board.next<state, MoveFlag::Silent>(Piece::Pawn, newMask(12), newMask(20));

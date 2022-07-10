@@ -18,7 +18,7 @@ class CheckLogicHandler {
     bool blockEP{};
 
     template<State state, bool diag>
-    BB addPins(Board& board){
+    constexpr BB addPins(Board& board){
         constexpr bool white = state.whiteToMove;
         std::array<BB, 8> kingLines = PieceSteps::LINES[kingSquare];
         auto dirs = diag ? PieceSteps::diagonal : PieceSteps::straight;
@@ -52,14 +52,10 @@ class CheckLogicHandler {
         return mask;
     }
 
-    [[nodiscard]] constexpr BB pruneEpPin(BB epPawns) const {
-        return blockEP ? 0 : epPawns;
-    }
-
 public:
 
     template<State state>
-    PinData reload(Board& board){
+    constexpr PinData reload(Board& board){
         constexpr bool white = state.whiteToMove;
         BB attacked{0}, checkMask{0};
         blockEP = false;
@@ -132,7 +128,7 @@ public:
         if(numChecks == 0) checkMask = FULL_BB;
         BB targetSquares = board.enemyOrEmpty<state.whiteToMove>() & checkMask;
 
-        return {isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal };
+        return { isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal };
     }
 };
 
