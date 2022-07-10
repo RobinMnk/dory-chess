@@ -68,7 +68,7 @@ public:
 private:
     template<State state, int depth, Flag_t flags = MoveFlag::Silent, BB epField = 0ull>
     void generateSuccessorBoard(Board& board, Piece_t piece, BB from, BB to) {
-        coll.registerMove<flags, state.whiteToMove>(piece, from, to, depth);
+//        coll.registerMove<flags, state.whiteToMove>(piece, from, to, depth);
         constexpr State nextState = state.next<flags, epField>();
         Board nextBoard = board.next<state, flags>(piece, from, to);
 //        coll.update<nextState>(nextBoard);
@@ -264,9 +264,9 @@ private:
             if(hasBitAt(pd.pinsStr, ix)) targets &= pd.pinsStr;
 
             if(hasBitAt(startingKingsideRook<state.whiteToMove>(), ix))
-                addToList<state, MoveFlag::RemoveShortCastling>(board, Piece::Rook, ix, targets);
+                addToList<state, depth, MoveFlag::RemoveShortCastling>(board, Piece::Rook, ix, targets);
             else if (hasBitAt(startingQueensideRook<state.whiteToMove>(), ix))
-                addToList<state, MoveFlag::RemoveLongCastling>(board, Piece::Rook, ix, targets);
+                addToList<state, depth, MoveFlag::RemoveLongCastling>(board, Piece::Rook, ix, targets);
             else
                 addToList<state, depth>(board, Piece::Rook, ix, targets);
         }

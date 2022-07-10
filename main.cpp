@@ -14,10 +14,14 @@ void time_movegen(MoveGenerator& gen, Board& board) {
     gen.generate<state, depth>(board);
     auto t2 = high_resolution_clock::now();
 
+    /* Getting number of milliseconds as an integer. */
+    auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
 
     std::cout << "Generated " << gen.nodesAtDepth << " nodes in " << ms_double.count() << "ms\n";
+    std::cout << ms_int.count() << "ms\n";
 }
 
 int main() {
@@ -29,7 +33,7 @@ int main() {
     Board board = STARTBOARD;
 
     MoveGenerator gen{};
-    time_movegen<state, 3>(gen, board);
+    time_movegen<state, 4>(gen, board);
 
 
 //    Board second = board.next<state, MoveFlag::Silent>(Piece::Pawn, newMask(12), newMask(20));
