@@ -4,7 +4,6 @@
 
 #include "chess.h"
 
-#define CHECK_BIT(var, pos) (var & (1 << pos))
 #ifndef CHESSENGINE_BOARD_H
 #define CHESSENGINE_BOARD_H
 
@@ -119,7 +118,7 @@ public:
 
     template<bool whiteToMove>
     [[nodiscard]] constexpr BB enemyOrEmpty() const {
-        return ~allPieces<whiteToMove>();
+        return ~myPieces<whiteToMove>();
     }
 
     template<bool whiteToMove, bool diag>

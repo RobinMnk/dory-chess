@@ -13,8 +13,8 @@
 using ByteBoard = std::array<uint8_t, 64>;
 
 static const std::array<char, 14> PIECE_TO_CHAR{
-    ' ', 'K', 'Q', 'R', 'B', 'N', ' ',
-    ' ', 'k', 'q', 'r', 'b', 'n', ' ',
+    ' ', 'K', 'Q', 'R', 'B', 'N', 'P',
+    ' ', 'k', 'q', 'r', 'b', 'n', 'p',
 };
 static const std::array<char, 14> FILE_NAMES{
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'

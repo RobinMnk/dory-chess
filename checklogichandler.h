@@ -8,8 +8,14 @@
 #ifndef CHESSENGINE_CHECKLOGICHANDLER_H
 #define CHESSENGINE_CHECKLOGICHANDLER_H
 
+struct PinData {
+    bool isDoubleCheck{false}, blockEP{false};
+    BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
+};
+
 class CheckLogicHandler {
     int kingSquare{};
+    bool blockEP{};
 
     template<State state, bool diag>
     BB addPins(Board& board){
@@ -46,22 +52,17 @@ class CheckLogicHandler {
         return mask;
     }
 
-    [[nodiscard]] constexpr bool isAttacked(int index) const {
-        return CHECK_BIT(attacked, index);
+    [[nodiscard]] constexpr BB pruneEpPin(BB epPawns) const {
+        return blockEP ? 0 : epPawns;
     }
+
 public:
-    bool isDoubleCheck{}, blockEP{};
-    BB attacked{}, checkMask{}, pinsStraight{}, pinsDiagonal{};
 
     template<State state>
-    void reload(Board& board){
+    PinData reload(Board& board){
         constexpr bool white = state.whiteToMove;
-        attacked = 0;
-        checkMask = 0;
-        pinsStraight = 0;
-        pinsDiagonal = 0;
+        BB attacked{0}, checkMask{0};
         blockEP = false;
-        isDoubleCheck = false;
         kingSquare = board.kingSquare<white>();
 
         BB pawnBB = board.enemyPawns<white>();
@@ -123,27 +124,15 @@ public:
             selector <<= 1;
         }
 
-        isDoubleCheck = numChecks > 1;
+        bool isDoubleCheck = numChecks > 1;
         if(isDoubleCheck) checkMask = 0;
 
-        pinsDiagonal = addPins<state, true>(board);
-        pinsStraight = addPins<state, false>(board);
-    }
+        BB pinsDiagonal = addPins<state, true>(board);
+        BB pinsStraight = addPins<state, false>(board);
+        if(numChecks == 0) checkMask = FULL_BB;
+        BB targetSquares = board.enemyOrEmpty<state.whiteToMove>() & checkMask;
 
-    [[nodiscard]] constexpr BB pruneEpPin(BB epPawns) const {
-        return blockEP ? 0 : epPawns;
-    }
-
-    [[nodiscard]] constexpr bool isCheck() const {
-        return isAttacked(kingSquare);
-    }
-
-    [[nodiscard]] constexpr BB getCheckMask() const {
-        return isCheck() ? checkMask : FULL_BB;
-    }
-
-    [[nodiscard]] constexpr BB allPins() const {
-        return pinsStraight | pinsDiagonal;
+        return {isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal };
     }
 };
 
