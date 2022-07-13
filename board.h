@@ -24,7 +24,6 @@ template<State state>
 constexpr bool canCastleShort() {
     if constexpr (state.whiteToMove) return state.wCastleShort;
     else return state.bCastleShort;
-
 }
 
 template<State state>
@@ -33,8 +32,8 @@ constexpr bool canCastleLong() {
     else return state.bCastleLong;
 }
 
-template<State state, Flag_t flag = MoveFlag::Silent, BB epField = 0ull>
-constexpr State nextState() {
+template<State state, Flag_t flag = MoveFlag::Silent>
+consteval State nextState() {
     if constexpr (flag == MoveFlag::RemoveShortCastling) {
         if constexpr (state.whiteToMove) return {false, false, state.wCastleLong, state.bCastleShort, state.bCastleLong};
         else return {true, state.wCastleShort, state.wCastleLong, false, state.bCastleLong};

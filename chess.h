@@ -8,7 +8,6 @@
 
 #ifndef CHESSENGINE_CHESS_H
 #define CHESSENGINE_CHESS_H
-#define SquareOf(X) _tzcnt_u64(X)
 #define Bitloop(X) for(;X; X = _blsr_u64(X))
 
 using BB = uint64_t;

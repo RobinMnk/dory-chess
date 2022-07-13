@@ -22,10 +22,11 @@ void time_movegen(MoveGenerator& gen, Board& board) {
 
     /* Getting number of milliseconds as a double. */
     duration<double> seconds = t2 - t1;
-    double mnps = (static_cast<double>(gen.nodesAtDepth) / 1000000) / seconds.count();
+    double mnps = (static_cast<double>(gen.coll.nodes) / 1000000) / seconds.count();
 
-    std::cout << "Generated " << gen.nodesAtDepth << " nodes in " << ms_int.count() << "ms\n";
-    std::cout << mnps << " M nps\n";
+    std::cout << "Generated " << gen.coll.nodes << " nodes in " << ms_int.count() << "ms\n";
+    std::cout << mnps << " M nps\n\n";
+    std::cout << gen.coll.captures << " captures\n" << gen.coll.checks << " checks" << std::endl;
 }
 
 int main() {
@@ -37,7 +38,12 @@ int main() {
     Board board = STARTBOARD;
 
     MoveGenerator gen{};
-    time_movegen<state, 4>(gen, board);
+    time_movegen<state, 6>(gen, board);
+
+    for(int i = 0; i < gen.coll.follow_positions.size(); i++) {
+        printMove<true>(gen.coll.moves.at(i));
+        std::cout << "\t\t" << gen.coll.follow_positions.at(i) << std::endl;
+    }
 
 
 //    Board second = board.next<state, MoveFlag::Silent>(Piece::Pawn, newMask(12), newMask(20));
