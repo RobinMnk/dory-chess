@@ -4,62 +4,75 @@
 
 #include <cstdint>
 #include <vector>
+#include <memory>
+
+#include "movecoll.h"
 #include "checklogichandler.h"
 #include "utils.h"
 
 #ifndef CHESSENGINE_MOVEGEN_H
 #define CHESSENGINE_MOVEGEN_H
 
-class MoveCollector {
-public:
-    std::vector<Move> moves;
-    std::vector<long> follow_positions{};
-    unsigned long long nodes{0}, captures{0}, checks{0};
-private:
-    CheckLogicHandler clh{};
-
-    template<Flag_t flags, bool whiteMoved>
-    void registerMove(Piece_t piece, BB from, BB to, int depth) {
-        if(depth == 1) {
-            moves.push_back(Move{from, to, piece, flags});
-            follow_positions.push_back(0);
-        }
-        if(depth == 1) {
-            follow_positions.at(follow_positions.size() - 1) += 1;
-        }
-//        if(depth > 0) {
-//            Move move{from, to, piece, flags};
-//            for(int i = 0; i < 3 - depth; i++) std::cout << "\t";
-//            printMove<whiteMoved>(move);
+//class MoveCollectorOLD {
+//public:
+//    std::vector<Move> moves;
+//    std::vector<long> follow_positions{};
+//    unsigned long long nodes{0}, captures{0}, checks{0};
+//private:
+//    CheckLogicHandler clh{};
+//
+//    template<Flag_t flags, bool whiteMoved>
+//    void registerMove(Piece_t piece, BB from, BB to, int depth) {
+//        if(depth == 1) {
+//            moves.push_back(Move{from, to, piece, flags});
+//            follow_positions.push_back(0);
 //        }
-    }
-
-    template<State state, State nextState>
-    void countMoves(Board& board, Board& nextBoard, BB from, BB to) {
-        nodes++;
-        if(board.enemyPieces<state.whiteToMove>() & to) {
-            captures++;
-        }
-//        if(clh.reload<nextState>(nextBoard).isCheck()) checks++;
-    }
-
-    template<State state>
-    void update(Board& board) {
-    }
-
-    friend class MoveGenerator;
-};
+//        if(depth == 1) {
+//            follow_positions.at(follow_positions.size() - 1) += 1;
+//        }
+////        if(depth > 0) {
+////            Move move{from, to, piece, flags};
+////            for(int i = 0; i < 3 - depth; i++) std::cout << "\t";
+////            printMove<whiteMoved>(move);
+////        }
+//    }
+//
+//    template<State state, State nextState>
+//    void countMoves(Board& board, Board& nextBoard, BB from, BB to) {
+//        nodes++;
+//        if(board.enemyPieces<state.whiteToMove>() & to) {
+//            captures++;
+//        }
+////        if(clh.reload<nextState>(nextBoard).isCheck()) checks++;
+//    }
+//
+//    template<State state>
+//    void update(Board& board) {
+//    }
+//
+//    friend class MoveGenerator;
+//};
+//
+//class MoveCollector {
+//public:
+//    virtual void registerMove(
+//            const Board& board,
+//            const State& state,
+//            BB from, BB to,
+//            Piece_t piece,
+//            Flag_t flags,
+//            int depth
+//    ) { };
+//
+//    friend class MoveGenerator;
+//};
 
 class MoveGenerator {
-    CheckLogicHandler clh{};
-
 public:
-    MoveCollector coll{};
-
     template<State state, int depth>
-    constexpr void generate(Board& board) {
+    static void generate(Board& board) {
         if constexpr (depth > 0) {
-            PinData pd = clh.reload<state>(board);
+            PinData pd = CheckLogicHandler::reload<state>(board);
 
             if(!pd.isDoubleCheck) {
                 pawnMoves<state, depth>(board, pd);
@@ -76,20 +89,19 @@ public:
 
 private:
     template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    void generateSuccessorBoard(Board& board, BB from, BB to) {
-//        if(hasBitAt(board.wPawns, 28) && hasBitAt(board.bPawns, 37)) coll.registerMove<flags, state.whiteToMove>(piece, from, to, depth);
+    static void generateSuccessorBoard(Board& board, BB from, BB to) {
         constexpr State nS = nextState<state, flags>();
         Board nextBoard = board.next<state, piece, flags>(from, to);
-//        coll.update<nextState>(nextBoard);
+        MoveCollector::registerMove<state, depth, piece, flags>(board, from, to);
 
-        if(depth == 1) coll.countMoves<state, nS>(board, nextBoard, from, to);
+//        if(depth == 1) coll.countMoves<state, nS>(board, nextBoard, from, to);
         generate<nS, depth-1>(nextBoard);
     }
 
     // - - - - - - Helper Functions - - - - - -
 
     template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    void addToList(Board& board, int fromIndex, BB targets) {
+    static void addToList(Board& board, int fromIndex, BB targets) {
         BB fromBB = newMask(fromIndex);
         Bitloop(targets) {
             int ix = lastBitOf(targets);
@@ -98,7 +110,7 @@ private:
     }
 
     template<State state, int depth>
-    void handlePromotions(Board& board, BB from, BB to) {
+    static void handlePromotions(Board& board, BB from, BB to) {
         generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteQueen>(board, from, to);
         generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteRook>(board, from, to);
         generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteBishop>(board, from, to);
@@ -108,7 +120,7 @@ private:
     // - - - - - - Individual Piece Moves - - - - - -
 
     template<State state, int depth>
-    void pawnMoves(Board& board, PinData& pd) {
+    static void pawnMoves(Board& board, PinData& pd) {
         constexpr bool white = state.whiteToMove;
         BB free = board.free();
         BB enemy = board.enemyPieces<white>();
@@ -131,22 +143,18 @@ private:
         pawnCapR    &= pawnInvAtkRight<white>(pd.pinsDiag & pawnCanGoLeft <white>()) | ~pd.pinsDiag;
 
         // handle en passant pawns
-        BB epPawnL = 0, epPawnR = 0;
+        BB epPawnL{0}, epPawnR{0};
         BB enPassant = board.enPassantField;
         if(enPassant != 0 && !pd.blockEP) {
             // left capture is ep square and is on checkmask
             epPawnL = pawnCapt & pawnCanGoLeft<white>() & pawnInvAtkLeft<white>(enPassant & forward<white>(pd.checkMask));
             // remove pinned ep pawns
             epPawnL &= pawnInvAtkLeft<white>(pd.pinsDiag & pawnCanGoLeft<white>()) | ~pd.pinsDiag;
-            // handle very special case of two sideways pinned epPawns
-//            epPawnL = clh.pruneEpPin(epPawnL);
 
             // right capture is ep square and is on checkmask
             epPawnR = pawnCapt & pawnCanGoRight<white>() & pawnInvAtkRight<white>(enPassant & forward<white>(pd.checkMask));
             // remove pinned ep pawns
             epPawnR &= pawnInvAtkRight<white>(pd.pinsDiag & pawnCanGoRight<white>()) | ~pd.pinsDiag;
-            // handle very special case of two sideways pinned epPawns
-//            epPawnR = clh.pruneEpPin(epPawnR);
         }
 
         // collect all promoting pawns in separate variables
@@ -205,7 +213,7 @@ private:
     }
 
     template<State state, int depth>
-    void knightMoves(Board& board, PinData& pd) {
+    static void knightMoves(Board& board, PinData& pd) {
         BB allPins = pd.pinsStr | pd.pinsDiag;
         BB movKnights = board.knights<state.whiteToMove>() & ~allPins;
 
@@ -217,12 +225,11 @@ private:
     }
 
     template<State state, int depth>
-    void bishopMoves(Board& board, PinData& pd) {
+    static void bishopMoves(Board& board, PinData& pd) {
         BB bishops = board.bishops<state.whiteToMove>() & ~pd.pinsStr;
 
         Bitloop(bishops) {
             int ix = lastBitOf(bishops);
-
             BB targets = PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares;
             if(hasBitAt(pd.pinsDiag, ix)) targets &= pd.pinsDiag;
             addToList<state, depth, Piece::Bishop>(board, ix, targets);
@@ -230,7 +237,7 @@ private:
     }
 
     template<State state, int depth>
-    void rookMoves(Board& board, PinData& pd) {
+    static void rookMoves(Board& board, PinData& pd) {
         BB rooks = board.rooks<state.whiteToMove>() & ~pd.pinsDiag;
 
         Bitloop(rooks) {
@@ -249,7 +256,7 @@ private:
     }
 
     template<State state, int depth>
-    void queenMoves(Board& board, PinData& pd) {
+    static void queenMoves(Board& board, PinData& pd) {
         BB queens = board.queens<state.whiteToMove>();
         BB queensPinStr = queens & pd.pinsStr & ~pd.pinsDiag;
         BB queensPinDiag = queens & pd.pinsDiag & ~pd.pinsStr;
@@ -276,7 +283,7 @@ private:
     }
 
     template<State state, int depth>
-    void kingMoves(Board& board, PinData& pd) {
+    static void kingMoves(Board& board, PinData& pd) {
         BB king = board.king<state.whiteToMove>();
         int ix = singleBitOf(king);
         BB targets = PieceSteps::KING_MOVES[ix] & ~pd.attacked & board.enemyOrEmpty<state.whiteToMove>();
@@ -284,7 +291,7 @@ private:
     }
 
     template<State state, int depth>
-    void castles(Board& board, PinData& pd) {
+    static void castles(Board& board, PinData& pd) {
         constexpr bool white = state.whiteToMove;
         constexpr BB startKing = white ? STARTBOARD.wKing : STARTBOARD.bKing;
         constexpr BB csMask = castleShortMask<white>();

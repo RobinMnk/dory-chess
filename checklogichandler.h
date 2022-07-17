@@ -36,7 +36,8 @@ class CheckLogicHandler {
                     && bitCount(kl & board.myPieces<white>()) == 1             // I only have one piece on line (excluding king)
                 ) mask |= kl;
 
-                // add special pin line through two pawns to prevent pinned en passant
+                // handle very special case of two sideways pinned epPawns
+                // add pin line through two pawns to prevent pinned en passant
                 else if(board.enPassantField
                         && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
                         && rankOf(kingSquare) == epRankNr<white>()
@@ -53,9 +54,9 @@ class CheckLogicHandler {
 
 public:
     template<State state>
-    PinData reload(Board& board){
+    static PinData reload(Board& board){
         constexpr bool white = state.whiteToMove;
-        BB attacked{0}, checkMask{0}, mask{0};
+        BB attacked{0}, checkMask{0}, mask;
         int numChecks = 0;
         bool blockEP = false;
         int kingSquare = board.kingSquare<white>();
@@ -115,7 +116,7 @@ public:
         pieces = rookBB | queenBB;
         Bitloop(pieces) {
             int ix = lastBitOf(pieces);
-            mask = PieceSteps::slideMask< white, false, true>(board, ix);
+            mask = PieceSteps::slideMask<white, false, true>(board, ix);
             attacked |= mask;
             if(mask & myKing) {
                 numChecks++;
