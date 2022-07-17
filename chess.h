@@ -49,14 +49,14 @@ struct Move {
 
 // ---------- BOARD GEOMETRY ----------
 
-static constexpr BB file1 = 0x8080808080808080;
-static constexpr BB file2 = 0x4040404040404040;
-static constexpr BB file3 = 0x2020202020202020;
-static constexpr BB file4 = 0x1010101010101010;
-static constexpr BB file5 = 0x0808080808080808;
-static constexpr BB file6 = 0x0404040404040404;
-static constexpr BB file7 = 0x0202020202020202;
-static constexpr BB file8 = 0x0101010101010101;
+static constexpr BB file8 = 0x8080808080808080;
+static constexpr BB file7 = 0x4040404040404040;
+static constexpr BB file6 = 0x2020202020202020;
+static constexpr BB file5 = 0x1010101010101010;
+static constexpr BB file4 = 0x0808080808080808;
+static constexpr BB file3 = 0x0404040404040404;
+static constexpr BB file2 = 0x0202020202020202;
+static constexpr BB file1 = 0x0101010101010101;
 
 static constexpr BB rank1 = 0xff;
 static constexpr BB rank2 = 0xff00;

@@ -176,28 +176,28 @@ public:
         if constexpr (piece == Piece::Pawn) {
             BB epMask = flags == MoveFlag::EnPassantCapture ? ~backward<whiteMoved>(enPassantField) : FULL_BB;
             BB epField = flags == MoveFlag::PawnDoublePush ? forward<whiteMoved>(from) : 0ull;
-            if constexpr (whiteMoved) return {wPawns ^ change, bPawns & epMask, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, epField};
-            return {wPawns & epMask, bPawns ^ change, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, epField};
+            if constexpr (whiteMoved) return {wPawns ^ change, bPawns & epMask & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKing, bKing, epField};
+            return {wPawns & epMask & ~to, bPawns ^ change, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKing, bKing, epField};
         }
         if constexpr (piece == Piece::Knight) {
-            if constexpr (whiteMoved) return {wPawns, bPawns, wKnights ^ change, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns, wKnights, bKnights ^ change, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights ^ change, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights ^ change, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKing, bKing, 0ull};
         }
         if constexpr (piece == Piece::Bishop) {
-            if constexpr (whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops ^ change, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops ^ change, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops ^ change, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops ^ change, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKing, bKing, 0ull};
         }
         if constexpr (piece == Piece::Rook) {
-            if constexpr (whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ change, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ change, wQueens, bQueens, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks ^ change, bRooks & ~to, wQueens, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks ^ change, wQueens & ~to, bQueens, wKing, bKing, 0ull};
         }
         if constexpr (piece == Piece::Queen) {
-            if constexpr (whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens ^ change, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens ^ change, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens ^ change, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens ^ change, wKing, bKing, 0ull};
         }
         if constexpr (piece == Piece::King) {
-            if constexpr (whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing ^ change, bKing, 0ull};
-            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing ^ change, 0ull};
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKing ^ change, bKing, 0ull};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKing, bKing ^ change, 0ull};
         }
         throw std::exception();
     }

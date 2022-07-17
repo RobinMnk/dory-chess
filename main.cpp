@@ -2,17 +2,17 @@
 #include <bitset>
 #include <chrono>
 
-#include "movegen.h"
+#include "movecollectors.h"
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
-template<State state, int depth>
+template<typename Collector, State state, int depth>
 void time_movegen(Board& board) {
     auto t1 = high_resolution_clock::now();
-    MoveCollector::generateGameTree<state, depth>(board);
+    Collector::template generateGameTree<state, depth>(board);
     auto t2 = high_resolution_clock::now();
 
     /* Getting number of milliseconds as an integer. */
@@ -23,12 +23,14 @@ void time_movegen(Board& board) {
 
     /* Getting number of milliseconds as a double. */
     duration<double> seconds = t2 - t1;
-    double mnps = (static_cast<double>(MoveCollector::nodes) / 1000000) / seconds.count();
+    double mnps = (static_cast<double>(Collector::nodes) / 1000000) / seconds.count();
 
-    std::cout << "Generated " << MoveCollector::nodes << " nodes in " << ms_int.count() << "ms\n";
+    std::cout << "Generated " << Collector::nodes << " nodes in " << ms_int.count() << "ms\n";
     std::cout << mnps << " M nps\n\n";
 //    std::cout << gen.coll.captures << " captures\n" << gen.coll.checks << " checks" << std::endl;
 }
+
+using Collector = MoveCollectorStandard<false>;
 
 int main() {
     std::cout << "Chess Engine" << std::endl;
@@ -38,7 +40,7 @@ int main() {
     constexpr State state = STARTSTATE;
     Board board = STARTBOARD;
 
-    time_movegen<state, 5>(board);
+    time_movegen<Collector, state, 3>(board);
 
 
 //    for(int i = 0; i < gen.coll.follow_positions.size(); i++) {
