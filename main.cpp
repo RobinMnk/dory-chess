@@ -3,7 +3,6 @@
 #include <chrono>
 
 #include "movegen.h"
-#include "movecoll.h"
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
@@ -11,9 +10,9 @@ using std::chrono::duration;
 using std::chrono::milliseconds;
 
 template<State state, int depth>
-void time_movegen(MoveGenerator& gen, Board& board) {
+void time_movegen(Board& board) {
     auto t1 = high_resolution_clock::now();
-    gen.generate<state, depth>(board);
+    MoveCollector::generateGameTree<state, depth>(board);
     auto t2 = high_resolution_clock::now();
 
     /* Getting number of milliseconds as an integer. */
@@ -39,8 +38,8 @@ int main() {
     constexpr State state = STARTSTATE;
     Board board = STARTBOARD;
 
-    MoveGenerator gen{};
-    time_movegen<state, 3>(gen, board);
+    time_movegen<state, 5>(board);
+
 
 //    for(int i = 0; i < gen.coll.follow_positions.size(); i++) {
 //        printMove<true>(gen.coll.moves.at(i));
