@@ -16,7 +16,7 @@
 //public:
 //    std::vector<Move> moves;
 //    std::vector<long> follow_positions{};
-//    unsigned long long nodes{0}, captures{0}, checks{0};
+//    unsigned long long totalNodes{0}, captures{0}, checks{0};
 //private:
 //    CheckLogicHandler clh{};
 //
@@ -38,7 +38,7 @@
 //
 //    template<State state, State getNextState>
 //    void countMoves(Board& board, Board& nextBoard, BB from, BB to) {
-//        nodes++;
+//        totalNodes++;
 //        if(board.enemyPieces<state.whiteToMove>() & to) {
 //            captures++;
 //        }
@@ -143,7 +143,7 @@ template<State state, int depth, Piece_t piece, Flag_t flags>
 void MoveGenerator<MoveCollector>::addToList(Board& board, int fromIndex, BB targets) {
     BB fromBB = newMask(fromIndex);
     Bitloop(targets) {
-        int ix = lastBitOf(targets);
+        int ix = firstBitOf(targets);
         generateSuccessorBoard<state, depth, piece, flags>(board, fromBB, newMask(ix));
     }
 }
@@ -212,43 +212,43 @@ void MoveGenerator<MoveCollector>::pawnMoves(Board& board, PinData& pd) {
 
     // non-promoting pawn moves
     Bitloop(pwnMov) {   // straight push, 1 square
-        int fromIx = lastBitOf(pwnMov);
+        int fromIx = firstBitOf(pwnMov);
         generateSuccessorBoard<state, depth, Piece::Pawn>(board, newMask(fromIx), forward<white>(newMask(fromIx)));
     }
     Bitloop(pawnCapL) { // capture towards left
-        int fromIx = lastBitOf(pawnCapL);
+        int fromIx = firstBitOf(pawnCapL);
         generateSuccessorBoard<state, depth, Piece::Pawn>(board, newMask(fromIx), pawnAtkLeft<white>(newMask(fromIx)));
     }
     Bitloop(pawnCapR) { // capture towards right
-        int fromIx = lastBitOf(pawnCapR);
+        int fromIx = firstBitOf(pawnCapR);
         generateSuccessorBoard<state, depth, Piece::Pawn>(board, newMask(fromIx), pawnAtkRight<white>(newMask(fromIx)));
     }
 
     // promoting pawn moves
     Bitloop(pwnPromoteFwd) {    // single push + promotion
-        int fromIx = lastBitOf(pwnPromoteFwd);
+        int fromIx = firstBitOf(pwnPromoteFwd);
         handlePromotions<state, depth>(board, newMask(fromIx), forward<white>(newMask(fromIx)));
     }
     Bitloop(pwnPromoteL) {    // capture left + promotion
-        int fromIx = lastBitOf(pwnPromoteL);
+        int fromIx = firstBitOf(pwnPromoteL);
         handlePromotions<state, depth>(board, newMask(fromIx), pawnAtkLeft<white>(newMask(fromIx)));
     }
     Bitloop(pwnPromoteR) {    // capture right + promotion
-        int fromIx = lastBitOf(pwnPromoteR);
+        int fromIx = firstBitOf(pwnPromoteR);
         handlePromotions<state, depth>(board, newMask(fromIx), pawnAtkRight<white>(newMask(fromIx)));
     }
 
     // pawn moves that cannot be promotions
     Bitloop(pwnMov2) {    // pawn double push
-        int fromIx = lastBitOf(pwnMov2);
+        int fromIx = firstBitOf(pwnMov2);
         generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PawnDoublePush>(board, newMask(fromIx), forward2<white>(newMask(fromIx)));
     }
     Bitloop(epPawnL) {    // pawn double push
-        int fromIx = lastBitOf(epPawnL);
+        int fromIx = firstBitOf(epPawnL);
         generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, newMask(fromIx), pawnAtkLeft<white>(newMask(fromIx)));
     }
     Bitloop(epPawnR) {    // pawn double push
-        int fromIx = lastBitOf(epPawnR);
+        int fromIx = firstBitOf(epPawnR);
         generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, newMask(fromIx), pawnAtkRight<white>(newMask(fromIx)));
     }
 }
@@ -260,7 +260,7 @@ void MoveGenerator<MoveCollector>::knightMoves(Board& board, PinData& pd) {
     BB movKnights = board.knights<state.whiteToMove>() & ~allPins;
 
     Bitloop(movKnights) {
-        int ix = lastBitOf(movKnights);
+        int ix = firstBitOf(movKnights);
         BB targets = PieceSteps::KNIGHT_MOVES[ix] & pd.targetSquares;
         addToList<state, depth, Piece::Knight>(board, ix, targets);
     }
@@ -272,7 +272,7 @@ void MoveGenerator<MoveCollector>::bishopMoves(Board& board, PinData& pd) {
     BB bishops = board.bishops<state.whiteToMove>() & ~pd.pinsStr;
 
     Bitloop(bishops) {
-        int ix = lastBitOf(bishops);
+        int ix = firstBitOf(bishops);
         BB targets = PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares;
         if(hasBitAt(pd.pinsDiag, ix)) targets &= pd.pinsDiag;
         addToList<state, depth, Piece::Bishop>(board, ix, targets);
@@ -285,7 +285,7 @@ void MoveGenerator<MoveCollector>::rookMoves(Board& board, PinData& pd) {
     BB rooks = board.rooks<state.whiteToMove>() & ~pd.pinsDiag;
 
     Bitloop(rooks) {
-        int ix = lastBitOf(rooks);
+        int ix = firstBitOf(rooks);
 
         BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, ix) & pd.targetSquares;
         if(hasBitAt(pd.pinsStr, ix)) targets &= pd.pinsStr;
@@ -308,19 +308,19 @@ void MoveGenerator<MoveCollector>::queenMoves(Board& board, PinData& pd) {
     BB queensNoPin = queens & ~(pd.pinsDiag | pd.pinsStr);
 
     Bitloop(queensPinStr) {
-        int ix = lastBitOf(queensPinStr);
+        int ix = firstBitOf(queensPinStr);
         BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, ix) & pd.targetSquares & pd.pinsStr;
         addToList<state, depth, Piece::Queen>(board, ix, targets);
     }
 
     Bitloop(queensPinDiag) {
-        int ix = lastBitOf(queensPinDiag);
+        int ix = firstBitOf(queensPinDiag);
         BB targets = PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares & pd.pinsDiag;
         addToList<state, depth, Piece::Queen>(board, ix, targets);
     }
 
     Bitloop(queensNoPin) {
-        int ix = lastBitOf(queensNoPin);
+        int ix = firstBitOf(queensNoPin);
         BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, ix) & pd.targetSquares;
         targets |= PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares;
         addToList<state, depth, Piece::Queen>(board, ix, targets);

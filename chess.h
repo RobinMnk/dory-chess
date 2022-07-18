@@ -113,15 +113,15 @@ static constexpr int bitCount(BB number) {
 }
 
 static constexpr int firstBitOf(BB number) {
-    return __builtin_clzll(number);
-}
-
-static constexpr int lastBitOf(BB number) {
     return __builtin_ctzll(number);
 }
 
+static constexpr int lastBitOf(BB number) {
+    return 63 - __builtin_clzll(number);
+}
+
 static constexpr int singleBitOf(BB number) {
-    return lastBitOf(number);
+    return firstBitOf(number);
 }
 
 // ------------- PAWN MOVES -------------

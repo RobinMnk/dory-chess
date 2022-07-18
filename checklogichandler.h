@@ -44,8 +44,8 @@ BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP)
                 && bitCount(kl & board.myPieces<white>()) == 1             // I only have one piece on line (excluding king)
             ) mask |= kl;
 
-                // handle very special case of two sideways pinned epPawns
-                // add pin line through two pawns to prevent pinned en passant
+            // handle very special case of two sideways pinned epPawns
+            // add pin line through two pawns to prevent pinned en passant
             else if(board.enPassantField
                 && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
                 && rankOf(kingSquare) == epRankNr<white>()
@@ -77,7 +77,7 @@ PinData CheckLogicHandler::reload(Board& board){
 
     // IS THE KING IN CHECK
 
-    attacked |= PieceSteps::KING_MOVES[lastBitOf(kingBB)];
+    attacked |= PieceSteps::KING_MOVES[firstBitOf(kingBB)];
 
     // Pawns
     mask = pawnAtkLeft<!white>(pawnBB);     // pawn attack to the left
@@ -96,7 +96,7 @@ PinData CheckLogicHandler::reload(Board& board){
 
     // Knights
     Bitloop(knightBB) {
-        int ix = lastBitOf(knightBB);
+        int ix = firstBitOf(knightBB);
         mask = PieceSteps::KNIGHT_MOVES[ix];
         attacked |= mask;
         if(mask & myKing) {
@@ -108,7 +108,7 @@ PinData CheckLogicHandler::reload(Board& board){
     // Bishops & (diagonal) Queens
     BB pieces = bishopBB | queenBB;
     Bitloop(pieces) {
-        int ix = lastBitOf(pieces);
+        int ix = firstBitOf(pieces);
         mask = PieceSteps::slideMask<white, true, true>(board, ix);
         attacked |= mask;
         if(mask & myKing) {
@@ -120,7 +120,7 @@ PinData CheckLogicHandler::reload(Board& board){
     // Rooks & (straight) Queens
     pieces = rookBB | queenBB;
     Bitloop(pieces) {
-        int ix = lastBitOf(pieces);
+        int ix = firstBitOf(pieces);
         mask = PieceSteps::slideMask<white, false, true>(board, ix);
         attacked |= mask;
         if(mask & myKing) {

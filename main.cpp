@@ -23,9 +23,9 @@ void time_movegen(Board& board) {
 
     /* Getting number of milliseconds as a double. */
     duration<double> seconds = t2 - t1;
-    double mnps = (static_cast<double>(Collector::nodes) / 1000000) / seconds.count();
+    double mnps = (static_cast<double>(Collector::totalNodes) / 1000000) / seconds.count();
 
-    std::cout << "Generated " << Collector::nodes << " nodes in " << ms_int.count() << "ms\n";
+    std::cout << "Generated " << Collector::totalNodes << " totalNodes in " << ms_int.count() << "ms\n";
     std::cout << mnps << " M nps\n\n";
 //    std::cout << gen.coll.captures << " captures\n" << gen.coll.checks << " checks" << std::endl;
 }
@@ -40,7 +40,19 @@ int main() {
     constexpr State state = STARTSTATE;
     Board board = STARTBOARD;
 
-    time_movegen<Collector, state, 3>(board);
+//    constexpr State nS = getNextState<state>();
+
+//    Board nextBoard = STARTBOARD
+//            .getNextBoard<state, Piece::Pawn, MoveFlag::Silent>(sqBB("c2"), sqBB("c3"))      // d2 - d3
+//            .getNextBoard<nS, Piece::Pawn, MoveFlag::Silent>(sqBB("d7"), sqBB("d6"))         // c7 - c6
+//            .getNextBoard<state, Piece::Queen, MoveFlag::Silent>(sqBB("d1"), sqBB("a4"));     // B c1 - d2
+////            .getNextBoard<nS, Piece::Queen, MoveFlag::Silent>(sqBB("d8"), sqBB("h4"));          // Q d8 - a5
+//
+//    print_board(nextBoard);
+
+    time_movegen<Collector, state, 5>(board);
+
+    MoveCollectorDivide::print();
 
 
 //    for(int i = 0; i < gen.coll.follow_positions.size(); i++) {

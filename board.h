@@ -94,7 +94,7 @@ public:
     template<bool whiteToMove> [[nodiscard]] constexpr BB enemyBishops() const   { return bishops<!whiteToMove>(); }
     template<bool whiteToMove> [[nodiscard]] constexpr BB enemyRooks() const     { return rooks<!whiteToMove>(); }
     template<bool whiteToMove> [[nodiscard]] constexpr BB enemyQueens() const    { return queens<!whiteToMove>(); }
-    template<bool whiteToMove> [[nodiscard]] constexpr BB enemyKing() const      { return kingSquare<!whiteToMove>(); }
+    template<bool whiteToMove> [[nodiscard]] constexpr BB enemyKing() const      { return king<!whiteToMove>(); }
 
     template<bool whiteToMove>
     [[nodiscard]] constexpr int kingSquare() const {

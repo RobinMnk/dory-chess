@@ -16,7 +16,12 @@ void add_piece_optimized(ByteBoard byteboard, BB pieces, char letter) {
 void add_piece(ByteBoard& byteboard, BB pieces, char letter) {
     BB selector = 1;
     for(int i = 0; i < 64; i++) {
-        if(pieces & selector) byteboard[i] = letter;
+        if(pieces & selector) {
+            if(byteboard[i]) {
+                throw std::runtime_error("two pieces on " + squarename(newMask(i)) + ": " + static_cast<char>(byteboard[i]) + " and " + letter);
+            }
+            byteboard[i] = letter;
+        }
         selector <<= 1;
     }
 }
@@ -66,4 +71,36 @@ std::string squarename(int file, int rank) {
 std::string squarename(BB board) {
     int index = singleBitOf(board);
     return squarename(fileOf(index), rankOf(index));
+}
+
+void printOcc(BB occ) {
+    int rank = 7;
+    while(rank >= 0) {
+        for(int file = 0; file < 8; file++) {
+            if(hasBitAt(occ, 8 * rank + file))
+                std::cout << squarename(file, rank) << " ";
+            else std::cout << "  ";
+        }
+        std::cout << "\n";
+        rank--;
+    }
+    std::cout << std::endl;
+}
+
+int sqId(std::string& name) {
+    int file{0};
+    for(char c: FILE_NAMES) {
+        if(name.at(0) == c) break;
+        file++;
+    }
+    int rank{name.at(1) - '0' - 1};
+    return 8 * rank + file;
+}
+
+BB sqBB(std::string& name) {
+    return newMask(sqId(name));
+}
+
+BB sqBB(std::string&& name) {
+    return newMask(sqId(name));
 }

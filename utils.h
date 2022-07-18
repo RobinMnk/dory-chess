@@ -16,7 +16,7 @@ static const std::array<char, 14> PIECE_TO_CHAR{
     ' ', 'K', 'Q', 'R', 'B', 'N', 'P',
     ' ', 'k', 'q', 'r', 'b', 'n', 'p',
 };
-static const std::array<char, 14> FILE_NAMES{
+static const std::array<char, 8> FILE_NAMES{
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'
 };
 
@@ -44,5 +44,27 @@ void printMove(Move m) {
     char piece = piece_as_char<whiteMoving>(m.piece);
     std::cout << piece << ": " << squarename(m.from) << " -> " << squarename(m.to) << std::endl;
 }
+
+template<bool whiteMoving>
+std::string moveName(Move m) {
+    char piece = piece_as_char<whiteMoving>(m.piece);
+    std::stringstream bss{};
+    bss << piece << ": " << squarename(m.from) << " -> " << squarename(m.to);
+    return bss.str();
+}
+
+template<bool whiteMoving>
+std::string moveNameShort(Move m) {
+    std::stringstream bss{};
+    bss << squarename(m.from) << squarename(m.to);
+    return bss.str();
+}
+
+void printOcc(BB occ);
+
+int sqId(std::string& name);
+BB sqBB(std::string& name);
+BB sqBB(std::string&& name);
+
 
 #endif //CHESSENGINE_UTILS_H
