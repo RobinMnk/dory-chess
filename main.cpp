@@ -1,8 +1,8 @@
 #include <iostream>
-#include <bitset>
 #include <chrono>
 
 #include "movecollectors.h"
+#include "fenreader.h"
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
@@ -50,9 +50,21 @@ int main() {
 //
 //    print_board(nextBoard);
 
-    time_movegen<Collector, state, 5>(board);
+//    time_movegen<Collector, state, 5>(board);
+//
+//    MoveCollectorDivide::print();
 
-    MoveCollectorDivide::print();
+
+    Board b = Utils::loadFEN("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2");
+
+    Utils::print_board(b);
+
+//    std::string s{};
+//
+//    std::cin >> s;
+
+//    constexpr auto pr = loadFEN(s);
+//    constexpr State st = pr.first;
 
 
 //    for(int i = 0; i < gen.coll.follow_positions.size(); i++) {

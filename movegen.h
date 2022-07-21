@@ -12,61 +12,6 @@
 #ifndef CHESSENGINE_MOVEGEN_H
 #define CHESSENGINE_MOVEGEN_H
 
-//class MoveCollectorOLD {
-//public:
-//    std::vector<Move> moves;
-//    std::vector<long> follow_positions{};
-//    unsigned long long totalNodes{0}, captures{0}, checks{0};
-//private:
-//    CheckLogicHandler clh{};
-//
-//    template<Flag_t flags, bool whiteMoved>
-//    void registerMove(Piece_t piece, BB from, BB to) {
-//        if(depth == 1) {
-//            moves.push_back(Move{from, to, piece, flags});
-//            follow_positions.push_back(0);
-//        }
-//        if(depth == 1) {
-//            follow_positions.at(follow_positions.size() - 1) += 1;
-//        }
-////        if(depth > 0) {
-////            Move move{from, to, piece, flags};
-////            for(int i = 0; i < 3 - depth; i++) std::cout << "\t";
-////            printMove<whiteMoved>(move);
-////        }
-//    }
-//
-//    template<State state, State getNextState>
-//    void countMoves(Board& board, Board& nextBoard, BB from, BB to) {
-//        totalNodes++;
-//        if(board.enemyPieces<state.whiteToMove>() & to) {
-//            captures++;
-//        }
-////        if(clh.reload<getNextState>(nextBoard).isCheck()) checks++;
-//    }
-//
-//    template<State state>
-//    void update(Board& board) {
-//    }
-//
-//    friend class MoveGenerator;
-//};
-//
-//class MoveCollector {
-//public:
-//    virtual void registerMove(
-//            const Board& board,
-//            const State& state,
-//            BB from, BB to,
-//            Piece_t piece,
-//            Flag_t flags,
-//            int depth
-//    ) { };
-//
-//    friend class MoveGenerator;
-//};
-
-
 template<typename>
 class MoveGenerator {
 public:
@@ -199,10 +144,10 @@ void MoveGenerator<MoveCollector>::pawnMoves(Board& board, PinData& pd) {
     }
 
     // collect all promoting pawns in separate variables
-    BB lastRowMask = pawnOnLastRow<white>();
-    BB pwnPromoteFwd  = pwnMov   & lastRowMask;
-    BB pwnPromoteL    = pawnCapL & lastRowMask;
-    BB pwnPromoteR    = pawnCapR & lastRowMask;
+    BB lastRowMask      = pawnOnLastRow<white>();
+    BB pwnPromoteFwd    = pwnMov   & lastRowMask;
+    BB pwnPromoteL      = pawnCapL & lastRowMask;
+    BB pwnPromoteR      = pawnCapR & lastRowMask;
 
     // remove all promoting pawns from these collections
     pwnMov &= ~lastRowMask;
