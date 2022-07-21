@@ -5,21 +5,17 @@
 #include <string_view>
 #include <string>
 #include "board.h"
+#include "utils.h"
 
 #ifndef CHESSENGINE_FENREADER_H
 #define CHESSENGINE_FENREADER_H
 
 namespace Utils {
-
-    constexpr Board loadFEN(std::string_view full_fen) {
+    constexpr Board getBoardFromFEN(std::string_view position, std::string_view ep) {
         int rank{7}, file{0};
 
-        BB wPawns{0}, bPawns{0}, wKnights{0}, bKnights{0}, wBishops{0}, bBishops{0}, wRooks{0}, bRooks{0}, wQueens{
-                0}, bQueens{0}, wKing{0}, bKing{0};
-        BB enPassantField{0};
-        for (char c: full_fen) {
-            if (c == ' ') break;
-
+        BB wPawns{0}, bPawns{0}, wKnights{0}, bKnights{0}, wBishops{0}, bBishops{0}, wRooks{0}, bRooks{0}, wQueens{0}, bQueens{0}, wKing{0}, bKing{0};
+        for (char c: position) {
             switch (c) {
                 case 'P':
                     setBit(wPawns, 8 * rank + file);
@@ -69,7 +65,71 @@ namespace Utils {
             file++;
         }
 
-        return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing,enPassantField};
+        BB enPassantField{0};
+        if(ep != "-") enPassantField = newMask(sqId(ep));
+
+        return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, enPassantField};
+    }
+
+    bool getMovingColorFromFEN(std::string_view color) {
+        return color == "w";
+    }
+
+    constexpr State toState(const uint8_t code) {
+        return {(code & 0b10000) != 0, (code & 0b01000) != 0, (code & 0b00100) != 0, (code & 0b00010) != 0, (code & 0b00001) != 0};
+    }
+
+    template<typename Main>
+    void loadFEN(std::string_view full_fen) {
+        std::stringstream stream(full_fen.data());
+        std::string segment;
+        std::vector<std::string> seglist;
+        while(std::getline(stream, segment, ' ')) seglist.push_back(segment);
+
+        // first position in FEN is board contents
+        Board board = getBoardFromFEN(seglist.at(0), seglist.at(3));
+
+        // second position is side to move
+        const bool w = seglist.at(1) == "w";
+
+        // castling rights
+        const bool wcs = seglist.at(2).find('K') != std::string::npos;
+        const bool wcl = seglist.at(2).find('Q') != std::string::npos;
+        const bool bcs = seglist.at(2).find('k') != std::string::npos;
+        const bool bcl = seglist.at(2).find('q') != std::string::npos;
+
+        if( w &&  wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b11111)>(board);
+        if(!w &&  wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b01111)>(board);
+        if( w && !wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b10111)>(board);
+        if(!w && !wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b00111)>(board);
+        if( w &&  wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b11011)>(board);
+        if(!w &&  wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b01011)>(board);
+        if( w && !wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b10011)>(board);
+        if(!w && !wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b00011)>(board);
+        if( w &&  wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b11101)>(board);
+        if(!w &&  wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b01101)>(board);
+        if( w && !wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b10101)>(board);
+        if(!w && !wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b00101)>(board);
+        if( w &&  wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b11001)>(board);
+        if(!w &&  wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b01001)>(board);
+        if( w && !wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b10001)>(board);
+        if(!w && !wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b00001)>(board);
+        if( w &&  wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b11110)>(board);
+        if(!w &&  wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b01110)>(board);
+        if( w && !wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b10110)>(board);
+        if(!w && !wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b00110)>(board);
+        if( w &&  wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b11010)>(board);
+        if(!w &&  wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b01010)>(board);
+        if( w && !wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b10010)>(board);
+        if(!w && !wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b00010)>(board);
+        if( w &&  wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b11100)>(board);
+        if(!w &&  wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b01100)>(board);
+        if( w && !wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b10100)>(board);
+        if(!w && !wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b00100)>(board);
+        if( w &&  wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b11000)>(board);
+        if(!w &&  wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b01000)>(board);
+        if( w && !wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b10000)>(board);
+        if(!w && !wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b00000)>(board);
     }
 
 }

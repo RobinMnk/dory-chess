@@ -91,7 +91,7 @@ namespace Utils {
         std::cout << std::endl;
     }
 
-    int sqId(std::string &name) {
+    int sqId(std::string_view name) {
         int file{0};
         for (char c: FILE_NAMES) {
             if (name.at(0) == c) break;

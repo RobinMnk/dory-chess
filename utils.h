@@ -64,7 +64,7 @@ namespace Utils {
 
     void printOcc(BB occ);
 
-    int sqId(std::string& name);
+    int sqId(std::string_view name);
     BB sqBB(std::string& name);
     BB sqBB(std::string&& name);
 

@@ -32,67 +32,19 @@ void time_movegen(Board& board) {
 
 using Collector = MoveCollectorStandard<false>;
 
+struct Runner {
+    template<State state>
+    static void main(Board& board) {
+        time_movegen<Collector, state, 7>(board);
+    }
+};
+
 int main() {
     std::cout << "Chess Engine" << std::endl;
 
     PieceSteps::load();
 
-    constexpr State state = STARTSTATE;
-    Board board = STARTBOARD;
-
-//    constexpr State nS = getNextState<state>();
-
-//    Board nextBoard = STARTBOARD
-//            .getNextBoard<state, Piece::Pawn, MoveFlag::Silent>(sqBB("c2"), sqBB("c3"))      // d2 - d3
-//            .getNextBoard<nS, Piece::Pawn, MoveFlag::Silent>(sqBB("d7"), sqBB("d6"))         // c7 - c6
-//            .getNextBoard<state, Piece::Queen, MoveFlag::Silent>(sqBB("d1"), sqBB("a4"));     // B c1 - d2
-////            .getNextBoard<nS, Piece::Queen, MoveFlag::Silent>(sqBB("d8"), sqBB("h4"));          // Q d8 - a5
-//
-//    print_board(nextBoard);
-
-//    time_movegen<Collector, state, 5>(board);
-//
-//    MoveCollectorDivide::print();
-
-
-    Board b = Utils::loadFEN("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2");
-
-    Utils::print_board(b);
-
-//    std::string s{};
-//
-//    std::cin >> s;
-
-//    constexpr auto pr = loadFEN(s);
-//    constexpr State st = pr.first;
-
-
-//    for(int i = 0; i < gen.coll.follow_positions.size(); i++) {
-//        printMove<true>(gen.coll.moves.at(i));
-//        std::cout << "\t\t" << gen.coll.follow_positions.at(i) << std::endl;
-//    }
-
-
-//    Board second = board.next<state, MoveFlag::Silent>(Piece::Pawn, newMask(12), newMask(20));
-//
-//    print_board(second);
-//
-//    print_board(board);
-
-//
-//    gen.generate<state>(board);
-
-//    auto lst = gen.generate<state>(board);
-//
-//    std::cout << lst->size() << " legal moves:" << std::endl;
-//    for(Move m: lst->moves) {
-//        if(m.from == 0 && m.to == 0) break;
-//        printMove<true>(m);
-//    }
-//
-//
-//    std::cout << "Applying the 10th move" << std::endl;
-//    Move move = lst->moves[9];
+    Utils::loadFEN<Runner>("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ");
 
     return 0;
 }
