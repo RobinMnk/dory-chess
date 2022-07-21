@@ -4,7 +4,9 @@
 
 #include <string_view>
 #include <string>
-#include "board.h"
+#include <sstream>
+#include <vector>
+
 #include "utils.h"
 
 #ifndef CHESSENGINE_FENREADER_H
@@ -69,10 +71,6 @@ namespace Utils {
         if(ep != "-") enPassantField = newMask(sqId(ep));
 
         return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, enPassantField};
-    }
-
-    bool getMovingColorFromFEN(std::string_view color) {
-        return color == "w";
     }
 
     constexpr State toState(const uint8_t code) {

@@ -6,6 +6,7 @@
 #define CHESSENGINE_MOVECOLLECTORS_H
 
 #include <unordered_map>
+#include <vector>
 #include "movegen.h"
 
 template<bool print>
