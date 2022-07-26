@@ -2,13 +2,20 @@
 
 #include "movecollectors.h"
 #include "fenreader.h"
+#include "board.h"
 
 using Collector = MoveCollectorStandard<false>;
 
 struct Runner {
-    template<State state>
-    static void main(Board& board) {
-        Utils::time_movegen<Collector, state, 7>(board);
+    template<State s>
+    static void main(Board& b) {
+
+        constexpr State ns = getNextState<s>();
+        Board nb = b.template getNextBoard<s, Piece::Pawn, MoveFlag::Silent>(newMask(Utils::sqId("a2")), newMask(Utils::sqId("a3")))
+                    .template getNextBoard<ns, Piece::Pawn, MoveFlag::Silent>(newMask(Utils::sqId("a7")), newMask(Utils::sqId("a6")));
+
+        Utils::time_movegen<Collector , s, 6>(b);
+        MoveCollectorDivide::print();
     }
 };
 
@@ -17,7 +24,11 @@ int main() {
 
     PieceSteps::load();
 
-    Utils::loadFEN<Runner>("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ");
+    Board b = STARTBOARD;
+
+    Runner::template main<STARTSTATE>(b);
+
+//    Utils::loadFEN<Runner>("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
 
     return 0;
 }

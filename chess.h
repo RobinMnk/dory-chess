@@ -8,7 +8,7 @@
 
 #ifndef CHESSENGINE_CHESS_H
 #define CHESSENGINE_CHESS_H
-#define Bitloop(X) for(;X; X = _blsr_u64(X))
+#define Bitloop(X) for(;X; X &= X-1)
 
 using BB = uint64_t;
 using square = uint64_t;
@@ -122,6 +122,10 @@ static constexpr int lastBitOf(BB number) {
 
 static constexpr int singleBitOf(BB number) {
     return firstBitOf(number);
+}
+
+static constexpr BB isolateLowestBit(BB number) {
+    return number & -number;
 }
 
 // ------------- PAWN MOVES -------------

@@ -17,7 +17,6 @@ struct State {
     const bool wCastleShort, bCastleShort;
     const bool wCastleLong, bCastleLong;
 };
-
 constexpr State STARTSTATE = State(true, true, true, true, true);
 
 template<State state>
@@ -30,6 +29,11 @@ template<State state>
 constexpr bool canCastleLong() {
     if constexpr (state.whiteToMove) return state.wCastleLong;
     else return state.bCastleLong;
+}
+
+template<State state>
+constexpr bool canCastle() {
+    return canCastleShort<state>() || canCastleLong<state>();
 }
 
 template<State state, Flag_t flag = MoveFlag::Silent>

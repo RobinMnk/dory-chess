@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 #include "movegen.h"
+#include "utils.h"
 
 template<bool print>
 class MoveCollectorStandard {
@@ -77,7 +78,7 @@ public:
 
         if (depth == maxDepth) {
             Move m{from, to, piece, flags};
-            moves.push_back(moveNameShort<state.whiteToMove>(m));
+            moves.push_back(Utils::moveNameShort<state.whiteToMove>(m));
             nodes.push_back(0);
             curr++;
         }

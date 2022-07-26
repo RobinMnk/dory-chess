@@ -61,7 +61,9 @@ void MoveGenerator<MoveCollector>::generate(Board& board) {
         bishopMoves<state, depth>(board, pd);
         rookMoves<state, depth>(board, pd);
         queenMoves<state, depth>(board, pd);
-        castles<state, depth>(board, pd);
+
+        if constexpr(canCastle<state>())
+            castles<state, depth>(board, pd);
     }
 
     kingMoves<state, depth>(board, pd);
@@ -84,8 +86,8 @@ template<State state, int depth, Piece_t piece, Flag_t flags>
 void MoveGenerator<MoveCollector>::addToList(Board& board, int fromIndex, BB targets) {
     BB fromBB = newMask(fromIndex);
     Bitloop(targets) {
-        int ix = firstBitOf(targets);
-        generateSuccessorBoard<state, depth, piece, flags>(board, fromBB, newMask(ix));
+        BB toBB = isolateLowestBit(targets);
+        generateSuccessorBoard<state, depth, piece, flags>(board, fromBB, toBB);
     }
 }
 
@@ -231,12 +233,19 @@ void MoveGenerator<MoveCollector>::rookMoves(Board& board, PinData& pd) {
         BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, ix) & pd.targetSquares;
         if(hasBitAt(pd.pinsStr, ix)) targets &= pd.pinsStr;
 
-        if(hasBitAt(startingKingsideRook<state.whiteToMove>(), ix))
-            addToList<state, depth, Piece::Rook, MoveFlag::RemoveShortCastling>(board, ix, targets);
-        else if (hasBitAt(startingQueensideRook<state.whiteToMove>(), ix))
-            addToList<state, depth, Piece::Rook, MoveFlag::RemoveLongCastling>(board, ix, targets);
-        else
-            addToList<state, depth, Piece::Rook>(board, ix, targets);
+        if constexpr(canCastleShort<state>()) {
+            if (hasBitAt(startingKingsideRook<state.whiteToMove>(), ix)) {
+                addToList<state, depth, Piece::Rook, MoveFlag::RemoveShortCastling>(board, ix, targets);
+                continue;
+            }
+        } else if constexpr(canCastleLong<state>()) {
+            if (hasBitAt(startingQueensideRook<state.whiteToMove>(), ix)) {
+                addToList<state, depth, Piece::Rook, MoveFlag::RemoveLongCastling>(board, ix, targets);
+                continue;
+            }
+        }
+
+        addToList<state, depth, Piece::Rook>(board, ix, targets);
     }
 }
 
