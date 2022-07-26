@@ -152,47 +152,47 @@ void MoveGenerator<MoveCollector>::pawnMoves(Board& board, PinData& pd) {
     pawnCapL &= ~lastRowMask;
     pawnCapR &= ~lastRowMask;
 
-
+    BB from;
     // non-promoting pawn moves
     Bitloop(pwnMov) {   // straight push, 1 square
-        int fromIx = firstBitOf(pwnMov);
-        generateSuccessorBoard<state, depth, Piece::Pawn>(board, newMask(fromIx), forward<white>(newMask(fromIx)));
+        from = isolateLowestBit(pwnMov);
+        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, forward<white>(from));
     }
     Bitloop(pawnCapL) { // capture towards left
-        int fromIx = firstBitOf(pawnCapL);
-        generateSuccessorBoard<state, depth, Piece::Pawn>(board, newMask(fromIx), pawnAtkLeft<white>(newMask(fromIx)));
+        from = isolateLowestBit(pawnCapL);
+        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, pawnAtkLeft<white>(from));
     }
     Bitloop(pawnCapR) { // capture towards right
-        int fromIx = firstBitOf(pawnCapR);
-        generateSuccessorBoard<state, depth, Piece::Pawn>(board, newMask(fromIx), pawnAtkRight<white>(newMask(fromIx)));
+        from = isolateLowestBit(pawnCapR);
+        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, pawnAtkRight<white>(from));
     }
 
     // promoting pawn moves
     Bitloop(pwnPromoteFwd) {    // single push + promotion
-        int fromIx = firstBitOf(pwnPromoteFwd);
-        handlePromotions<state, depth>(board, newMask(fromIx), forward<white>(newMask(fromIx)));
+        from = isolateLowestBit(pwnPromoteFwd);
+        handlePromotions<state, depth>(board, from, forward<white>(from));
     }
     Bitloop(pwnPromoteL) {    // capture left + promotion
-        int fromIx = firstBitOf(pwnPromoteL);
-        handlePromotions<state, depth>(board, newMask(fromIx), pawnAtkLeft<white>(newMask(fromIx)));
+        from = isolateLowestBit(pwnPromoteL);
+        handlePromotions<state, depth>(board, from, pawnAtkLeft<white>(from));
     }
     Bitloop(pwnPromoteR) {    // capture right + promotion
-        int fromIx = firstBitOf(pwnPromoteR);
-        handlePromotions<state, depth>(board, newMask(fromIx), pawnAtkRight<white>(newMask(fromIx)));
+        from = isolateLowestBit(pwnPromoteR);
+        handlePromotions<state, depth>(board, from, pawnAtkRight<white>(from));
     }
 
     // pawn moves that cannot be promotions
     Bitloop(pwnMov2) {    // pawn double push
-        int fromIx = firstBitOf(pwnMov2);
-        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PawnDoublePush>(board, newMask(fromIx), forward2<white>(newMask(fromIx)));
+        from = isolateLowestBit(pwnMov2);
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PawnDoublePush>(board, from, forward2<white>(from));
     }
     Bitloop(epPawnL) {    // pawn double push
-        int fromIx = firstBitOf(epPawnL);
-        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, newMask(fromIx), pawnAtkLeft<white>(newMask(fromIx)));
+        from = isolateLowestBit(epPawnL);
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, from, pawnAtkLeft<white>(from));
     }
     Bitloop(epPawnR) {    // pawn double push
-        int fromIx = firstBitOf(epPawnR);
-        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, newMask(fromIx), pawnAtkRight<white>(newMask(fromIx)));
+        from = isolateLowestBit(epPawnR);
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, from, pawnAtkRight<white>(from));
     }
 }
 
