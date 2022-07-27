@@ -3,12 +3,15 @@
 //
 
 #include <cstdint>
-#include <immintrin.h>
 #include <bit>
+
+#include <immintrin.h>
 
 #ifndef CHESSENGINE_CHESS_H
 #define CHESSENGINE_CHESS_H
-#define Bitloop(X) for(;X; X &= X-1)
+
+#pragma GCC target ("bmi,bmi2,tune=native")
+#define Bitloop(X) for(;X; X = _blsr_u64(X))
 
 using BB = uint64_t;
 using square = uint64_t;
@@ -124,8 +127,9 @@ static constexpr int singleBitOf(BB number) {
     return firstBitOf(number);
 }
 
-static constexpr BB isolateLowestBit(BB number) {
-    return number & -number;
+static BB isolateLowestBit(BB number) {
+//    return number & -number;
+    return _blsi_u64(number);
 }
 
 // ------------- PAWN MOVES -------------
