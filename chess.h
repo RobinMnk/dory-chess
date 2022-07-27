@@ -10,7 +10,6 @@
 #ifndef CHESSENGINE_CHESS_H
 #define CHESSENGINE_CHESS_H
 
-#pragma GCC target ("bmi,bmi2,tune=native")
 #define Bitloop(X) for(;X; X = _blsr_u64(X))
 
 using BB = uint64_t;
