@@ -14,8 +14,8 @@ struct State {
             bCastleShort{bcs}, bCastleLong{bcl} {}
 
     const bool whiteToMove;
-    const bool wCastleShort, bCastleShort;
-    const bool wCastleLong, bCastleLong;
+    const bool wCastleShort, wCastleLong;
+    const bool bCastleShort, bCastleLong;
 };
 constexpr State STARTSTATE = State(true, true, true, true, true);
 

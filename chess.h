@@ -127,7 +127,7 @@ static constexpr int singleBitOf(BB number) {
 }
 
 static BB isolateLowestBit(BB number) {
-//    return number & -number;
+    // calculates number & -number;
     return _blsi_u64(number);
 }
 
