@@ -29,6 +29,7 @@ namespace PieceSteps {
 
     static std::array<BB, 64> KNIGHT_MOVES{}, KING_MOVES{};
 
+    static bool loaded{false};
 
     static constexpr int manhattan(int x1, int y1, int x2, int y2) {
         return abs(x2 - x1) + abs(y2 - y1);
@@ -113,13 +114,16 @@ namespace PieceSteps {
         PAWN_CAPTURES<false>[index] = board;
     }
 
-    static constexpr void load() {
-        for(int i = 0; i < 64; i++) {
-            calculate_lines<true>(i);
-            calculate_lines<false>(i);
-            addKnightMoves(i);
-            addKingMoves(i);
-            addPawnCaptures(i);
+    static void load() {
+        if(!loaded) {
+            for(int i = 0; i < 64; i++) {
+                calculate_lines<true>(i);
+                calculate_lines<false>(i);
+                addKnightMoves(i);
+                addKingMoves(i);
+                addPawnCaptures(i);
+            }
+            loaded = true;
         }
     }
 

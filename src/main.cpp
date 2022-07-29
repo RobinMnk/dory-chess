@@ -2,15 +2,14 @@
 
 #include "movecollectors.h"
 #include "fenreader.h"
-#include "board.h"
 
-using Collector = MoveCollectors::LimitedDFS<false, false>;
+using Collector = MoveCollectors::LimitedDFS<false, true>;
 using Divide = MoveCollectors::Divide;
 
 struct Runner {
     template<State s>
     static void main(Board& b) {
-        Utils::time_movegen<Collector , s, 4>(b);
+        Utils::time_movegen<Collector , s, 1>(b);
     }
 };
 

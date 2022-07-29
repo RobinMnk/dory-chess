@@ -30,6 +30,7 @@ namespace MoveCollectors {
         template<State state, int depth>
         static void generateGameTree(Board& board) {
             totalNodes = 0;
+            positions.clear();
             build<state, depth>(board);
 
             if constexpr (saveBoards)
@@ -58,7 +59,7 @@ namespace MoveCollectors {
                     std::cout << "\t";
                 }
                 Move m {from, to, piece, flags};
-                printMove<state.whiteToMove>(m);
+                Utils::printMove<state.whiteToMove>(m);
             }
         }
 
