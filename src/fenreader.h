@@ -68,7 +68,7 @@ namespace Utils {
         }
 
         BB enPassantField{0};
-        if(ep != "-") enPassantField = newMask(sqId(ep));
+        if(ep != "-") enPassantField = newMask(Utils::sqId(ep));
 
         return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, enPassantField};
     }

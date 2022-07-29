@@ -72,7 +72,16 @@ namespace Utils {
 
     void printOcc(BB occ);
 
-    int sqId(std::string_view name);
+    int sqId(std::string_view name) {
+        int file{0};
+        for (char c: FILE_NAMES) {
+            if (name.at(0) == c) break;
+            file++;
+        }
+        int rank{name.at(1) - '0' - 1};
+        return 8 * rank + file;
+    }
+
     BB sqBB(std::string& name);
     BB sqBB(std::string&& name);
 

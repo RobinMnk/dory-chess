@@ -58,7 +58,7 @@ namespace MoveCollectors {
                     std::cout << "\t";
                 }
                 Move m {from, to, piece, flags};
-                printMove<state.whiteToMove>(m);
+                Utils::printMove<state.whiteToMove>(m);
             }
         }
 
