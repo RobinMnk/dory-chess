@@ -7,7 +7,7 @@
 #include "../src/movecollectors.h"
 #include "../src/fenreader.h"
 
-using Collector = MoveCollectors::LimitedDFS<false, false>;
+using Collector = MoveCollectors::PerftCollector;
 
 template<int depth>
 struct Runner {
@@ -17,23 +17,19 @@ struct Runner {
     }
 };
 
-TEST(StartingPosition, Depth1) {
+TEST(NodeCounts, StartingPosition) {
     PieceSteps::load();
     Board board = STARTBOARD;
-    Runner<1>::template main<STARTSTATE>(board);
-    ASSERT_EQ(Collector::totalNodes, 20);
-}
 
-TEST(StartingPosition, Depth2) {
-    PieceSteps::load();
-    Board board = STARTBOARD;
-    Runner<2>::template main<STARTSTATE>(board);
-    ASSERT_EQ(Collector::totalNodes, 400);
-}
+    std::vector<unsigned long long> ground_truth{
+        1, 20, 400, 8902, 197281, 4865609, 119060324, 3195901860
+    };
 
-TEST(StartingPosition, Depth3) {
-    PieceSteps::load();
-    Board board = STARTBOARD;
-    Runner<3>::template main<STARTSTATE>(board);
-    ASSERT_EQ(Collector::totalNodes, 8902);
+    Runner<6>::template main<STARTSTATE>(board);
+
+    std::cout << Collector::nodes.size() << std::endl;
+
+    for(int i{1}; i <= 6; i++) {
+        ASSERT_EQ(Collector::nodes.at(i), ground_truth.at(i));
+    }
 }
