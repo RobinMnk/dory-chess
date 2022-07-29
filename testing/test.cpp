@@ -10,9 +10,8 @@
 using uLong = unsigned long long;
 using Collector = MoveCollectors::PerftCollector;
 
-template<int depth>
 struct Runner {
-    template<State state>
+    template<State state, int depth>
     static void main(Board& board) {
         Collector::template generateGameTree<state, depth>(board);
     }
@@ -26,7 +25,7 @@ TEST(NodeCounts, StartingPosition) {
             1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860
     };
 
-    Runner<6>::template main<STARTSTATE>(board);
+    Runner::template main<STARTSTATE, 6>(board);
 
     std::cout << "Testing Starting Position ..." << std::endl;
     for(int i{1}; i <= 6; i++) {
@@ -40,7 +39,7 @@ TEST(NodeCounts, StartingPosition) {
 
 template<int depth>
 void runNodeCountTest(std::string_view fen, std::vector<uLong> ground_truth, std::string_view name) {
-    Utils::loadFEN<Runner<depth>>(fen);
+    Utils::loadFEN<Runner, depth>(fen);
 
     std::cout << "Testing " << name << " ..." << std::endl;
     for(int i{1}; i <= depth; i++) {

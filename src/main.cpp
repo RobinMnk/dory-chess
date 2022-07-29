@@ -7,21 +7,24 @@ using Collector = MoveCollectors::LimitedDFS<false, false>;
 using Divide = MoveCollectors::Divide;
 
 struct Runner {
-    template<State state>
+    template<State state, int depth>
     static void main(Board& board) {
-        Utils::time_movegen<Collector, state, 5>(board);
+        Utils::time_movegen<Collector, state, depth>(board);
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << R"( "<FEN>" "<Depth>")" << std::endl;
+        return 1;
+    }
     std::cout << "Chess Engine" << std::endl;
 
+    std::string_view fen{argv[1]};
+    int depth = static_cast<int>(std::strtol(argv[2], nullptr, 10));
+
     PieceSteps::load();
-
-//    Board b = STARTBOARD;
-//    Runner::template main<STARTSTATE>(b);
-
-    Utils::loadFEN<Runner>("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ");
+    Utils::loadFEN<Runner>(fen, depth);
 
     return 0;
 }
