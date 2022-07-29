@@ -1,4 +1,4 @@
-name: CMake
+name: Perft Test
 
 on:
   push:
