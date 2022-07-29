@@ -80,6 +80,27 @@ namespace Utils {
         std::cout << std::endl;
     }
 
+    std::string squarename(int file, int rank) {
+        std::ostringstream oss;
+        oss << filename(file) << (rank + 1);
+        return oss.str();
+    }
+
+    std::string squarename(BB board) {
+        int index = singleBitOf(board);
+        return squarename(fileOf(index), rankOf(index));
+    }
+
+    int sqId(std::string_view name) {
+        int file{0};
+        for (char c: FILE_NAMES) {
+            if (name.at(0) == c) break;
+            file++;
+        }
+        int rank{name.at(1) - '0' - 1};
+        return 8 * rank + file;
+    }
+
     BB sqBB(std::string &name) {
         return newMask(sqId(name));
     }

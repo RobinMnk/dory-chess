@@ -175,7 +175,7 @@ namespace MoveCollectors {
         }
 
         template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove(const Board &board, BB from, BB to) {
+        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
             if (depth == maxDepth) {
                 Move m{from, to, piece, flags};
                 moves.push_back(Utils::moveNameShort<state.whiteToMove>(m));

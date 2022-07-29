@@ -51,14 +51,14 @@ struct Move {
 
 // ---------- BOARD GEOMETRY ----------
 
-static constexpr BB file8 = 0x8080808080808080;
-static constexpr BB file7 = 0x4040404040404040;
-static constexpr BB file6 = 0x2020202020202020;
-static constexpr BB file5 = 0x1010101010101010;
-static constexpr BB file4 = 0x0808080808080808;
-static constexpr BB file3 = 0x0404040404040404;
-static constexpr BB file2 = 0x0202020202020202;
-static constexpr BB file1 = 0x0101010101010101;
+static constexpr BB fileH = 0x8080808080808080;
+static constexpr BB fileG = 0x4040404040404040;
+static constexpr BB fileF = 0x2020202020202020;
+static constexpr BB fileE = 0x1010101010101010;
+static constexpr BB fileD = 0x0808080808080808;
+static constexpr BB fileC = 0x0404040404040404;
+static constexpr BB fileB = 0x0202020202020202;
+static constexpr BB fileA = 0x0101010101010101;
 
 static constexpr BB rank1 = 0xff;
 static constexpr BB rank2 = 0xff00;
@@ -166,12 +166,12 @@ template<bool whiteToMove> constexpr BB pawnInvAtkRight(BB bb) {
     else return bb << 9;
 }
 template<bool whiteToMove> constexpr BB pawnCanGoLeft() {
-    if constexpr (whiteToMove) return ~file1;
-    else return ~file8;
+    if constexpr (whiteToMove) return ~fileA;
+    else return ~fileH;
 }
 template<bool whiteToMove> constexpr BB pawnCanGoRight() {
-    if constexpr (whiteToMove) return ~file8;
-    else return ~file1;
+    if constexpr (whiteToMove) return ~fileH;
+    else return ~fileA;
 }
 template<bool whiteToMove> constexpr BB pawnOnLastRow() {
     if constexpr (whiteToMove) return rank7;

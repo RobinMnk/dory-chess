@@ -4,6 +4,7 @@
 
 #include "board.h"
 #include "piecesteps.h"
+#include "utils.h"
 
 #ifndef CHESSENGINE_CHECKLOGICHANDLER_H
 #define CHESSENGINE_CHECKLOGICHANDLER_H
@@ -80,14 +81,14 @@ PinData CheckLogicHandler::reload(Board& board){
     attacked |= PieceSteps::KING_MOVES[firstBitOf(kingBB)];
 
     // Pawns
-    mask = pawnAtkLeft<!white>(pawnBB);     // pawn attack to the left
+    mask = pawnAtkLeft<!white>(pawnBB & pawnCanGoLeft<!white>());     // pawn attack to the left
     attacked |= mask;
     if(mask & myKing) {
         numChecks++;
         checkMask |= pawnInvAtkLeft<!white>(myKing);
     }
 
-    mask = pawnAtkRight<!white>(pawnBB);    // pawn attack to the right
+    mask = pawnAtkRight<!white>(pawnBB & pawnCanGoRight<!white>());    // pawn attack to the right
     attacked |= mask;
     if(mask & myKing) {
         numChecks++;
