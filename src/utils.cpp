@@ -66,17 +66,6 @@ namespace Utils {
         print_board(to_byteboard(board));
     }
 
-    std::string squarename(int file, int rank) {
-        std::ostringstream oss;
-        oss << filename(file) << (rank + 1);
-        return oss.str();
-    }
-
-    std::string squarename(BB board) {
-        int index = singleBitOf(board);
-        return squarename(fileOf(index), rankOf(index));
-    }
-
     void printOcc(BB occ) {
         int rank = 7;
         while (rank >= 0) {

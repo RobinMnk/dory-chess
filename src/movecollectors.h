@@ -103,6 +103,43 @@ namespace MoveCollectors {
     std::vector<Board> SuccessorBoards::positions{};
 
 
+    class PerftCollector {
+    public:
+        static std::vector<unsigned long long> nodes;
+        static int maxDepth;
+
+        template<State state, int depth>
+        static void generateGameTree(Board& board) {
+            nodes.clear();
+            nodes.resize(depth+1);
+            maxDepth = depth;
+            build<state, depth>(board);
+        }
+
+    private:
+        template<State state, int depth>
+        static void build(Board& board) {
+            if constexpr (depth > 0) {
+                MoveGenerator<PerftCollector>::template generate<state, depth>(board);
+            }
+        }
+
+        template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+            nodes.at(maxDepth - depth + 1)++;
+        }
+
+        template<State nextState, int depth>
+        static void next(Board& nextBoard) {
+            build<nextState, depth-1>(nextBoard);
+        }
+
+        friend class MoveGenerator<PerftCollector>;
+    };
+
+    std::vector<unsigned long long> PerftCollector::nodes{};
+    int PerftCollector::maxDepth{0};
+
     /**
      * A Movecollector for listing the divide output for a given position.
      * For every legal move the number of resulting follow-up positions at the given depth is calculated.
