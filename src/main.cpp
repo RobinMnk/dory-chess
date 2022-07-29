@@ -9,8 +9,7 @@ using Divide = MoveCollectors::Divide;
 struct Runner {
     template<State state>
     static void main(Board& board) {
-        Utils::time_movegen<Divide, state, 1>(board);
-        Divide::print();
+        Utils::time_movegen<Collector, state, 5>(board);
     }
 };
 
