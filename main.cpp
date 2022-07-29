@@ -4,7 +4,8 @@
 #include "fenreader.h"
 #include "board.h"
 
-using Collector = MoveCollectorStandard<false>;
+using Collector = MoveCollectors::LimitedDFS<false>;
+using Divide = MoveCollectors::Divide;
 
 struct Runner {
     template<State s>
@@ -15,7 +16,7 @@ struct Runner {
 //                    .template getNextBoard<ns, Piece::Pawn, MoveFlag::Silent>(newMask(Utils::sqId("a7")), newMask(Utils::sqId("a6")));
 
         Utils::time_movegen<Collector , s, 7>(b);
-        MoveCollectorDivide::print();
+        Divide::print();
     }
 };
 
