@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 #set(CMAKE_CXX_FLAGS "-fomit-frame-pointer -foptimize-sibling-calls")
 #set(CMAKE_CXX_FLAGS "-O3")
 
-add_executable(ChessEngine main.cpp board.h chess.h utils.cpp utils.h checklogichandler.h piecesteps.h movegen.h movecollectors.h fenreader.h)
+add_executable(ChessEngine src/main.cpp src/board.h src/chess.h src/utils.cpp src/utils.h src/checklogichandler.h src/piecesteps.h src/movegen.h src/movecollectors.h src/fenreader.h)
 target_compile_options(ChessEngine PUBLIC -Wall -Wextra)
 target_compile_options(ChessEngine PUBLIC -march=native)
 #target_compile_options(ChessEngine PUBLIC -Wa,-mbig-obj)
