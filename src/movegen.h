@@ -2,7 +2,6 @@
 // Created by Robin on 01.07.2022.
 //
 
-#include "board.h"
 #include "checklogichandler.h"
 #include "utils.h"
 

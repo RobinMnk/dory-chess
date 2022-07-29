@@ -4,7 +4,6 @@
 #include "fenreader.h"
 
 using Collector = MoveCollectors::LimitedDFS<false, false>;
-using Divide = MoveCollectors::Divide;
 
 struct Runner {
     template<State state, int depth>
