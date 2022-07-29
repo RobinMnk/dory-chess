@@ -4,7 +4,6 @@
 
 #include "board.h"
 #include "piecesteps.h"
-#include "utils.h"
 
 #ifndef CHESSENGINE_CHECKLOGICHANDLER_H
 #define CHESSENGINE_CHECKLOGICHANDLER_H
@@ -12,8 +11,6 @@
 struct PinData {
     bool isDoubleCheck{false}, blockEP{false};
     BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
-
-    [[nodiscard]] bool isCheck() const { return checkMask != FULL_BB; }
 };
 
 class CheckLogicHandler {

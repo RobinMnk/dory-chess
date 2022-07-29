@@ -90,7 +90,7 @@ namespace MoveCollectors {
 
     private:
         template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+        static void registerMove([[maybe_unused]] const Board &board, [[maybe_unused]] BB from, [[maybe_unused]] BB to) {
             positions.push_back(board);
         }
 
@@ -125,7 +125,7 @@ namespace MoveCollectors {
         }
 
         template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+        static void registerMove([[maybe_unused]] const Board &board, [[maybe_unused]] BB from, [[maybe_unused]] BB to) {
             nodes.at(maxDepth - depth + 1)++;
         }
 
