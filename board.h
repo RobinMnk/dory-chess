@@ -211,34 +211,40 @@ public:
 constexpr Board STARTBOARD = Board(rank2, rank7, 0x42, 0x42ull << 7*8, 0x24, 0x24ull << 7*8, 0x81, 0x81ull << 7*8, 0x8, 0x8ull << 7*8, 0x10, 0x10ull << 7*8, 0ull);
 
 
-template<bool white>
+template<bool isWhite>
 static constexpr BB startingKingsideRook() {
-    return white ? newMask(7) : newMask(63);
+    if constexpr (isWhite) return newMask(7);
+    else return newMask(63);
 }
 
-template<bool white>
+template<bool isWhite>
 static constexpr BB startingQueensideRook() {
-    return white ? newMask(0) : newMask(56);
+    if constexpr (isWhite) return 0ull;
+    else return newMask(56);
 }
 
 template<bool isWhite>
 constexpr BB castleShortMask() {
-    return isWhite ? 0b111ull << singleBitOf(STARTBOARD.wKing) : 0b111ull << singleBitOf(STARTBOARD.bKing);
+    if constexpr (isWhite) return 0b111ull << singleBitOf(STARTBOARD.wKing);
+    else return 0b111ull << singleBitOf(STARTBOARD.bKing);
 }
 
 template<bool isWhite>
 constexpr BB castleLongMask() {
-    return isWhite ? 0b111ull << (singleBitOf(STARTBOARD.wKing)-2) : 0b111ull << (singleBitOf(STARTBOARD.bKing)-2);
+    if constexpr (isWhite) return 0b111ull << (singleBitOf(STARTBOARD.wKing) - 2);
+    else return 0b111ull << (singleBitOf(STARTBOARD.bKing) - 2);
 }
 
 template<bool isWhite>
 constexpr BB castleShortRookMove() {
-    return isWhite ? 0b101ull << (singleBitOf(STARTBOARD.wKing) + 1) : 0b101ull << (singleBitOf(STARTBOARD.bKing) + 1);
+    if constexpr (isWhite) return 0b101ull << (singleBitOf(STARTBOARD.wKing) + 1);
+    else return 0b101ull << (singleBitOf(STARTBOARD.bKing) + 1);
 }
 
 template<bool isWhite>
 constexpr BB castleLongRookMove() {
-    return isWhite ? 0b1001ull : 0b1001ull << (singleBitOf(STARTBOARD.bKing) - 4);
+    if constexpr (isWhite) return 0b1001ull;
+    else return 0b1001ull << (singleBitOf(STARTBOARD.bKing) - 4);
 }
 
 
