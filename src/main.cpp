@@ -3,21 +3,13 @@
 #include "movecollectors.h"
 #include "fenreader.h"
 
-using Collector = MoveCollectors::LimitedDFS<false, true>;
+using Collector = MoveCollectors::LimitedDFS<false, false>;
 using Divide = MoveCollectors::Divide;
 
 struct Runner {
-    template<State s>
-    static void main(Board& b) {
-
-        constexpr State ns = getNextState<s>();
-
-        Board nb = b.template getNextBoard<s, Piece::King, MoveFlag::Silent>(newMask(Utils::sqId("e1")), newMask(Utils::sqId("f2")))
-                .template getNextBoard<ns, Piece::Pawn, MoveFlag::PawnDoublePush>(newMask(Utils::sqId("a7")), newMask(Utils::sqId("a5")))
-                .template getNextBoard<s, Piece::King, MoveFlag::Silent>(newMask(Utils::sqId("f2")), newMask(Utils::sqId("g3")))
-                .template getNextBoard<ns, Piece::Bishop, MoveFlag::Silent>(newMask(Utils::sqId("e7")), newMask(Utils::sqId("d6")));
-
-        Utils::time_movegen<Divide, s, 1>(nb);
+    template<State state>
+    static void main(Board& board) {
+        Utils::time_movegen<Divide, state, 1>(board);
         Divide::print();
     }
 };
