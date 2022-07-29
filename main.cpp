@@ -10,13 +10,7 @@ using Divide = MoveCollectors::Divide;
 struct Runner {
     template<State s>
     static void main(Board& b) {
-
-//        constexpr State ns = getNextState<s>();
-//        Board nb = b.template getNextBoard<s, Piece::Pawn, MoveFlag::Silent>(newMask(Utils::sqId("a2")), newMask(Utils::sqId("a3")))
-//                    .template getNextBoard<ns, Piece::Pawn, MoveFlag::Silent>(newMask(Utils::sqId("a7")), newMask(Utils::sqId("a6")));
-
         Utils::time_movegen<Collector , s, 4>(b);
-        Divide::print();
     }
 };
 
