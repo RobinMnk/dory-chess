@@ -11,28 +11,35 @@
 #include "utils.h"
 
 namespace MoveCollectors {
-    template<bool print>
+    template<bool saveList, bool print>
     class LimitedDFS {
     public:
         static unsigned long long totalNodes;
+        static std::vector<Board> positions;
 
         template<State state, int depth>
         static void generateGameTree(Board& board) {
             totalNodes = 0;
             build<state, depth>(board);
+
+            if constexpr (saveList)
+                totalNodes = positions.size();
         }
 
         template<State state, int depth>
         static void build(Board& board) {
             if constexpr (depth > 0) {
-                MoveGenerator<LimitedDFS<print>>::template generate<state, depth>(board);
+                MoveGenerator<LimitedDFS<saveList, print>>::template generate<state, depth>(board);
             }
         }
 
         template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+        static void registerMove(const Board &board, BB from, BB to) {
             if constexpr (depth == 1) {
-                totalNodes++;
+                if constexpr (saveList)
+                    positions.push_back(board);
+                else
+                    totalNodes++;
             }
 
             if constexpr (print) {
@@ -50,8 +57,10 @@ namespace MoveCollectors {
         }
     };
 
-    template<bool print>
-    unsigned long long LimitedDFS<print>::totalNodes{0};
+    template<bool saveList, bool print>
+    unsigned long long LimitedDFS<saveList, print>::totalNodes{0};
+    template<bool saveList, bool print>
+    std::vector<Board> LimitedDFS<saveList, print>::positions{};
 
 
     class OpenDFS {
