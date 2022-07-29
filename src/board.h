@@ -145,26 +145,25 @@ public:
     template<State state, Piece_t piece, Flag_t flags>
     [[nodiscard]] constexpr Board getNextBoard(BB from, BB to) const {
         constexpr bool whiteMoved = state.whiteToMove;
+        BB change = from | to;
 
         // Promotions
         if constexpr (flags == MoveFlag::PromoteQueen) {
-            if constexpr (whiteMoved) return {wPawns & ~to, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens | to, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns & ~to, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens | to, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens | to, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens | to, wKing, bKing, 0ull};
         }
         if constexpr (flags == MoveFlag::PromoteRook) {
-            if constexpr (whiteMoved) return {wPawns & ~to, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks | to, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns & ~to, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks | to, wQueens, bQueens, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks | to, bRooks & ~to, wQueens, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks | to, wQueens & ~to, bQueens, wKing, bKing, 0ull};
         }
         if constexpr (flags == MoveFlag::PromoteBishop) {
-            if constexpr (whiteMoved) return {wPawns & ~to, bPawns, wKnights, bKnights, wBishops | to, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns & ~to, wKnights, bKnights, wBishops, bBishops | to, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops | to, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops | to, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKing, bKing, 0ull};
         }
         if constexpr (flags == MoveFlag::PromoteKnight) {
-            if constexpr (whiteMoved) return {wPawns & ~to, bPawns, wKnights | to, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
-            return {wPawns, bPawns & ~to, wKnights, bKnights | to, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, 0ull};
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights | to, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKing, bKing, 0ull};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights | to, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKing, bKing, 0ull};
         }
-
-        BB change = from | to;
 
         //Castles
         if constexpr (flags == MoveFlag::ShortCastling) {
@@ -219,7 +218,7 @@ static constexpr BB startingKingsideRook() {
 
 template<bool isWhite>
 static constexpr BB startingQueensideRook() {
-    if constexpr (isWhite) return 0ull;
+    if constexpr (isWhite) return 1ull;
     else return newMask(56);
 }
 

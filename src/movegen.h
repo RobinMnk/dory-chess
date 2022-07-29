@@ -298,14 +298,14 @@ void MoveGenerator<MoveCollector>::castles(Board& board, PinData& pd) {
     if constexpr (canCastleShort<state>())
         if(kingBB == startKing
                && board.rooks<white>() & startingKingsideRook<white>()
-               && csMask & ~pd.attacked
+               && (csMask & pd.attacked) == 0
                && (csMask & board.occ()) == kingBB
         ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::ShortCastling>(board, kingBB, kingBB << 2);
 
     if constexpr (canCastleLong<state>())
         if(kingBB == startKing
            && board.rooks<white>() & startingQueensideRook<white>()
-           && clMask & ~pd.attacked
+           && (clMask & pd.attacked) == 0
            && (clMask & board.occ()) == kingBB
            && board.free() & (startingQueensideRook<white>() << 1)
         ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);

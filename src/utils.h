@@ -38,16 +38,9 @@ namespace Utils {
         return FILE_NAMES.at(file);
     }
 
-    std::string squarename(int file, int rank) {
-        std::ostringstream oss;
-        oss << filename(file) << (rank + 1);
-        return oss.str();
-    }
+    std::string squarename(int file, int rank);
 
-    std::string squarename(BB board) {
-        int index = singleBitOf(board);
-        return squarename(fileOf(index), rankOf(index));
-    }
+    std::string squarename(BB board);
 
     template<bool whiteMoving>
     void printMove(Move m) {
@@ -72,15 +65,7 @@ namespace Utils {
 
     void printOcc(BB occ);
 
-    int sqId(std::string_view name) {
-        int file{0};
-        for (char c: FILE_NAMES) {
-            if (name.at(0) == c) break;
-            file++;
-        }
-        int rank{name.at(1) - '0' - 1};
-        return 8 * rank + file;
-    }
+    int sqId(std::string_view name);
 
     BB sqBB(std::string& name);
     BB sqBB(std::string&& name);

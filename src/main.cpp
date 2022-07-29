@@ -3,13 +3,13 @@
 #include "movecollectors.h"
 #include "fenreader.h"
 
-using Collector = MoveCollectors::LimitedDFS<false, true>;
+using Collector = MoveCollectors::LimitedDFS<false, false>;
 using Divide = MoveCollectors::Divide;
 
 struct Runner {
-    template<State s>
-    static void main(Board& b) {
-        Utils::time_movegen<Collector , s, 1>(b);
+    template<State state>
+    static void main(Board& board) {
+        Utils::time_movegen<Collector, state, 5>(board);
     }
 };
 
@@ -18,10 +18,10 @@ int main() {
 
     PieceSteps::load();
 
-    Board b = STARTBOARD;
-    Runner::template main<STARTSTATE>(b);
+//    Board b = STARTBOARD;
+//    Runner::template main<STARTSTATE>(b);
 
-//    Utils::loadFEN<Runner>("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    Utils::loadFEN<Runner>("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ");
 
     return 0;
 }
