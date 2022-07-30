@@ -42,11 +42,11 @@ namespace Utils {
 
     std::string squarename(BB board);
 
-    template<bool whiteMoving>
-    void printMove(Move m) {
-        char piece = piece_as_char<whiteMoving>(m.piece);
-        std::cout << piece << ": " << squarename(m.from) << " -> " << squarename(m.to) << std::endl;
-    }
+    std::string specialMove(Flag_t flags);
+
+    std::string pieceString(Piece_t piece);
+
+    void printMove(Move);
 
     template<bool whiteMoving>
     std::string moveName(Move m) {
@@ -86,7 +86,7 @@ namespace Utils {
         std::chrono::duration<double> seconds = t2 - t1;
         double mnps = (static_cast<double>(Collector::totalNodes) / 1000000) / seconds.count();
 
-        std::cout << "Generated " << Collector::totalNodes << " totalNodes in " << ms_int.count() << "ms\n";
+        std::cout << "Generated " << Collector::totalNodes << " nodes in " << ms_int.count() << "ms\n";
         std::cout << mnps << " M nps\n\n";
     }
 }

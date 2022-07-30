@@ -7,7 +7,6 @@
 #ifndef CHESSENGINE_BOARD_H
 #define CHESSENGINE_BOARD_H
 
-
 struct State {
     constexpr State(bool white, bool wcs, bool wcl, bool bcs, bool bcl) :
             whiteToMove{white}, wCastleShort{wcs}, wCastleLong{wcl},
@@ -54,6 +53,17 @@ constexpr State getNextState() {
     }
 
     return {!state.whiteToMove, state.wCastleShort, state.wCastleLong, state.bCastleShort, state.bCastleLong};
+}
+
+template<State state>
+constexpr uint8_t getStateCode() {
+    uint8_t code = 0;
+    if constexpr(state.whiteToMove)     code |= 0b10000;
+    if constexpr(state.wCastleShort)    code |= 0b1000;
+    if constexpr(state.wCastleLong)     code |= 0b100;
+    if constexpr(state.bCastleShort)    code |= 0b10;
+    if constexpr(state.bCastleLong)     code |= 0b1;
+    return code;
 }
 
 
@@ -209,6 +219,16 @@ public:
 
 constexpr Board STARTBOARD = Board(rank2, rank7, 0x42, 0x42ull << 7*8, 0x24, 0x24ull << 7*8, 0x81, 0x81ull << 7*8, 0x8, 0x8ull << 7*8, 0x10, 0x10ull << 7*8, 0ull);
 
+
+struct ExtendedBoard {
+    Board board{};
+    uint8_t state_code{};
+};
+
+template<State state>
+ExtendedBoard getExtendedBoard(Board& board) {
+    return { board, getStateCode<state>() };
+}
 
 template<bool isWhite>
 static constexpr BB startingKingsideRook() {

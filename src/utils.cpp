@@ -61,6 +61,32 @@ namespace Utils {
         std::cout << std::endl;
     }
 
+    std::string specialMove(Flag_t flags) {
+        switch (flags) {
+            case MoveFlag::PromoteBishop: return "=B";
+            case MoveFlag::PromoteKnight: return "=N";
+            case MoveFlag::PromoteRook: return "=R";
+            case MoveFlag::PromoteQueen: return "=Q";
+            case MoveFlag::ShortCastling: return "0-0";
+            case MoveFlag::LongCastling: return "0-0-0";
+            default: return "";
+        }
+    }
+    std::string pieceString(Piece_t piece) {
+        switch (piece) {
+            case Piece::King: return "K";
+            case Piece::Queen: return "Q";
+            case Piece::Rook: return "R";
+            case Piece::Bishop: return "B";
+            case Piece::Knight: return "N";
+            default: return "";
+        }
+    }
+    void printMove(Move m) {
+        if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
+        else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling) << std::endl;
+        else std::cout << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to) << specialMove(m.flags) << std::endl;
+    }
 
     void print_board(Board &board) {
         print_board(to_byteboard(board));
