@@ -84,6 +84,45 @@ namespace Utils {
     }
 
     template<typename Main, int depth>
+    void run(uint8_t state_code, Board& board) {
+        switch (state_code) {
+            case 0:  Main::template main<toState( 0), depth>(board); break;
+            case 1:  Main::template main<toState( 1), depth>(board); break;
+            case 2:  Main::template main<toState( 2), depth>(board); break;
+            case 3:  Main::template main<toState( 3), depth>(board); break;
+            case 4:  Main::template main<toState( 4), depth>(board); break;
+            case 5:  Main::template main<toState( 5), depth>(board); break;
+            case 6:  Main::template main<toState( 6), depth>(board); break;
+            case 7:  Main::template main<toState( 7), depth>(board); break;
+            case 8:  Main::template main<toState( 8), depth>(board); break;
+            case 9:  Main::template main<toState( 9), depth>(board); break;
+            case 10: Main::template main<toState(10), depth>(board); break;
+            case 11: Main::template main<toState(11), depth>(board); break;
+            case 12: Main::template main<toState(12), depth>(board); break;
+            case 13: Main::template main<toState(13), depth>(board); break;
+            case 14: Main::template main<toState(14), depth>(board); break;
+            case 15: Main::template main<toState(15), depth>(board); break;
+            case 16: Main::template main<toState(16), depth>(board); break;
+            case 17: Main::template main<toState(17), depth>(board); break;
+            case 18: Main::template main<toState(18), depth>(board); break;
+            case 19: Main::template main<toState(19), depth>(board); break;
+            case 20: Main::template main<toState(20), depth>(board); break;
+            case 21: Main::template main<toState(21), depth>(board); break;
+            case 22: Main::template main<toState(22), depth>(board); break;
+            case 23: Main::template main<toState(23), depth>(board); break;
+            case 24: Main::template main<toState(24), depth>(board); break;
+            case 25: Main::template main<toState(25), depth>(board); break;
+            case 26: Main::template main<toState(26), depth>(board); break;
+            case 27: Main::template main<toState(27), depth>(board); break;
+            case 28: Main::template main<toState(28), depth>(board); break;
+            case 29: Main::template main<toState(29), depth>(board); break;
+            case 30: Main::template main<toState(30), depth>(board); break;
+            case 31: Main::template main<toState(31), depth>(board); break;
+            default: break;
+        }
+    }
+
+    template<typename Main, int depth>
     void loadFEN(std::string_view full_fen) {
         std::stringstream stream(full_fen.data());
         std::string segment;
@@ -103,38 +142,14 @@ namespace Utils {
             const bool bcs = seglist.at(2).find('k') != std::string::npos;
             const bool bcl = seglist.at(2).find('q') != std::string::npos;
 
-            if( w &&  wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b11111), depth>(board);
-            if(!w &&  wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b01111), depth>(board);
-            if( w && !wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b10111), depth>(board);
-            if(!w && !wcs &&  wcl &&  bcs &&  bcl) Main::template main<toState(0b00111), depth>(board);
-            if( w &&  wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b11011), depth>(board);
-            if(!w &&  wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b01011), depth>(board);
-            if( w && !wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b10011), depth>(board);
-            if(!w && !wcs && !wcl &&  bcs &&  bcl) Main::template main<toState(0b00011), depth>(board);
-            if( w &&  wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b11101), depth>(board);
-            if(!w &&  wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b01101), depth>(board);
-            if( w && !wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b10101), depth>(board);
-            if(!w && !wcs &&  wcl && !bcs &&  bcl) Main::template main<toState(0b00101), depth>(board);
-            if( w &&  wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b11001), depth>(board);
-            if(!w &&  wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b01001), depth>(board);
-            if( w && !wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b10001), depth>(board);
-            if(!w && !wcs && !wcl && !bcs &&  bcl) Main::template main<toState(0b00001), depth>(board);
-            if( w &&  wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b11110), depth>(board);
-            if(!w &&  wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b01110), depth>(board);
-            if( w && !wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b10110), depth>(board);
-            if(!w && !wcs &&  wcl &&  bcs && !bcl) Main::template main<toState(0b00110), depth>(board);
-            if( w &&  wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b11010), depth>(board);
-            if(!w &&  wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b01010), depth>(board);
-            if( w && !wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b10010), depth>(board);
-            if(!w && !wcs && !wcl &&  bcs && !bcl) Main::template main<toState(0b00010), depth>(board);
-            if( w &&  wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b11100), depth>(board);
-            if(!w &&  wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b01100), depth>(board);
-            if( w && !wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b10100), depth>(board);
-            if(!w && !wcs &&  wcl && !bcs && !bcl) Main::template main<toState(0b00100), depth>(board);
-            if( w &&  wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b11000), depth>(board);
-            if(!w &&  wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b01000), depth>(board);
-            if( w && !wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b10000), depth>(board);
-            if(!w && !wcs && !wcl && !bcs && !bcl) Main::template main<toState(0b00000), depth>(board);
+            uint8_t state_code = 0;
+            if(w)   state_code |= 0b10000;
+            if(wcs) state_code |= 0b1000;
+            if(wcl) state_code |= 0b100;
+            if(bcs) state_code |= 0b10;
+            if(bcl) state_code |= 0b1;
+
+            run<Main, depth>(state_code, board);
 
         } catch (std::exception& ex) {
             std::cerr << "Invalid FEN string!" << std::endl;
