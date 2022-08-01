@@ -1,6 +1,6 @@
 # Chess (Move Generation) Engine
 
-A work-in-progress chess engine, written in C++20. So far, the main focus of the project lies on optimizing the move generation, which is currently peaking around **320 Million nodes per second**.
+A work-in-progress chess engine, written in C++20. So far, the main focus of the project lies on optimizing the move generation, which is currently peaking over **450 Million nodes per second**.
 
 ### Move Collectors
 
