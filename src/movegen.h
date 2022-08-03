@@ -238,7 +238,8 @@ void MoveGenerator<MoveCollector>::rookMoves(Board& board, PinData& pd) {
                 addToList<state, depth, Piece::Rook, MoveFlag::RemoveShortCastling>(board, ix, targets);
                 continue;
             }
-        } else if constexpr(canCastleLong<state>()) {
+        }
+        if constexpr(canCastleLong<state>()) {
             if (hasBitAt(startingQueensideRook<state.whiteToMove>(), ix)) {
                 addToList<state, depth, Piece::Rook, MoveFlag::RemoveLongCastling>(board, ix, targets);
                 continue;
