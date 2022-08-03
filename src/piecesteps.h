@@ -9,32 +9,32 @@
 #define CHESSENGINE_PIECESTEPS_H
 
 // used to terminate arrays that represent list of squares
-static const uint8_t END_OF_ARRAY = 0x7f;
+const uint8_t END_OF_ARRAY = 0x7f;
 
 namespace PieceSteps {
 
-    static const std::array<int, 8> directions{8, 9, 1, -7, -8, -9, -1, 7};
-    static const std::array<int, 4> diagonal{1, 3, 5, 7}, straight{0, 2, 4, 6};
-    static const int DIR_LEFT = 6, DIR_RIGHT = 2;
+    const std::array<int, 8> directions{8, 9, 1, -7, -8, -9, -1, 7};
+    const std::array<int, 4> diagonal{1, 3, 5, 7}, straight{0, 2, 4, 6};
+    const int DIR_LEFT = 6, DIR_RIGHT = 2;
 
-    static std::array<std::array<BB, 8>, 64> LINES{};
+    std::array<std::array<BB, 8>, 64> LINES{};
 
-    static std::array<std::array<BB, 64>, 64> FROM_TO{};
-
-    template<bool>
-    static std::array<std::array<std::array<uint8_t, 8>, 4>, 64> STEPS{};
+    std::array<std::array<BB, 64>, 64> FROM_TO{};
 
     template<bool>
-    static std::array<BB, 64> PAWN_CAPTURES{};
+    std::array<std::array<std::array<uint8_t, 8>, 4>, 64> STEPS{};
 
-    static std::array<BB, 64> KNIGHT_MOVES{}, KING_MOVES{};
+    template<bool>
+    std::array<BB, 64> PAWN_CAPTURES{};
 
-    static bool loaded{false};
+    std::array<BB, 64> KNIGHT_MOVES{}, KING_MOVES{};
 
-    static constexpr int manhattan(int x1, int y1, int x2, int y2) {
+    bool loaded{false};
+
+    constexpr int manhattan(int x1, int y1, int x2, int y2) {
         return abs(x2 - x1) + abs(y2 - y1);
     }
-    static constexpr int manhattan(int index1, int index2) {
+    constexpr int manhattan(int index1, int index2) {
         return manhattan(
             fileOf(index1),
             rankOf(index1),
@@ -44,7 +44,7 @@ namespace PieceSteps {
     }
 
     template<bool diag>
-    static constexpr void calculate_lines(int i) {
+    constexpr void calculate_lines(int i) {
         int j;
         int d{0}, x{0};
         int manhattan_dist = diag ? 2 : 1;
@@ -65,7 +65,7 @@ namespace PieceSteps {
         }
     }
 
-    static constexpr void addKnightMoves(int index) {
+    constexpr void addKnightMoves(int index) {
         BB board{0};
         for(int off: std::array<int, 8>{-17, -15, -6, 10, 17, 15, 6, -10}) {
             int to = index + off;
@@ -76,7 +76,7 @@ namespace PieceSteps {
         KNIGHT_MOVES[index] = board;
     }
 
-    static constexpr void addKingMoves(int index) {
+    constexpr void addKingMoves(int index) {
         BB board{0};
         for(int off: std::array<int, 8>{-9, -8, -7, -1, 1, 7, 8, 9}) {
             int to = index + off;
@@ -88,7 +88,7 @@ namespace PieceSteps {
     }
 
 
-    static constexpr void addPawnCaptures(int index) {
+    constexpr void addPawnCaptures(int index) {
         std::array<int, 2> attack{7, 9};
         int file = fileOf(index);
 
@@ -114,7 +114,7 @@ namespace PieceSteps {
         PAWN_CAPTURES<false>[index] = board;
     }
 
-    static void load() {
+    void load() {
         if(!loaded) {
             for(int i = 0; i < 64; i++) {
                 calculate_lines<true>(i);
@@ -127,34 +127,14 @@ namespace PieceSteps {
         }
     }
 
-    template<bool whiteToMove, bool diag>
-    static constexpr BB slideMask(BB occ, int index) {
+    template<bool diag>
+    constexpr BB slideMask(BB occ, int index) {
         BB mask = 0ull;
         for(auto line: STEPS<diag>.at(index)) {
             for(uint8_t sq: line) {
                 if(sq == END_OF_ARRAY) break;
-                BB mk = newMask(sq);
-                mask |= mk;
-                if(occ & mk) break;
-            }
-        }
-        return mask;
-    }
-
-    template<bool whiteToMove, bool diag, bool xrayking>
-    static constexpr BB slideMaskOld(Board& board, int index) {
-        BB mask = 0ull;
-        for(auto line: STEPS<diag>.at(index)) {
-            bool breakNext = false;
-            for(uint8_t sq: line) {
-                if(sq == END_OF_ARRAY) break;
-                BB mk = newMask(sq);
-                mask |= mk;
-                if(breakNext) break;
-                if(board.occ() & mk) {
-                    if(xrayking && mk == board.king<whiteToMove>()) breakNext = true;
-                    else break;
-                }
+                setBit(mask, sq);
+                if(hasBitAt(occ, sq)) break;
             }
         }
         return mask;

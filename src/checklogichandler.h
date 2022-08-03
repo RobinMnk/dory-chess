@@ -107,7 +107,7 @@ PinData CheckLogicHandler::reload(Board& board){
     BB pieces = bishopBB | queenBB;
     Bitloop(pieces) {
         int ix = firstBitOf(pieces);
-        mask = PieceSteps::slideMask<white, true>(board.occ() ^ myKing, ix);
+        mask = PieceSteps::slideMask<true>(board.occ() ^ myKing, ix);
         attacked |= mask;
         if(mask & myKing) {
             numChecks++;
@@ -119,7 +119,7 @@ PinData CheckLogicHandler::reload(Board& board){
     pieces = rookBB | queenBB;
     Bitloop(pieces) {
         int ix = firstBitOf(pieces);
-        mask = PieceSteps::slideMask<white, false>(board.occ() ^ myKing, ix);
+        mask = PieceSteps::slideMask<false>(board.occ() ^ myKing, ix);
         attacked |= mask;
         if(mask & myKing) {
             numChecks++;
