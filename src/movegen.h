@@ -216,7 +216,7 @@ void MoveGenerator<MoveCollector>::bishopMoves(Board& board, PinData& pd) {
 
     Bitloop(bishops) {
         int ix = firstBitOf(bishops);
-        BB targets = PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares;
+        BB targets = PieceSteps::slideMask<state.whiteToMove, true>(board.occ(), ix) & pd.targetSquares;
         if(hasBitAt(pd.pinsDiag, ix)) targets &= pd.pinsDiag;
         addToList<state, depth, Piece::Bishop>(board, ix, targets);
     }
@@ -230,7 +230,7 @@ void MoveGenerator<MoveCollector>::rookMoves(Board& board, PinData& pd) {
     Bitloop(rooks) {
         int ix = firstBitOf(rooks);
 
-        BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, ix) & pd.targetSquares;
+        BB targets = PieceSteps::slideMask<state.whiteToMove, false>(board.occ(), ix) & pd.targetSquares;
         if(hasBitAt(pd.pinsStr, ix)) targets &= pd.pinsStr;
 
         if constexpr(canCastleShort<state>()) {
@@ -260,20 +260,20 @@ void MoveGenerator<MoveCollector>::queenMoves(Board& board, PinData& pd) {
 
     Bitloop(queensPinStr) {
         int ix = firstBitOf(queensPinStr);
-        BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, ix) & pd.targetSquares & pd.pinsStr;
+        BB targets = PieceSteps::slideMask<state.whiteToMove, false>(board.occ(), ix) & pd.targetSquares & pd.pinsStr;
         addToList<state, depth, Piece::Queen>(board, ix, targets);
     }
 
     Bitloop(queensPinDiag) {
         int ix = firstBitOf(queensPinDiag);
-        BB targets = PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares & pd.pinsDiag;
+        BB targets = PieceSteps::slideMask<state.whiteToMove, true>(board.occ(), ix) & pd.targetSquares & pd.pinsDiag;
         addToList<state, depth, Piece::Queen>(board, ix, targets);
     }
 
     Bitloop(queensNoPin) {
         int ix = firstBitOf(queensNoPin);
-        BB targets = PieceSteps::slideMask<state.whiteToMove, false, false>(board, ix) & pd.targetSquares;
-        targets |= PieceSteps::slideMask<state.whiteToMove, true, false>(board, ix) & pd.targetSquares;
+        BB targets = PieceSteps::slideMask<state.whiteToMove, false>(board.occ(), ix) & pd.targetSquares;
+        targets |= PieceSteps::slideMask<state.whiteToMove, true>(board.occ(), ix) & pd.targetSquares;
         addToList<state, depth, Piece::Queen>(board, ix, targets);
     }
 }

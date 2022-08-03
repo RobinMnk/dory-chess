@@ -127,8 +127,22 @@ namespace PieceSteps {
         }
     }
 
+    template<bool whiteToMove, bool diag>
+    static constexpr BB slideMask(BB occ, int index) {
+        BB mask = 0ull;
+        for(auto line: STEPS<diag>.at(index)) {
+            for(uint8_t sq: line) {
+                if(sq == END_OF_ARRAY) break;
+                BB mk = newMask(sq);
+                mask |= mk;
+                if(occ & mk) break;
+            }
+        }
+        return mask;
+    }
+
     template<bool whiteToMove, bool diag, bool xrayking>
-    static constexpr BB slideMask(Board& board, int index) {
+    static constexpr BB slideMaskOld(Board& board, int index) {
         BB mask = 0ull;
         for(auto line: STEPS<diag>.at(index)) {
             bool breakNext = false;
