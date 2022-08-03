@@ -97,12 +97,12 @@ namespace Utils {
 
         explicit MoveSimulator(Board& bd) : board{bd} {}
 
-        template<Piece_t piece, Flag_t flag>
-        MoveSimulator<getNextState<state>()> move(std::string_view from, std::string_view to) {
+        template<Piece_t piece, Flag_t flag = MoveFlag::Silent>
+        MoveSimulator<getNextState<state, flag>()> move(std::string_view from, std::string_view to) {
             BB fromBB = newMask(sqId(from));
             BB toBB = newMask(sqId(to));
             Board nextBoard = board.getNextBoard<state, piece, flag>(fromBB, toBB);
-            return MoveSimulator<getNextState<state>()>(nextBoard);
+            return MoveSimulator<getNextState<state, flag>()>(nextBoard);
         }
 
         constexpr State getState() {
