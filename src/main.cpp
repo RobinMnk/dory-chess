@@ -23,7 +23,13 @@ int main(int argc, char* argv[]) {
     int depth = static_cast<int>(std::strtol(argv[2], nullptr, 10));
 
     PieceSteps::load();
-    Utils::loadFEN<Runner>(fen, depth);
+
+    if (fen == "startpos" || fen == "start") {
+        Utils::startingPositionAtDepth<Runner>(depth);
+    } else {
+        Utils::loadFEN<Runner>(fen, depth);
+    }
+
 
     return 0;
 }

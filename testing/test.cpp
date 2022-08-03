@@ -73,7 +73,7 @@ TEST(NodeCounts, TestPos3) {
 }
 
 TEST(NodeCounts, TestPos4w) {
-    runNodeCountTest<5>(
+    runNodeCountTest<6>(
         "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
         std::vector<uLong> {
             1, 6, 264, 9'467, 422'333, 15'833'292, 706'045'033
@@ -83,7 +83,7 @@ TEST(NodeCounts, TestPos4w) {
 }
 
 TEST(NodeCounts, TestPos4b) {
-    runNodeCountTest<4>(
+    runNodeCountTest<6>(
         "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1",
         std::vector<uLong> {
             1, 6, 264, 9'467, 422'333, 15'833'292, 706'045'033

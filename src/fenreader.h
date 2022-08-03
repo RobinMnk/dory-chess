@@ -171,6 +171,23 @@ namespace Utils {
             default: std::cerr << "Depth not implemented!" << std::endl;
         }
     }
+
+    template<typename Main>
+    void startingPositionAtDepth(int depth) {
+        Board board = STARTBOARD;
+        switch(depth) {
+            case 1: Main::template main<STARTSTATE, 1>(board); break;
+            case 2: Main::template main<STARTSTATE, 2>(board); break;
+            case 3: Main::template main<STARTSTATE, 3>(board); break;
+            case 4: Main::template main<STARTSTATE, 4>(board); break;
+            case 5: Main::template main<STARTSTATE, 5>(board); break;
+            case 6: Main::template main<STARTSTATE, 6>(board); break;
+            case 7: Main::template main<STARTSTATE, 7>(board); break;
+            case 8: Main::template main<STARTSTATE, 8>(board); break;
+            case 9: Main::template main<STARTSTATE, 9>(board); break;
+            default: std::cerr << "Depth not implemented!" << std::endl;
+        }
+    }
 }
 
 #endif //CHESSENGINE_FENREADER_H
