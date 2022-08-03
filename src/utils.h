@@ -89,6 +89,26 @@ namespace Utils {
         std::cout << "Generated " << Collector::totalNodes << " nodes in " << ms_int.count() << "ms\n";
         std::cout << mnps << " M nps\n\n";
     }
+
+
+    template<State state>
+    struct MoveSimulator {
+        Board board;
+
+        explicit MoveSimulator(Board& bd) : board{bd} {}
+
+        template<Piece_t piece, Flag_t flag>
+        MoveSimulator<getNextState<state>()> move(std::string_view from, std::string_view to) {
+            BB fromBB = newMask(sqId(from));
+            BB toBB = newMask(sqId(to));
+            Board nextBoard = board.getNextBoard<state, piece, flag>(fromBB, toBB);
+            return MoveSimulator<getNextState<state>()>(nextBoard);
+        }
+
+        constexpr State getState() {
+            return state;
+        }
+    };
 }
 
 #endif //CHESSENGINE_UTILS_H
