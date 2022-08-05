@@ -24,17 +24,14 @@ namespace PieceSteps {
     template<bool>
     std::array<std::array<std::array<uint8_t, 8>, 4>, 64> STEPS{};
 
-    template<bool>
-    std::array<BB, 64> PAWN_CAPTURES{};
-
     std::array<BB, 64> KNIGHT_MOVES{}, KING_MOVES{};
 
     bool loaded{false};
 
-    constexpr int manhattan(int x1, int y1, int x2, int y2) {
+    int manhattan(int x1, int y1, int x2, int y2) {
         return abs(x2 - x1) + abs(y2 - y1);
     }
-    constexpr int manhattan(int index1, int index2) {
+    int manhattan(int index1, int index2) {
         return manhattan(
             fileOf(index1),
             rankOf(index1),
@@ -44,7 +41,7 @@ namespace PieceSteps {
     }
 
     template<bool diag>
-    constexpr void calculate_lines(int i) {
+    void calculate_lines(int i) {
         int j;
         int d{0}, x{0};
         int manhattan_dist = diag ? 2 : 1;
@@ -65,7 +62,7 @@ namespace PieceSteps {
         }
     }
 
-    constexpr void addKnightMoves(int index) {
+    void addKnightMoves(int index) {
         BB board{0};
         for(int off: std::array<int, 8>{-17, -15, -6, 10, 17, 15, 6, -10}) {
             int to = index + off;
@@ -76,7 +73,7 @@ namespace PieceSteps {
         KNIGHT_MOVES[index] = board;
     }
 
-    constexpr void addKingMoves(int index) {
+    void addKingMoves(int index) {
         BB board{0};
         for(int off: std::array<int, 8>{-9, -8, -7, -1, 1, 7, 8, 9}) {
             int to = index + off;
@@ -87,33 +84,6 @@ namespace PieceSteps {
         KING_MOVES[index] = board;
     }
 
-
-    constexpr void addPawnCaptures(int index) {
-        std::array<int, 2> attack{7, 9};
-        int file = fileOf(index);
-
-        // white attacks
-        BB board{0};
-        for(int off: attack) {
-            int newFile = fileOf(index + off);
-            if(index+off >= 0 && index+off < 64 && 0 <= newFile && newFile < 8 && abs(newFile - file) == 1) {
-                setBit(board, index + off);
-            }
-        }
-        PAWN_CAPTURES<true>[index] = board;
-
-        // black attacks
-        board = 0;
-        for(int off: attack) {
-            off *= -1;
-            int newFile = fileOf(index + off);
-            if(index+off >= 0 && index+off < 64 && 0 <= newFile && newFile < 8 && abs(newFile - file) == 1) {
-                setBit(board, index + off);
-            }
-        }
-        PAWN_CAPTURES<false>[index] = board;
-    }
-
     void load() {
         if(!loaded) {
             for(int i = 0; i < 64; i++) {
@@ -121,14 +91,13 @@ namespace PieceSteps {
                 calculate_lines<false>(i);
                 addKnightMoves(i);
                 addKingMoves(i);
-                addPawnCaptures(i);
             }
             loaded = true;
         }
     }
 
     template<bool diag>
-    constexpr BB slideMask(BB occ, int index) {
+    BB slideMask(BB occ, int index) {
         BB mask = 0ull;
         for(auto line: STEPS<diag>.at(index)) {
             for(uint8_t sq: line) {
