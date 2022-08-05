@@ -12,7 +12,7 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(ChessEngine src/main.cpp src/board.h src/chess.h src/utils.cpp src/utils.h src/checklogichandler.h src/piecesteps.h src/movegen.h src/movecollectors.h src/fenreader.h)
+add_executable(ChessEngine src/main.cpp src/board.h src/chess.h src/utils.h src/checklogichandler.h src/piecesteps.h src/movegen.h src/movecollectors.h src/fenreader.h)
 target_compile_options(ChessEngine PUBLIC -Wall -Wextra)
 target_compile_options(ChessEngine PUBLIC -march=native)
 target_compile_options(ChessEngine PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)
