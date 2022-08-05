@@ -66,15 +66,7 @@ namespace Utils {
         }
 
         BB enPassantField{0};
-        if(ep != "-") {
-            int ff{0};
-            for (char c: std::array<char, 8>{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}) {
-                if (ep.at(0) == c) break;
-                ff++;
-            }
-            int rr{ep.at(1) - '0' - 1};
-            enPassantField = newMask(8 * rr + ff);
-        }
+        if(ep != "-") enPassantField = sqId(ep);
 
         return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, enPassantField};
     }

@@ -3,7 +3,6 @@
 //
 
 #include "checklogichandler.h"
-#include "utils.h"
 
 #ifndef CHESSENGINE_MOVEGEN_H
 #define CHESSENGINE_MOVEGEN_H
