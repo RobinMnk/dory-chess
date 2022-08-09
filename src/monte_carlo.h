@@ -19,15 +19,7 @@ namespace RandomUtils {
         return uni(rng);
     }
 
-    template<State state>
-    ExtendedBoard& generateRandomMove(Board& board) {
-        BoardCollector::template generateGameTree<state, 1>(board);
-        int size = static_cast<int>(BoardCollector::positions.size());
-        int index = randomNumber(size);
-        return BoardCollector::positions.at(index);
-    }
-
-    ExtendedBoard& generateRandomMove2(ExtendedBoard& board) {
+    ExtendedBoard& generateRandomMove(ExtendedBoard& board) {
         BoardCollector::getLegalMoves(board);
         int size = static_cast<int>(BoardCollector::positions.size());
         int index = randomNumber(size);
@@ -53,6 +45,49 @@ namespace MonteCarlo {
         }
     };
 
+    class ExpanderMoveCollectorMC {
+    public:
+        static GameTreeNodeMC* currentNode;
+        static std::vector<GameTreeNodeMC*> nodes;
+        static int numMoves;
+
+        static void expand(GameTreeNodeMC* node) {
+            currentNode = node;
+            numMoves = 0;
+            Utils::template run<ExpanderMoveCollectorMC, 1>(node->board->state_code, node->board->board);
+        }
+
+        template<State state, int depth>
+        static void main(Board& board) {
+            MoveGenerator<ExpanderMoveCollectorMC>::template generate<state, 1>(board);
+        }
+
+        static GameTreeNodeMC* getRandomChild() {
+            int index = RandomUtils::randomNumber(numMoves);
+            return nodes.at(index);
+        }
+
+    private:
+        template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        static void registerMove(Board &board, [[maybe_unused]] BB from, [[maybe_unused]] BB to) {
+            ExtendedBoard nextBoard = getExtendedBoard<state>(board);
+            auto* node = new GameTreeNodeMC{ nextBoard, currentNode };
+            currentNode->next.push( node );
+            nodes.push_back(node);
+            numMoves++;
+        }
+
+        template<State nextState, int depth>
+        static void next([[maybe_unused]] Board& nextBoard) {}
+
+        friend class MoveGenerator<ExpanderMoveCollectorMC>;
+    };
+
+    GameTreeNodeMC* ExpanderMoveCollectorMC::currentNode{};
+    std::vector<GameTreeNodeMC*> ExpanderMoveCollectorMC::nodes{};
+    int ExpanderMoveCollectorMC::numMoves{0};
+
+
     class TreeBuilder {
     private:
         static GameTreeNodeMC* select(GameTreeNodeMC& root) {
@@ -63,36 +98,53 @@ namespace MonteCarlo {
             return node;
         }
 
-        static bool simulate(GameTreeNodeMC& node) {
+        static GameTreeNodeMC* expand(GameTreeNodeMC* node) {
+            ExpanderMoveCollectorMC::expand(node);
+            return ExpanderMoveCollectorMC::getRandomChild();
+        }
+
+        static int simulate(GameTreeNodeMC& node) {
             // TODO: realize via custom movecollector
+            // return 0 on loss, 1 on draw and 2 on win
+
+            int rand = RandomUtils::randomNumber(100);
+            if(rand > 80) return 2;
+            if(rand > 50) return 1;
+            return 0;
         }
         
-        static void backpropagate(GameTreeNodeMC& leaf, bool win) {
-            GameTreeNodeMC* node{&leaf};
-            do {
-                node->moves++;
-                if(win) node->wins++;
+        static void backpropagate(GameTreeNodeMC* leaf, int result) {
+            GameTreeNodeMC* node{leaf};
+            while (node != nullptr) {
+                node->moves += 2;
+                node->wins += result;
                 node = node->parent;
-            } while (node != nullptr);
+            }
         }
 
     public:
         template<State state>
         static void generateGameTree(Board &board, int iterations) {
-            GameTreeNodeMC root { getExtendedBoard<state>(board), nullptr };
+            ExtendedBoard brd = getExtendedBoard<state>(board);
+            GameTreeNodeMC root { brd, nullptr };
 
             for(int it{0}; it < iterations; ++it) {
+                std::cout << "select" << std::endl;
                 GameTreeNodeMC* leaf = select(root);
-                GameTreeNodeMC follow { RandomUtils::generateRandomMove2(*leaf->board), leaf };
-                leaf->next.push(&follow);
 
-                bool win = simulate(follow);
-                backpropagate(follow, win);
+                std::cout << "expand" << std::endl;
+                GameTreeNodeMC* candidate = expand(leaf);
+
+                std::cout << "simulate" << std::endl;
+                int result = simulate(*candidate);
+
+                std::cout << "backpropagate" << std::endl;
+                backpropagate(candidate, result);
             }
-        }
 
+            std::cout << (root.wins / 2) << " / " << (root.moves / 2) << std::endl;
+        }
     };
 }
-
 
 #endif //CHESSENGINE_MONTE_CARLO_H
