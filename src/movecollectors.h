@@ -104,6 +104,10 @@ namespace MoveCollectors {
         template<State nextState, int depth>
         static void next([[maybe_unused]] Board& nextBoard) {}
 
+
+        template<bool white>
+        static void endOfGame(bool isCheck) {}
+
         friend class MoveGenerator<SuccessorBoards>;
     };
 

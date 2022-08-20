@@ -3,6 +3,7 @@
 //
 
 #include "checklogichandler.h"
+#include "utils.h"
 
 #ifndef CHESSENGINE_MOVEGEN_H
 #define CHESSENGINE_MOVEGEN_H
@@ -15,15 +16,15 @@ public:
 
 private:
     template<State, int, Piece_t, Flag_t = MoveFlag::Silent>
-    static void generateSuccessorBoard(Board& board, BB from, BB to);
+    static void generateSuccessorBoard(Board& board, BB from, BB to, PinData& pd);
 
     // - - - - - - Helper Functions - - - - - -
 
     template<State, int, Piece_t, Flag_t = MoveFlag::Silent>
-    static void addToList(Board& board, int fromIndex, BB targets);
+    static void addToList(Board& board, int fromIndex, BB targets, PinData& pd);
 
     template<State, int>
-    static void handlePromotions(Board& board, BB from, BB to);
+    static void handlePromotions(Board& board, BB from, BB to, PinData& pd);
 
     // - - - - - - Individual Piece Moves - - - - - -
 
@@ -66,11 +67,16 @@ void MoveGenerator<MoveCollector>::generate(Board& board) {
     }
 
     kingMoves<state, depth>(board, pd);
+
+    if(!pd.anyMoveFound) {
+        MoveCollector::template endOfGame<!state.whiteToMove>(pd.isCheck());
+    }
 }
 
 template<typename MoveCollector>
 template<State state, int depth, Piece_t piece, Flag_t flags>
-void MoveGenerator<MoveCollector>::generateSuccessorBoard(Board& board, BB from, BB to) {
+void MoveGenerator<MoveCollector>::generateSuccessorBoard(Board& board, BB from, BB to, PinData& pd) {
+    pd.anyMoveFound = true;
     constexpr State nextState = getNextState<state, flags>();
     Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
 
@@ -82,21 +88,21 @@ void MoveGenerator<MoveCollector>::generateSuccessorBoard(Board& board, BB from,
 
 template<typename MoveCollector>
 template<State state, int depth, Piece_t piece, Flag_t flags>
-void MoveGenerator<MoveCollector>::addToList(Board& board, int fromIndex, BB targets) {
+void MoveGenerator<MoveCollector>::addToList(Board& board, int fromIndex, BB targets, PinData& pd) {
     BB fromBB = newMask(fromIndex);
     Bitloop(targets) {
         BB toBB = isolateLowestBit(targets);
-        generateSuccessorBoard<state, depth, piece, flags>(board, fromBB, toBB);
+        generateSuccessorBoard<state, depth, piece, flags>(board, fromBB, toBB, pd);
     }
 }
 
 template<typename MoveCollector>
 template<State state, int depth>
-void MoveGenerator<MoveCollector>::handlePromotions(Board& board, BB from, BB to) {
-    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteQueen>(board, from, to);
-    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteRook>(board, from, to);
-    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteBishop>(board, from, to);
-    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteKnight>(board, from, to);
+void MoveGenerator<MoveCollector>::handlePromotions(Board& board, BB from, BB to, PinData& pd) {
+    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteQueen>(board, from, to, pd);
+    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteRook>(board, from, to, pd);
+    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteBishop>(board, from, to, pd);
+    generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PromoteKnight>(board, from, to, pd);
 }
 
 // - - - - - - Individual Piece Moves - - - - - -
@@ -155,43 +161,43 @@ void MoveGenerator<MoveCollector>::pawnMoves(Board& board, PinData& pd) {
     // non-promoting pawn moves
     Bitloop(pwnMov) {   // straight push, 1 square
         from = isolateLowestBit(pwnMov);
-        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, forward<white>(from));
+        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, forward<white>(from), pd);
     }
     Bitloop(pawnCapL) { // capture towards left
         from = isolateLowestBit(pawnCapL);
-        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, pawnAtkLeft<white>(from));
+        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, pawnAtkLeft<white>(from), pd);
     }
     Bitloop(pawnCapR) { // capture towards right
         from = isolateLowestBit(pawnCapR);
-        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, pawnAtkRight<white>(from));
+        generateSuccessorBoard<state, depth, Piece::Pawn>(board, from, pawnAtkRight<white>(from), pd);
     }
 
     // promoting pawn moves
     Bitloop(pwnPromoteFwd) {    // single push + promotion
         from = isolateLowestBit(pwnPromoteFwd);
-        handlePromotions<state, depth>(board, from, forward<white>(from));
+        handlePromotions<state, depth>(board, from, forward<white>(from), pd);
     }
     Bitloop(pwnPromoteL) {    // capture left + promotion
         from = isolateLowestBit(pwnPromoteL);
-        handlePromotions<state, depth>(board, from, pawnAtkLeft<white>(from));
+        handlePromotions<state, depth>(board, from, pawnAtkLeft<white>(from), pd);
     }
     Bitloop(pwnPromoteR) {    // capture right + promotion
         from = isolateLowestBit(pwnPromoteR);
-        handlePromotions<state, depth>(board, from, pawnAtkRight<white>(from));
+        handlePromotions<state, depth>(board, from, pawnAtkRight<white>(from), pd);
     }
 
     // pawn moves that cannot be promotions
     Bitloop(pwnMov2) {    // pawn double push
         from = isolateLowestBit(pwnMov2);
-        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PawnDoublePush>(board, from, forward2<white>(from));
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::PawnDoublePush>(board, from, forward2<white>(from), pd);
     }
     Bitloop(epPawnL) {    // pawn double push
         from = isolateLowestBit(epPawnL);
-        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, from, pawnAtkLeft<white>(from));
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, from, pawnAtkLeft<white>(from), pd);
     }
     Bitloop(epPawnR) {    // pawn double push
         from = isolateLowestBit(epPawnR);
-        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, from, pawnAtkRight<white>(from));
+        generateSuccessorBoard<state, depth, Piece::Pawn, MoveFlag::EnPassantCapture>(board, from, pawnAtkRight<white>(from), pd);
     }
 }
 
@@ -204,7 +210,7 @@ void MoveGenerator<MoveCollector>::knightMoves(Board& board, PinData& pd) {
     Bitloop(movKnights) {
         int ix = firstBitOf(movKnights);
         BB targets = PieceSteps::KNIGHT_MOVES[ix] & pd.targetSquares;
-        addToList<state, depth, Piece::Knight>(board, ix, targets);
+        addToList<state, depth, Piece::Knight>(board, ix, targets, pd);
     }
 }
 
@@ -217,7 +223,7 @@ void MoveGenerator<MoveCollector>::bishopMoves(Board& board, PinData& pd) {
         int ix = firstBitOf(bishops);
         BB targets = PieceSteps::slideMask<true>(board.occ(), ix) & pd.targetSquares;
         if(hasBitAt(pd.pinsDiag, ix)) targets &= pd.pinsDiag;
-        addToList<state, depth, Piece::Bishop>(board, ix, targets);
+        addToList<state, depth, Piece::Bishop>(board, ix, targets, pd);
     }
 }
 
@@ -234,18 +240,18 @@ void MoveGenerator<MoveCollector>::rookMoves(Board& board, PinData& pd) {
 
         if constexpr(canCastleShort<state>()) {
             if (hasBitAt(startingKingsideRook<state.whiteToMove>(), ix)) {
-                addToList<state, depth, Piece::Rook, MoveFlag::RemoveShortCastling>(board, ix, targets);
+                addToList<state, depth, Piece::Rook, MoveFlag::RemoveShortCastling>(board, ix, targets, pd);
                 continue;
             }
         }
         if constexpr(canCastleLong<state>()) {
             if (hasBitAt(startingQueensideRook<state.whiteToMove>(), ix)) {
-                addToList<state, depth, Piece::Rook, MoveFlag::RemoveLongCastling>(board, ix, targets);
+                addToList<state, depth, Piece::Rook, MoveFlag::RemoveLongCastling>(board, ix, targets, pd);
                 continue;
             }
         }
 
-        addToList<state, depth, Piece::Rook>(board, ix, targets);
+        addToList<state, depth, Piece::Rook>(board, ix, targets, pd);
     }
 }
 
@@ -260,20 +266,20 @@ void MoveGenerator<MoveCollector>::queenMoves(Board& board, PinData& pd) {
     Bitloop(queensPinStr) {
         int ix = firstBitOf(queensPinStr);
         BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd.targetSquares & pd.pinsStr;
-        addToList<state, depth, Piece::Queen>(board, ix, targets);
+        addToList<state, depth, Piece::Queen>(board, ix, targets, pd);
     }
 
     Bitloop(queensPinDiag) {
         int ix = firstBitOf(queensPinDiag);
         BB targets = PieceSteps::slideMask<true>(board.occ(), ix) & pd.targetSquares & pd.pinsDiag;
-        addToList<state, depth, Piece::Queen>(board, ix, targets);
+        addToList<state, depth, Piece::Queen>(board, ix, targets, pd);
     }
 
     Bitloop(queensNoPin) {
         int ix = firstBitOf(queensNoPin);
         BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd.targetSquares;
         targets |= PieceSteps::slideMask<true>(board.occ(), ix) & pd.targetSquares;
-        addToList<state, depth, Piece::Queen>(board, ix, targets);
+        addToList<state, depth, Piece::Queen>(board, ix, targets, pd);
     }
 }
 
@@ -283,7 +289,7 @@ void MoveGenerator<MoveCollector>::kingMoves(Board& board, PinData& pd) {
     BB king = board.king<state.whiteToMove>();
     int ix = singleBitOf(king);
     BB targets = PieceSteps::KING_MOVES[ix] & ~pd.attacked & board.enemyOrEmpty<state.whiteToMove>();
-    addToList<state, depth, Piece::King, MoveFlag::RemoveAllCastling>(board, ix, targets);
+    addToList<state, depth, Piece::King, MoveFlag::RemoveAllCastling>(board, ix, targets, pd);
 }
 
 template<typename MoveCollector>
@@ -300,7 +306,7 @@ void MoveGenerator<MoveCollector>::castles(Board& board, PinData& pd) {
                && board.rooks<white>() & startingKingsideRook<white>()
                && (csMask & pd.attacked) == 0
                && (csMask & board.occ()) == kingBB
-        ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::ShortCastling>(board, kingBB, kingBB << 2);
+        ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::ShortCastling>(board, kingBB, kingBB << 2, pd);
 
     if constexpr (canCastleLong<state>())
         if(kingBB == startKing
@@ -308,7 +314,7 @@ void MoveGenerator<MoveCollector>::castles(Board& board, PinData& pd) {
            && (clMask & pd.attacked) == 0
            && (clMask & board.occ()) == kingBB
            && board.free() & (startingQueensideRook<white>() << 1)
-        ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);
+        ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2, pd);
 }
 
 #endif //CHESSENGINE_MOVEGEN_H

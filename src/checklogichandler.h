@@ -9,8 +9,10 @@
 #define CHESSENGINE_CHECKLOGICHANDLER_H
 
 struct PinData {
-    bool isDoubleCheck{false}, blockEP{false};
+    bool isDoubleCheck{false}, blockEP{false}, anyMoveFound{false};
     BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
+
+    [[nodiscard]] bool isCheck() const { return checkMask != FULL_BB; }
 };
 
 class CheckLogicHandler {
@@ -135,7 +137,7 @@ PinData CheckLogicHandler::reload(Board& board){
     if(numChecks == 0) checkMask = FULL_BB;
     BB targetSquares = board.enemyOrEmpty<state.whiteToMove>() & checkMask;
 
-    return { isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal };
+    return { isDoubleCheck, blockEP, false, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal };
 }
 
 #endif //CHESSENGINE_CHECKLOGICHANDLER_H
