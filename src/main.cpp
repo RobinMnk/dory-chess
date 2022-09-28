@@ -14,10 +14,9 @@ struct Runner {
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << R"( "<FEN>" "<Depth>")" << std::endl;
+        std::cerr << R"(Usage: ./Dory "<FEN>" <Depth>)" << std::endl;
         return 1;
     }
-    std::cout << "Chess Engine" << std::endl;
 
     std::string_view fen{argv[1]};
     int depth = static_cast<int>(std::strtol(argv[2], nullptr, 10));
@@ -29,7 +28,6 @@ int main(int argc, char* argv[]) {
     } else {
         Utils::loadFEN<Runner>(fen, depth);
     }
-
 
     return 0;
 }
