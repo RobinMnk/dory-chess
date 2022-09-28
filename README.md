@@ -15,7 +15,7 @@ Dory is a powerful chess move generation engine, written in C++20 capable of enu
 
 Dory allows the developer to customize the move enumeration process and specify how to handle the discovery of the next position. For example one might want to just count the positions, print them or save them in a list. This is realized by implementing a custom Move Collectors to give very fine-grained control of the move generation.
 
-Crucially, this allows for advanced techniques such as pre-selecting or even pre-evaluating positions before ever saving them in a list or further processing them. This opens the door for creative 
+Crucially, this allows for advanced techniques such as pre-selecting or even pre-evaluating positions before ever saving them in a list or further processing them. This opens the door for new, creative engine solutions! 
 
 ### Performance
 
