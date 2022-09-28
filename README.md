@@ -82,4 +82,4 @@ This project is a successor of an earlier chess move generation project of mine 
 
 </br>
 
-##### Feel free to fork the project and experiment with your own engine!
+#### Feel free to fork the project and experiment with your own chess engine!
