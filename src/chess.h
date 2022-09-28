@@ -7,8 +7,8 @@
 
 #include <immintrin.h>
 
-#ifndef CHESSENGINE_CHESS_H
-#define CHESSENGINE_CHESS_H
+#ifndef DORY_CHESS_H
+#define DORY_CHESS_H
 
 #define Bitloop(X) for(;X; X = _blsr_u64(X))
 
@@ -182,4 +182,4 @@ template<bool whiteToMove> constexpr BB firstRank() {
     else return rank7;
 }
 
-#endif //CHESSENGINE_CHESS_H
+#endif //DORY_CHESS_H

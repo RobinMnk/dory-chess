@@ -7,8 +7,8 @@
 #include <sstream>
 #include <vector>
 
-#ifndef CHESSENGINE_FENREADER_H
-#define CHESSENGINE_FENREADER_H
+#ifndef DORY_FENREADER_H
+#define DORY_FENREADER_H
 
 namespace Utils {
     constexpr Board getBoardFromFEN(std::string_view position, std::string_view ep) {
@@ -182,4 +182,4 @@ namespace Utils {
     }
 }
 
-#endif //CHESSENGINE_FENREADER_H
+#endif //DORY_FENREADER_H

@@ -5,8 +5,8 @@
 #include "board.h"
 #include "piecesteps.h"
 
-#ifndef CHESSENGINE_CHECKLOGICHANDLER_H
-#define CHESSENGINE_CHECKLOGICHANDLER_H
+#ifndef DORY_CHECKLOGICHANDLER_H
+#define DORY_CHECKLOGICHANDLER_H
 
 struct PinData {
     bool isDoubleCheck{false}, blockEP{false};
@@ -138,4 +138,4 @@ PinData CheckLogicHandler::reload(Board& board){
     return { isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal };
 }
 
-#endif //CHESSENGINE_CHECKLOGICHANDLER_H
+#endif //DORY_CHECKLOGICHANDLER_H

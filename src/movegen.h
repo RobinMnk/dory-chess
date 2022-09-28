@@ -4,8 +4,8 @@
 
 #include "checklogichandler.h"
 
-#ifndef CHESSENGINE_MOVEGEN_H
-#define CHESSENGINE_MOVEGEN_H
+#ifndef DORY_MOVEGEN_H
+#define DORY_MOVEGEN_H
 
 template<typename>
 class MoveGenerator {
@@ -311,4 +311,4 @@ void MoveGenerator<MoveCollector>::castles(Board& board, PinData& pd) {
         ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);
 }
 
-#endif //CHESSENGINE_MOVEGEN_H
+#endif //DORY_MOVEGEN_H

@@ -2,33 +2,33 @@
 
 Dory is a powerful chess move generation engine, written in C++20 capable of enumerating legal moves at a speed peaking over **1 Billion positions per second**.
 
-It is easy to customize and highly performant, making it a great core for chess engines or chess data analysis.
+It is easy to customize and highly performant, making it a great core for chess engines, chess data analysis or other chess projects.
 
 - **Customization** [[more](#Move-Collectors)]</br>
-  The behavior can be easily adjusted with custom Move Collectors. 
+  The move enumeration behavior can be easily adjusted with custom Move Collectors to serve different purposes. 
 - **Efficiency** [[more](#Performance)]</br>
-  From the starting position the engine produces positions at roughly 230 million nodes/sec, increasing up to 1 billion nps on emptier boards
+  From the starting position the engine produces positions at roughly 240 million nodes/sec, with increasing speed to over 1 billion node/sec on emptier boards using only a single thread.
 
 The implementation is thoroughly [Perft tested](#Perft-Testing) to ensure its correctness.
 
 ## Installation
 
-Make sure you have Cmake (>= v3.21) and a recent version of a C++ compiler installed. To build run the following commands
+Make sure you have recent versions of Cmake and of a C++ compiler installed. Then, to build run the following commands from the root directory
 
 ```bash
 mkdir build
 cmake -G Ninja -B build
-cmake --build build --target ChessEngine
+cmake --build build --target Dory
 ```
 
-Note: If you also wish to run the test suites, omit the `--target ChessEngine` flag in the last command.
+Note: If you also wish to run the [test suites](#Perft Testing), omit the `--target ChessEngine` flag in the last command.
 
 ## Usage
 
 To just get the number of legal moves from a given position, first build the program as described above and then switch to the build directory and run
 
 ```bash
-./ChessEngine "<FEN String>" <depth>
+./Dory "<FEN String>" <depth>
 ```
 
 with the corresponding FEN string of the position (or `startpos` for the starting position). </br>
@@ -44,7 +44,15 @@ Generated 119060324 nodes in 512ms
 
 ## Performance
 
-The implementation relies heavily on compile time programming, making the execution significantly faster at runtime. From the starting position the legal moves can enumerated at a speed of roughly up to 240 Million nodes per second. On emptier boards the speed can increase to surpass the mark of 1 Billion nodes per second: See for example this endgame position (FEN: 8/pp2k2p/2nppn2/2p5/1P3N2/3P2N1/P1PK3P/8 w - - 0 1) at depth 6.
+The implementation relies heavily on compile time programming, making the execution significantly faster at runtime. From the starting position the legal moves can enumerated at a speed of roughly 240 Million nodes per second. On emptier boards the speed can increase to surpass the mark of 1 Billion nodes per second:
+
+See for example this endgame position at depth 6:
+
+```
+./ChessEngine "8/pp2k2p/2nppn2/2p5/1P3N2/3P2N1/P1PK3P/8 w - - 0 1" 6
+Generated 250923676 nodes in 243ms
+1029.1 M nps
+```
 
 ## Perft Testing
 
@@ -65,8 +73,8 @@ The engines main advantage is its modularity. It uses the concept of Move Collec
 
 ## References
 
-This project is a predecessor of an earlier chess move generation project of mine which was written in Java. It is based on the same algorithm, but enhanced significantly with efficient compile-time programming.
+This project is a successor of an earlier chess move generation project of mine which was written in Java. It is based on the same algorithm, but enhanced significantly with efficient compile-time programming.
 
-- Chessprogramming Wiki (Lots of super helpful information)
-- Gigantua (inspiration and some implementation details)
+- [Chessprogramming Wiki](https://www.chessprogramming.org) (Lots of super helpful information)
+- [Gigantua ](https://github.com/Gigantua/Gigantua) (inspiration and some implementation details)
 

@@ -4,8 +4,8 @@
 
 #include "chess.h"
 
-#ifndef CHESSENGINE_BOARD_H
-#define CHESSENGINE_BOARD_H
+#ifndef DORY_BOARD_H
+#define DORY_BOARD_H
 
 struct State {
     constexpr State(bool white, bool wcs, bool wcl, bool bcs, bool bcl) :
@@ -267,5 +267,5 @@ constexpr BB castleLongRookMove() {
 }
 
 
-#endif //CHESSENGINE_BOARD_H
+#endif //DORY_BOARD_H
 

@@ -5,8 +5,8 @@
 #include <array>
 #include "chess.h"
 
-#ifndef CHESSENGINE_PIECESTEPS_H
-#define CHESSENGINE_PIECESTEPS_H
+#ifndef DORY_PIECESTEPS_H
+#define DORY_PIECESTEPS_H
 
 // used to terminate arrays that represent list of squares
 const uint8_t END_OF_ARRAY = 0x7f;
@@ -110,4 +110,4 @@ namespace PieceSteps {
     }
 }
 
-#endif //CHESSENGINE_PIECESTEPS_H
+#endif //DORY_PIECESTEPS_H

@@ -8,8 +8,8 @@
 #include <chrono>
 #include "board.h"
 
-#ifndef CHESSENGINE_UTILS_H
-#define CHESSENGINE_UTILS_H
+#ifndef DORY_UTILS_H
+#define DORY_UTILS_H
 
 namespace Utils {
 
@@ -210,4 +210,4 @@ namespace Utils {
     };
 }
 
-#endif //CHESSENGINE_UTILS_H
+#endif //DORY_UTILS_H

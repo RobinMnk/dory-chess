@@ -2,8 +2,8 @@
 // Created by robin on 17.07.2022.
 //
 
-#ifndef CHESSENGINE_MOVECOLLECTORS_H
-#define CHESSENGINE_MOVECOLLECTORS_H
+#ifndef DORY_MOVECOLLECTORS_H
+#define DORY_MOVECOLLECTORS_H
 
 #include <unordered_map>
 #include <vector>
@@ -211,4 +211,4 @@ namespace MoveCollectors {
     int Divide::maxDepth{1};
 }
 
-#endif //CHESSENGINE_MOVECOLLECTORS_H
+#endif //DORY_MOVECOLLECTORS_H
