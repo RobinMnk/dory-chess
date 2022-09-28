@@ -8,7 +8,7 @@ Dory is a powerful chess move generation engine, written in C++20 capable of enu
   The move enumeration behavior can be adjusted with custom Move Collectors to serve different purposes. This allows for and efficient implementation of advanced search techniques.
 - **Efficiency** [[more](#Performance)]</br>
   From the starting position the engine produces positions at roughly 240 million nodes/sec, with increasing speed to over 1 billion node/sec on emptier boards using only a single thread.
-- **Correctness** [[more](#Perft Testing)]</br>
+- **Correctness** [[more](#Perft-Testing)]</br>
   The implementation is thoroughly Perft tested to ensure its correctness, saving the developer from the tedious task of fully bug-checking their engines implementation.
 
 ### Move Collectors
