@@ -19,7 +19,7 @@ Crucially, this allows for advanced techniques such as pre-selecting or even pre
 
 ### Performance
 
-The implementation relies heavily on compile time programming, making the execution significantly faster at runtime. From the starting position the legal moves can enumerated at a speed of roughly 240 Million nodes per second. On emptier boards the speed can increase to surpass the mark of 1 Billion nodes per second:
+The implementation relies heavily on compile time programming, making the execution significantly faster at runtime. From the starting position the legal moves can enumerated at a speed of roughly 240 Million nodes per second. On emptier boards the speed can increase to surpass the mark of 1 Billion nodes per second. Note that the speed advantage shows for larger depths of around 5 to 6.
 
 See for example this endgame position at depth 6:
 
@@ -52,7 +52,7 @@ cmake -G Ninja -B build
 cmake --build build --target Dory
 ```
 
-Note: If you also wish to run the [test suites](#Perft Testing), omit the `--target Dory` flag in the last command.
+Note: If you also wish to run the [test suites](#Perft-Testing), omit the `--target Dory` flag in the last command.
 
 ### Usage
 
