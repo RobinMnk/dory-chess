@@ -66,8 +66,8 @@ namespace Utils {
         add_piece(byteboard, board.bRooks, 'r');
         add_piece(byteboard, board.wQueens, 'Q');
         add_piece(byteboard, board.bQueens, 'q');
-        add_piece(byteboard, newMask(board.wKing), 'K');
-        add_piece(byteboard, newMask(board.bKing), 'k');
+        add_piece(byteboard, newMask(board.wKingSq), 'K');
+        add_piece(byteboard, newMask(board.bKingSq), 'k');
         return byteboard;
     }
 
