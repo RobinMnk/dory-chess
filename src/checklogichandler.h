@@ -44,7 +44,7 @@ BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP)
 
             // handle very special case of two sideways pinned epPawns
             // add pin line through two pawns to prevent pinned en passant
-            else if(board.enPassantField
+            else if(board.hasEnPassant()
                 && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
                 && rankOf(kingSquare) == epRankNr<white>()
                 && bitCount(kl & board.pawns<white>()) == 1         // one own pawn
@@ -69,13 +69,12 @@ PinData CheckLogicHandler::reload(const Board& board){
     BB bishopBB = board.enemyBishops<white>();
     BB rookBB = board.enemyRooks<white>();
     BB queenBB = board.enemyQueens<white>();
-    BB kingBB = board.enemyKing<white>();
 
     BB myKing = board.king<white>();
 
     // IS THE KING IN CHECK
 
-    attacked |= PieceSteps::KING_MOVES[firstBitOf(kingBB)];
+    attacked |= PieceSteps::KING_MOVES[board.kingSquare<!white>()];
 
     // Pawns
     mask = pawnAtkLeft<!white>(pawnBB & pawnCanGoLeft<!white>());     // pawn attack to the left

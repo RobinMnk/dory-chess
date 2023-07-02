@@ -14,7 +14,8 @@ namespace Utils {
     constexpr Board getBoardFromFEN(std::string_view position, std::string_view ep) {
         int rank{7}, file{0};
 
-        BB wPawns{0}, bPawns{0}, wKnights{0}, bKnights{0}, wBishops{0}, bBishops{0}, wRooks{0}, bRooks{0}, wQueens{0}, bQueens{0}, wKing{0}, bKing{0};
+        BB wPawns{0}, bPawns{0}, wKnights{0}, bKnights{0}, wBishops{0}, bBishops{0}, wRooks{0}, bRooks{0}, wQueens{0}, bQueens{0};
+        uint8_t wKing{0}, bKing{1};
         for (char c: position) {
             switch (c) {
                 case 'P':
@@ -33,7 +34,7 @@ namespace Utils {
                     setBit(wQueens, 8 * rank + file);
                     break;
                 case 'K':
-                    setBit(wKing, 8 * rank + file);
+                    wKing = 8 * rank + file;
                     break;
                 case 'p':
                     setBit(bPawns, 8 * rank + file);
@@ -51,7 +52,7 @@ namespace Utils {
                     setBit(bQueens, 8 * rank + file);
                     break;
                 case 'k':
-                    setBit(bKing, 8 * rank + file);
+                    bKing = 8 * rank + file;
                     break;
                 case '/':
                     rank--;
@@ -65,8 +66,8 @@ namespace Utils {
             file++;
         }
 
-        BB enPassantField{0};
-        if(ep != "-") enPassantField = newMask(sqId(ep));
+        uint8_t enPassantField{0};
+        if(ep != "-") enPassantField = sqId(ep);
 
         return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, enPassantField};
     }

@@ -79,10 +79,10 @@ template<typename MoveCollector>
 template<State state, int depth, Piece_t piece, Flag_t flags>
 requires ValidMoveCollector<MoveCollector, state, depth, piece, flags>
 void MoveGenerator<MoveCollector>::generateSuccessorBoard(const Board& board, BB from, BB to) {
+    MoveCollector::template registerMove<state, depth, piece, flags>(board, from, to);
+
     constexpr State nextState = getNextState<state, flags>();
     Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-
-    MoveCollector::template registerMove<state, depth, piece, flags>(board, from, to);
     MoveCollector::template next<nextState, depth>(nextBoard);
 }
 
@@ -135,8 +135,8 @@ void MoveGenerator<MoveCollector>::pawnMoves(const Board& board, PinData& pd) {
 
     // handle en passant pawns
     BB epPawnL{0}, epPawnR{0};
-    BB enPassant = board.enPassantField;
-    if(enPassant != 0 && !pd.blockEP) {
+    if(board.hasEnPassant() != 0 && !pd.blockEP) {
+        BB enPassant = board.enPassantBB();
         // left capture is ep square and is on checkmask
         epPawnL = pawnCapt & pawnCanGoLeft<white>() & pawnInvAtkLeft<white>(enPassant & forward<white>(pd.checkMask));
         // remove pinned ep pawns
@@ -288,8 +288,7 @@ void MoveGenerator<MoveCollector>::queenMoves(const Board& board, PinData& pd) {
 template<typename MoveCollector>
 template<State state, int depth>
 void MoveGenerator<MoveCollector>::kingMoves(const Board& board, PinData& pd) {
-    BB king = board.king<state.whiteToMove>();
-    int ix = singleBitOf(king);
+    int ix = board.kingSquare<state.whiteToMove>();
     BB targets = PieceSteps::KING_MOVES[ix] & ~pd.attacked & board.enemyOrEmpty<state.whiteToMove>();
     addToList<state, depth, Piece::King, MoveFlag::RemoveAllCastling>(board, ix, targets);
 }
@@ -298,7 +297,7 @@ template<typename MoveCollector>
 template<State state, int depth>
 void MoveGenerator<MoveCollector>::castles(const Board& board, PinData& pd) {
     constexpr bool white = state.whiteToMove;
-    constexpr BB startKing = white ? STARTBOARD.wKing : STARTBOARD.bKing;
+    constexpr BB startKing = STARTBOARD.king<white>();
     constexpr BB csMask = castleShortMask<white>();
     constexpr BB clMask = castleLongMask<white>();
     BB kingBB = board.king<white>();

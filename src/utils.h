@@ -54,7 +54,7 @@ namespace Utils {
         }
     }
 
-    ByteBoard to_byteboard(Board board) {
+    ByteBoard to_byteboard(const Board& board) {
         ByteBoard byteboard{};
         add_piece(byteboard, board.wPawns, 'P');
         add_piece(byteboard, board.bPawns, 'p');
@@ -66,12 +66,12 @@ namespace Utils {
         add_piece(byteboard, board.bRooks, 'r');
         add_piece(byteboard, board.wQueens, 'Q');
         add_piece(byteboard, board.bQueens, 'q');
-        add_piece(byteboard, board.wKing, 'K');
-        add_piece(byteboard, board.bKing, 'k');
+        add_piece(byteboard, newMask(board.wKing), 'K');
+        add_piece(byteboard, newMask(board.bKing), 'k');
         return byteboard;
     }
 
-    void print_board(ByteBoard &&byteboard) {
+    void print_board(const ByteBoard &&byteboard) {
         int rank = 7;
         while (rank >= 0) {
             for (int i = 0; i < 8; i++) {
