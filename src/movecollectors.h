@@ -29,8 +29,9 @@ namespace MoveCollectors {
         static std::vector<Board> positions;
 
         template<State state, int depth>
-        static void generateGameTree(Board& board) {
+        static void generateGameTree(const Board& board) {
             totalNodes = 0;
+            positions.clear();
             build<state, depth>(board);
 
             if constexpr (saveBoards)
@@ -39,7 +40,7 @@ namespace MoveCollectors {
 
     private:
         template<State state, int depth>
-        static void build(Board& board) {
+        static void build(const Board& board) {
             if constexpr (depth > 0) {
                 MoveGenerator<LimitedDFS<saveBoards, print>>::template generate<state, depth>(board);
             }
@@ -97,7 +98,7 @@ namespace MoveCollectors {
 
     private:
         template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove(Board &board, [[maybe_unused]] BB from, [[maybe_unused]] BB to) {
+        static void registerMove(const Board &board, [[maybe_unused]] BB from, [[maybe_unused]] BB to) {
             positions.push_back(getExtendedBoard<state>(board));
         }
 

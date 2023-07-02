@@ -226,7 +226,7 @@ struct ExtendedBoard {
 };
 
 template<State state>
-ExtendedBoard getExtendedBoard(Board& board) {
+ExtendedBoard getExtendedBoard(const Board& board) {
     return { board, getStateCode<state>() };
 }
 

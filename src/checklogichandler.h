@@ -19,7 +19,7 @@ class CheckLogicHandler {
 
 public:
     template<State>
-    static PinData reload(Board& board);
+    static PinData reload(const Board& board);
 };
 
 template<State state, bool diag>
@@ -57,7 +57,7 @@ BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP)
 }
 
 template<State state>
-PinData CheckLogicHandler::reload(Board& board){
+PinData CheckLogicHandler::reload(const Board& board){
     constexpr bool white = state.whiteToMove;
     BB attacked{0}, checkMask{0}, mask;
     int numChecks = 0;

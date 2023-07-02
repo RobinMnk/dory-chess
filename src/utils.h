@@ -170,7 +170,7 @@ namespace Utils {
     }
 
     template<typename Collector, State state, int depth>
-    void time_movegen(Board& board) {
+    void time_movegen(const Board& board) {
         auto t1 = std::chrono::high_resolution_clock::now();
         Collector::template generateGameTree<state, depth>(board);
         auto t2 = std::chrono::high_resolution_clock::now();
