@@ -107,14 +107,25 @@ namespace Utils {
         }
     }
 
-    void printMove(Move m) {
+    void printMove(const Move m) {
+        if(m.from + m.to == 0) std::cout << "NULL" << std::endl;
         if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
         else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling) << std::endl;
         else std::cout << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to) << specialMove(m.flags) << std::endl;
     }
 
-    void print_board(Board &board) {
+    void print_board(const Board &board) {
         print_board(to_byteboard(board));
+    }
+
+    void printMoveList(const std::vector<Move>& moves) {
+        for(auto& m: moves) {
+            if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling);
+            else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling);
+            else std::cout << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to) << specialMove(m.flags);
+            std::cout << " - ";
+        }
+        std::cout << std::endl;
     }
 
     void printOcc(BB occ) {

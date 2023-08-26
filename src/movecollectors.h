@@ -65,6 +65,8 @@ namespace MoveCollectors {
             build<nextState, depth-1>(nextBoard);
         }
 
+        static void done() {}
+
         friend class MoveGenerator<LimitedDFS<saveBoards, print>>;
     };
 
@@ -104,6 +106,8 @@ namespace MoveCollectors {
 
         template<State nextState, int depth>
         static void next([[maybe_unused]] Board& nextBoard) {}
+
+        static void done() {}
 
         friend class MoveGenerator<SuccessorBoards>;
     };
@@ -200,6 +204,9 @@ namespace MoveCollectors {
         template<State nextState, int depth>
         static void next(Board& nextBoard) {
             build<nextState, depth-1>(nextBoard);
+        }
+
+        static void done() {
         }
 
         friend class MoveGenerator<Divide>;

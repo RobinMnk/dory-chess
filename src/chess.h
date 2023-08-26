@@ -47,6 +47,7 @@ struct Move {
     BB from{0}, to{0};
     uint8_t piece{0}, flags{0};
 };
+[[maybe_unused]] constexpr Move NULLMOVE = Move{};
 
 
 // ---------- BOARD GEOMETRY ----------

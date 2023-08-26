@@ -17,9 +17,11 @@ template<typename MC>
 class MoveGenerator {
 public:
     template<State, int>
-    static void generate(const Board& board);
+    static bool generate(const Board& board);
 
 private:
+    static int moves_found;
+
     template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     requires ValidMoveCollector<MC, state, depth, piece, flags>
     static void generateSuccessorBoard(const Board& board, BB from, BB to);
@@ -58,8 +60,9 @@ private:
 
 template<typename MoveCollector>
 template<State state, int depth>
-void MoveGenerator<MoveCollector>::generate(const Board& board) {
+bool MoveGenerator<MoveCollector>::generate(const Board& board) {
     PinData pd = CheckLogicHandler::reload<state>(board);
+    moves_found = 0;
 
     if(!pd.isDoubleCheck) {
         pawnMoves<state, depth>(board, pd);
@@ -73,6 +76,9 @@ void MoveGenerator<MoveCollector>::generate(const Board& board) {
     }
 
     kingMoves<state, depth>(board, pd);
+
+    // returns true if the current player is checkmated
+    return moves_found == 0 && pd.checkMask < FULL_BB;
 }
 
 template<typename MoveCollector>
@@ -84,6 +90,7 @@ void MoveGenerator<MoveCollector>::generateSuccessorBoard(const Board& board, BB
     constexpr State nextState = getNextState<state, flags>();
     Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
     MoveCollector::template next<nextState, depth>(nextBoard);
+    moves_found++;
 }
 
 // - - - - - - Helper Functions - - - - - -
@@ -317,5 +324,8 @@ void MoveGenerator<MoveCollector>::castles(const Board& board, PinData& pd) {
            && board.free() & (startingQueensideRook<white>() << 1)
         ) generateSuccessorBoard<state, depth, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);
 }
+
+template<typename MC>
+int MoveGenerator<MC>::moves_found{0};
 
 #endif //DORY_MOVEGEN_H
