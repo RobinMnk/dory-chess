@@ -12,7 +12,6 @@ using Params = engine_params::EvaluationParams;
 
 namespace features {
 
-    template<State state>
     double material(const Board& board, Params params) {
         double mat = (bitCount(board.wPawns) - bitCount(board.bPawns)) * params.MATERIAL_WEIGHT_PAWN +
                         (bitCount(board.wKnights) - bitCount(board.bKnights)) * params.MATERIAL_WEIGHT_KNIGHT +

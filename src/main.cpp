@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "movecollectors.h"
+#include "board.h"
 #include "fenreader.h"
 #include "engine/engine_move_collector.h"
 
@@ -10,15 +10,16 @@ struct Runner {
     template<State state, int depth>
     static void main(Board& board) {
 //        Utils::time_movegen<Collector, state, depth>(board);
-        EngineMC::template generateGameTree<state, 8>(board);
-        std::cout << "FINAL EVALUATION: " << EngineMC::evaluation << std::endl;
+        auto eval = EngineMC::template generateGameTree<state>(board, 6);
+        std::cout << "FINAL EVALUATION: " << eval << std::endl;
 //        std::cout << "Best Move: " << Utils::moveName<state.whiteToMove>(EngineMC::bestMove) << std::endl;
 
-        std::cout << "LINE " << std::endl;
-        Utils::printMoveList(EngineMC::line);
-//        for (auto& move: EngineMC::line) {
-//            Utils::printMove(move);
-//        }
+        std::cout << "Best Move(s) " << std::endl;
+//        Utils::printMoveList(EngineMC::line.);
+        for (auto& move: EngineMC::bestMoves) {
+//            if (move.from + move.to == 0) break;
+            Utils::printMove(move);
+        }
     }
 };
 

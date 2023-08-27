@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include "board.h"
+#include "utils.h"
 
 #ifndef DORY_FENREADER_H
 #define DORY_FENREADER_H
@@ -72,10 +74,6 @@ namespace Utils {
         return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, enPassantField};
     }
 
-    constexpr State toState(const uint8_t code) {
-        return {(code & 0b10000) != 0, (code & 0b01000) != 0, (code & 0b00100) != 0, (code & 0b00010) != 0, (code & 0b00001) != 0};
-    }
-
     template<typename Main, int depth>
     void run(uint8_t state_code, Board& board) {
         switch (state_code) {
@@ -120,7 +118,7 @@ namespace Utils {
         std::stringstream stream(full_fen.data());
         std::string segment;
         std::vector<std::string> seglist;
-        try {
+//        try {
             while(std::getline(stream, segment, ' ')) seglist.push_back(segment);
 
             // first position in FEN is board contents
@@ -144,9 +142,9 @@ namespace Utils {
 
             run<Main, depth>(state_code, board);
 
-        } catch (std::exception& ex) {
-            std::cerr << "Invalid FEN string!" << std::endl;
-        }
+//        } catch (std::exception& ex) {
+//            std::cerr << "Invalid FEN string!" << std::endl;
+//        }
     }
 
     template<typename Main>

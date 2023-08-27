@@ -10,10 +10,9 @@
 
 namespace evaluation {
 
-    template<State state>
     double hard_evaluate(const Board& board) {
         engine_params::EvaluationParams params;
-        return features::material<state>(board, params);
+        return features::material(board, params);
     }
 
 

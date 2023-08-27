@@ -219,4 +219,6 @@ namespace MoveCollectors {
     int Divide::maxDepth{1};
 }
 
+*/
+
 #endif //DORY_MOVECOLLECTORS_H

@@ -12,7 +12,7 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(Dory src/main.cpp src/board.h src/chess.h src/utils.h src/checklogichandler.h src/piecesteps.h src/movegen.h src/movecollectors.h src/fenreader.h src/engine/evaluation.h src/engine/features.h src/engine/engine_params.h src/engine/engine_move_collector.h)
+add_executable(Dory src/main.cpp src/board.h src/chess.h src/utils.h src/checklogichandler.h src/piecesteps.h src/movegen.h src/fenreader.h src/engine/evaluation.h src/engine/features.h src/engine/engine_params.h src/engine/engine_move_collector.h)
 target_compile_options(Dory PUBLIC -Wall -Wextra)
 target_compile_options(Dory PUBLIC -march=native)
 target_compile_options(Dory PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)

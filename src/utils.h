@@ -109,7 +109,7 @@ namespace Utils {
 
     void printMove(const Move m) {
         if(m.from + m.to == 0) std::cout << "NULL" << std::endl;
-        if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
+        else if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
         else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling) << std::endl;
         else std::cout << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to) << specialMove(m.flags) << std::endl;
     }
