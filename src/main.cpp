@@ -6,13 +6,22 @@
 
 //using Collector = MoveCollectors::LimitedDFS<false, false>;
 
+template<State state>
+double timeEvaluation(const Board& board, int depth) {
+    auto t1 = std::chrono::high_resolution_clock::now();
+    double eval = EngineMC::template generateGameTree<state>(board, depth);
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
+
+    std::cout << "Evaluation: " << eval << "     (time " << ms_int.count() << "ms)\n";
+    return eval;
+}
+
 struct Runner {
     template<State state, int depth>
     static void main(Board& board) {
-//        Utils::time_movegen<Collector, state, depth>(board);
-        auto eval = EngineMC::template generateGameTree<state>(board, 6);
-        std::cout << "FINAL EVALUATION: " << eval << std::endl;
-//        std::cout << "Best Move: " << Utils::moveName<state.whiteToMove>(EngineMC::bestMove) << std::endl;
+        double eval = timeEvaluation<state>(board, depth);
 
         std::cout << "Best Move(s) " << std::endl;
 //        Utils::printMoveList(EngineMC::line.);
@@ -24,6 +33,18 @@ struct Runner {
 };
 
 int main(int argc, char* argv[]) {
+    std::string fen, depth_str;
+    std::getline(std::cin, fen);
+    std::getline(std::cin, depth_str);
+    int depth = static_cast<int>(std::strtol(depth_str.c_str(), nullptr, 10));
+
+    PieceSteps::load();
+    Utils::loadFEN<Runner>(fen, depth);
+
+    return 0;
+}
+
+int mainMoveEnumeration(int argc, char* argv[]) {
     if (argc < 3) {
         std::cerr << R"(Usage: ./Dory "<FEN>" <Depth>)" << std::endl;
         return 1;
