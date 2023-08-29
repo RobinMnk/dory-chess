@@ -12,9 +12,21 @@ struct State {
             whiteToMove{white}, wCastleShort{wcs}, wCastleLong{wcl},
             bCastleShort{bcs}, bCastleLong{bcl} {}
 
-    const bool whiteToMove;
-    const bool wCastleShort, wCastleLong;
-    const bool bCastleShort, bCastleLong;
+//    constexpr State(const State& other) = default;
+
+    bool whiteToMove;
+    bool wCastleShort, wCastleLong;
+    bool bCastleShort, bCastleLong;
+
+    unsigned int code() {
+        uint8_t state_code = 0;
+        if(whiteToMove)   state_code |= 0b10000;
+        if(wCastleShort) state_code |= 0b1000;
+        if(wCastleLong) state_code |= 0b100;
+        if(bCastleShort) state_code |= 0b10;
+        if(bCastleLong) state_code |= 0b1;
+        return state_code;
+    }
 };
 constexpr State STARTSTATE = State(true, true, true, true, true);
 
@@ -92,8 +104,8 @@ constexpr BB castleLongRookMove();
 
 class Board {
 public:
-    const BB wPawns{0}, bPawns{0}, wKnights{0}, bKnights{0}, wBishops{0}, bBishops{0}, wRooks{0}, bRooks{0}, wQueens{0}, bQueens{0};
-    const uint8_t wKingSq{0}, bKingSq{0}, enPassantSq{0};
+    BB wPawns{0}, bPawns{0}, wKnights{0}, bKnights{0}, wBishops{0}, bBishops{0}, wRooks{0}, bRooks{0}, wQueens{0}, bQueens{0};
+    uint8_t wKingSq{0}, bKingSq{0}, enPassantSq{0};
 
     Board() = default;
     constexpr Board(BB wP, BB bP, BB wN, BB bN, BB wB, BB bB, BB wR, BB bR, BB wQ, BB bQ, uint8_t wK, uint8_t bK, uint8_t ep) :
@@ -292,244 +304,245 @@ constexpr BB castleLongRookMove() {
 
 
 template<Piece_t piece, Flag_t flags = MoveFlag::Silent>
-std::pair<Board, uint8_t> make_move(const Board& board, uint8_t state_code, Move move) {
+std::pair<Board, State> make_move(const Board& board, State state, Move move) {
+    unsigned int state_code = state.code();
     if(state_code == 0) {
-        constexpr State state = toState(0);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+        constexpr State st = toState(0);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 1) {
-        constexpr State state = toState(1);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 1) {
+        constexpr State st = toState(1);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 2) {
-        constexpr State state = toState(2);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 2) {
+        constexpr State st = toState(2);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 3) {
-        constexpr State state = toState(3);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 3) {
+        constexpr State st = toState(3);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 4) {
-        constexpr State state = toState(4);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 4) {
+        constexpr State st = toState(4);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 5) {
-        constexpr State state = toState(5);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 5) {
+        constexpr State st = toState(5);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 6) {
-        constexpr State state = toState(6);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 6) {
+        constexpr State st = toState(6);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 7) {
-        constexpr State state = toState(7);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 7) {
+        constexpr State st = toState(7);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 8) {
-        constexpr State state = toState(8);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 8) {
+        constexpr State st = toState(8);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 9) {
-        constexpr State state = toState(9);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 9) {
+        constexpr State st = toState(9);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 10) {
-        constexpr State state = toState(10);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 10) {
+        constexpr State st = toState(10);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 11) {
-        constexpr State state = toState(11);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 11) {
+        constexpr State st = toState(11);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 12) {
-        constexpr State state = toState(12);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 12) {
+        constexpr State st = toState(12);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 13) {
-        constexpr State state = toState(13);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 13) {
+        constexpr State st = toState(13);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 14) {
-        constexpr State state = toState(14);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 14) {
+        constexpr State st = toState(14);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 15) {
-        constexpr State state = toState(15);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 15) {
+        constexpr State st = toState(15);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 16) {
-        constexpr State state = toState(16);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 16) {
+        constexpr State st = toState(16);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 17) {
-        constexpr State state = toState(17);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 17) {
+        constexpr State st = toState(17);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 18) {
-        constexpr State state = toState(18);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 18) {
+        constexpr State st = toState(18);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 19) {
-        constexpr State state = toState(19);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 19) {
+        constexpr State st = toState(19);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 20) {
-        constexpr State state = toState(20);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 20) {
+        constexpr State st = toState(20);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 21) {
-        constexpr State state = toState(21);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 21) {
+        constexpr State st = toState(21);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 22) {
-        constexpr State state = toState(22);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 22) {
+        constexpr State st = toState(22);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 23) {
-        constexpr State state = toState(23);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 23) {
+        constexpr State st = toState(23);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 24) {
-        constexpr State state = toState(24);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 24) {
+        constexpr State st = toState(24);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 25) {
-        constexpr State state = toState(25);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 25) {
+        constexpr State st = toState(25);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 26) {
-        constexpr State state = toState(26);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 26) {
+        constexpr State st = toState(26);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 27) {
-        constexpr State state = toState(27);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 27) {
+        constexpr State st = toState(27);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 28) {
-        constexpr State state = toState(28);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 28) {
+        constexpr State st = toState(28);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 29) {
-        constexpr State state = toState(29);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 29) {
+        constexpr State st = toState(29);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 30) {
-        constexpr State state = toState(30);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 30) {
+        constexpr State st = toState(30);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
-    if(state_code == 31) {
-        constexpr State state = toState(31);
-        Board nextBoard = board.getNextBoard<state, piece, flags>(move.from, move.to);
-        constexpr State nextState = getNextState<state, flags>();
-        return {nextBoard, toCode<nextState>()};
+    else if(state_code == 31) {
+        constexpr State st = toState(31);
+        Board nextBoard = board.getNextBoard<st, piece, flags>(move.from, move.to);
+        constexpr State nextState = getNextState<st, flags>();
+        return {nextBoard, nextState};
     }
     throw std::runtime_error("INVALID STATE CODE");
 }
 
-std::pair<Board, uint8_t> make_move(const Board& board, uint8_t state_code, Move move) {
+std::pair<Board, State> make_move(const Board& board, State state, Move move) {
     switch (move.piece) {
         case Piece::Pawn:
             switch (move.flags) {
                 case MoveFlag::PawnDoublePush:
-                    return make_move<Piece::Pawn, MoveFlag::PawnDoublePush>(board, state_code, move);
+                    return make_move<Piece::Pawn, MoveFlag::PawnDoublePush>(board, state, move);
                 case MoveFlag::EnPassantCapture:
-                    return make_move<Piece::Pawn, MoveFlag::EnPassantCapture>(board, state_code, move);
+                    return make_move<Piece::Pawn, MoveFlag::EnPassantCapture>(board, state, move);
                 case MoveFlag::PromoteQueen:
-                    return make_move<Piece::Pawn, MoveFlag::PromoteQueen>(board, state_code, move);
+                    return make_move<Piece::Pawn, MoveFlag::PromoteQueen>(board, state, move);
                 case MoveFlag::PromoteRook:
-                    return make_move<Piece::Pawn, MoveFlag::PromoteRook>(board, state_code, move);
+                    return make_move<Piece::Pawn, MoveFlag::PromoteRook>(board, state, move);
                 case MoveFlag::PromoteBishop:
-                    return make_move<Piece::Pawn, MoveFlag::PromoteBishop>(board, state_code, move);
+                    return make_move<Piece::Pawn, MoveFlag::PromoteBishop>(board, state, move);
                 case MoveFlag::PromoteKnight:
-                    return make_move<Piece::Pawn, MoveFlag::PromoteKnight>(board, state_code, move);
+                    return make_move<Piece::Pawn, MoveFlag::PromoteKnight>(board, state, move);
             }
-            return make_move<Piece::Pawn>(board, state_code, move);
+            return make_move<Piece::Pawn>(board, state, move);
         case Piece::Knight:
-            return make_move<Piece::Knight>(board, state_code, move);
+            return make_move<Piece::Knight>(board, state, move);
         case Piece::Bishop:
-            return make_move<Piece::Bishop>(board, state_code, move);
+            return make_move<Piece::Bishop>(board, state, move);
         case Piece::Rook:
             switch (move.flags) {
                 case MoveFlag::RemoveShortCastling:
-                    return make_move<Piece::Rook, MoveFlag::RemoveShortCastling>(board, state_code, move);
+                    return make_move<Piece::Rook, MoveFlag::RemoveShortCastling>(board, state, move);
                 case MoveFlag::RemoveLongCastling:
-                    return make_move<Piece::Rook, MoveFlag::RemoveLongCastling>(board, state_code, move);
+                    return make_move<Piece::Rook, MoveFlag::RemoveLongCastling>(board, state, move);
             }
-            return make_move<Piece::Rook>(board, state_code, move);
+            return make_move<Piece::Rook>(board, state, move);
         case Piece::Queen:
-            return make_move<Piece::Queen>(board, state_code, move);
+            return make_move<Piece::Queen>(board, state, move);
         case Piece::King:
             switch (move.flags) {
                 case MoveFlag::RemoveAllCastling:
-                    return make_move<Piece::King, MoveFlag::RemoveAllCastling>(board, state_code, move);
+                    return make_move<Piece::King, MoveFlag::RemoveAllCastling>(board, state, move);
                 case MoveFlag::ShortCastling:
-                    return make_move<Piece::King, MoveFlag::ShortCastling>(board, state_code, move);
+                    return make_move<Piece::King, MoveFlag::ShortCastling>(board, state, move);
                 case MoveFlag::LongCastling:
-                    return make_move<Piece::King, MoveFlag::LongCastling>(board, state_code, move);
+                    return make_move<Piece::King, MoveFlag::LongCastling>(board, state, move);
             }
-            return make_move<Piece::King>(board, state_code, move);
+            return make_move<Piece::King>(board, state, move);
     }
     throw std::runtime_error("INVALID PIECE MOVED");
 }

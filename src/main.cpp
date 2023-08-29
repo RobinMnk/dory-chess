@@ -3,13 +3,14 @@
 #include "board.h"
 #include "fenreader.h"
 #include "engine/engine_move_collector.h"
+#include "engine/monte_carlo.h"
 
 //using Collector = MoveCollectors::LimitedDFS<false, false>;
 
 template<State state>
 double timeEvaluation(const Board& board, int depth) {
     auto t1 = std::chrono::high_resolution_clock::now();
-    double eval = EngineMC::template generateGameTree<state>(board, depth);
+    double eval = EngineMC::beginEvaluation(board, state, depth);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
@@ -21,14 +22,21 @@ double timeEvaluation(const Board& board, int depth) {
 struct Runner {
     template<State state, int depth>
     static void main(Board& board) {
-        double eval = timeEvaluation<state>(board, depth);
 
-        std::cout << "Best Move(s) " << std::endl;
-//        Utils::printMoveList(EngineMC::line.);
-        for (auto& move: EngineMC::bestMoves) {
-//            if (move.from + move.to == 0) break;
-            Utils::printMove(move);
-        }
+        MonteCarlo mc;
+        auto fen = mc.simulateGame(board, state);
+        std::cout << "FEN: \n" << fen << std::endl;
+//
+
+//        timeEvaluation<state>(board, depth);
+//        std::cout << "Best Move(s) " << std::endl;
+////        Utils::printMoveList(EngineMC::line.);
+//        for (auto& move: EngineMC::bestMoves) {
+////            if (move.from + move.to == 0) break;
+//            Utils::printMove(move);
+//        }
+//
+//        std::cout << EngineMC::nodesSearched << " nodes searched. " << std::endl;
     }
 };
 
@@ -39,7 +47,12 @@ int main(int argc, char* argv[]) {
     int depth = static_cast<int>(std::strtol(depth_str.c_str(), nullptr, 10));
 
     PieceSteps::load();
-    Utils::loadFEN<Runner>(fen, depth);
+
+    if (fen == "startpos" || fen == "start") {
+        Utils::startingPositionAtDepth<Runner>(depth);
+    } else {
+        Utils::loadFEN<Runner>(fen, depth);
+    }
 
     return 0;
 }

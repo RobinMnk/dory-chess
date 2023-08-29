@@ -87,9 +87,9 @@ requires ValidMoveCollector<MoveCollector, state, piece, flags>
 void MoveGenerator<MoveCollector>::generateSuccessorBoard(const Board& board, BB from, BB to) {
     MoveCollector::template registerMove<state, piece, flags>(board, from, to);
 
-    constexpr State nextState = getNextState<state, flags>();
-    Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-    MoveCollector::template next<nextState>(nextBoard);
+//    constexpr State nextState = getNextState<state, flags>();
+//    Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
+//    MoveCollector::template next<nextState>(nextBoard);
     moves_found++;
 }
 
@@ -329,7 +329,8 @@ template<typename MC>
 int MoveGenerator<MC>::moves_found{0};
 
 template<typename MC>
-static bool generate(const Board& board, size_t state_code) {
+static bool generate(const Board& board, State state) {
+    unsigned int state_code = state.code();
     switch (state_code) {
         case 0: return MoveGenerator<MC>::template generate<toState(0)>(board);
         case 1: return MoveGenerator<MC>::template generate<toState(1)>(board);

@@ -1,2 +1,2 @@
-1n1k4/1n1p2P1/4P3/3p2p1/qN6/1pRP4/Q6P/6K1 w - - 0 1
-10
+startpos
+4

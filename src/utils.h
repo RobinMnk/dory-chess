@@ -173,10 +173,17 @@ namespace Utils {
         return bss.str();
     }
 
-    template<bool whiteMoving>
     std::string moveNameShort(Move m) {
         std::stringstream bss{};
         bss << squarename(m.from) << squarename(m.to);
+        return bss.str();
+    }
+
+    std::string moveNameNotation(Move m) {
+        std::stringstream bss{};
+        if(m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
+        else if(m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
+        else bss << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to);
         return bss.str();
     }
 

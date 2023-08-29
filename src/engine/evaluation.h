@@ -19,6 +19,8 @@ namespace evaluation {
     static double move_heuristic(const Board &board, BB from, BB to) {
         engine_params::EvaluationParams params;
 
+        double heuristic_val{0};
+
         // is Capture
         if ((to & board.enemyPieces<state.whiteToMove>()) != 0) {
             double valueDiff = engine_params::pieceValue<piece>(params);
@@ -38,10 +40,15 @@ namespace evaluation {
                 valueDiff -= engine_params::pieceValue<Piece::Queen>(params);
             }
 
-            return 1 + valueDiff * 2;
+            heuristic_val += 1 + valueDiff * 2;
         }
 
-        return 0;
+        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
+        double position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
+
+        heuristic_val += position_eval_diff;
+
+        return heuristic_val;
     }
 
 
