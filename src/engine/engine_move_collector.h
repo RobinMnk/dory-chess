@@ -10,9 +10,11 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <unordered_map>
 #include "../movegen.h"
 #include "evaluation.h"
 #include "../utils.h"
+#include "../zobrist.h"
 
 double INF = 99999;
 
@@ -64,6 +66,13 @@ bool sortMovePairs(const std::pair<double, Move> &a, const std::pair<double, Mov
     return a.first > b.first;
 }
 
+const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
+
+struct TTEntry {
+    double value;
+    uint8_t depth, flag;
+};
+
 class EngineMC {
 public:
 //    template<State state>
@@ -84,7 +93,7 @@ public:
 
     static double evaluation;
     static std::vector<Move> bestMoves;
-    static BB nodesSearched;
+    static BB nodesSearched, lookups;
 
     static std::vector<std::pair<double, Move>> topLevelLegalMoves() {
         return moves[0];
@@ -92,9 +101,35 @@ public:
 private:
     static std::array<std::vector<std::pair<double, Move>>, 16> moves;
     static int maxDepth, currentDepth;
+    static std::unordered_map<BB, TTEntry> lookup_table;
+
 
     template<bool topLevel>
     static double negamax(const Board& board, State state, int depth, double alpha, double beta) {
+        double origAlpha = alpha;
+
+        size_t boardHash;
+        if constexpr (!topLevel) {
+            boardHash = Zobrist::hash(board, state);
+            auto res = lookup_table.find(boardHash);
+
+            if(res != lookup_table.end()) {
+                TTEntry entry = res->second;
+                if (entry.depth <= depth) {
+                    lookups++;
+                    if (entry.flag == TTFlagExact) {
+                        return entry.value;
+                    } else if (entry.flag == TTFlagLowerBound) {
+                        if (entry.value > alpha) alpha = entry.value;
+                    } else if (entry.flag == TTFlagUpperBound) {
+                        if (entry.value < beta) beta = entry.value;
+                    }
+
+                    if (alpha >= beta) return entry.value;
+                }
+            }
+        }
+
         if (depth >= maxDepth) {
             double heuristic_val = evaluation::position_evaluate(board);
             nodesSearched++;
@@ -134,13 +169,13 @@ private:
                     bestMoves.clear();
                     bestMoves.push_back(move);
                 }
-            } else {
-                if constexpr (topLevel) {
-                    double margin = bestMoves.size() >= MARGIN_THRESHOLD ? 0 : BEST_MOVE_MARGIN;
-                    if (eval >= currentEval - margin && bestMoves.size() < MAX_NUMBER_BEST_MOVES) {
-                        bestMoves.push_back(move);
-                    }
-                }
+//            } else {
+//                if constexpr (topLevel) {
+//                    double margin = bestMoves.size() >= MARGIN_THRESHOLD ? 0 : BEST_MOVE_MARGIN;
+//                    if (eval >= currentEval - margin && bestMoves.size() < MAX_NUMBER_BEST_MOVES) {
+//                        bestMoves.push_back(move);
+//                    }
+//                }
             }
 
             if constexpr (!topLevel) {
@@ -149,6 +184,18 @@ private:
                 }
                 if (alpha >= beta) break;
             }
+        }
+
+        if constexpr (!topLevel) {
+            uint8_t flag{};
+            if (currentEval <= origAlpha)
+                flag = TTFlagUpperBound;
+            else if (currentEval >= beta)
+                flag = TTFlagLowerBound;
+            else flag = TTFlagExact;
+
+            TTEntry entry{currentEval, static_cast<uint8_t>(depth), flag};
+            lookup_table.insert({boardHash, entry});
         }
 
         return currentEval;
@@ -173,7 +220,10 @@ int EngineMC::currentDepth{0};
 int EngineMC::maxDepth{0};
 double EngineMC::evaluation{0};
 BB EngineMC::nodesSearched{0};
+BB EngineMC::lookups{0};
 std::vector<Move> EngineMC::bestMoves{};
+std::unordered_map<BB, TTEntry> EngineMC::lookup_table;
+
 
 
 

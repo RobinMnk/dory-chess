@@ -28,6 +28,7 @@ struct Runner {
         std::cout << "FEN: \n" << fen << std::endl;
 //
 
+
 //        timeEvaluation<state>(board, depth);
 //        std::cout << "Best Move(s) " << std::endl;
 ////        Utils::printMoveList(EngineMC::line.);
@@ -35,8 +36,9 @@ struct Runner {
 ////            if (move.from + move.to == 0) break;
 //            Utils::printMove(move);
 //        }
-//
-//        std::cout << EngineMC::nodesSearched << " nodes searched. " << std::endl;
+
+        std::cout << EngineMC::nodesSearched << " nodes searched. " << std::endl;
+        std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
     }
 };
 
@@ -47,6 +49,7 @@ int main(int argc, char* argv[]) {
     int depth = static_cast<int>(std::strtol(depth_str.c_str(), nullptr, 10));
 
     PieceSteps::load();
+    Zobrist::init();
 
     if (fen == "startpos" || fen == "start") {
         Utils::startingPositionAtDepth<Runner>(depth);
