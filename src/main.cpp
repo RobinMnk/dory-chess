@@ -23,19 +23,17 @@ struct Runner {
     template<State state, int depth>
     static void main(Board& board) {
 
-        MonteCarlo mc;
-        auto fen = mc.simulateGame(board, state);
-        std::cout << "FEN: \n" << fen << std::endl;
-//
+//        MonteCarlo mc;
+//        auto fen = mc.simulateGame(board, state);
+//        std::cout << "FEN: \n" << fen << std::endl;
 
-
-//        timeEvaluation<state>(board, depth);
-//        std::cout << "Best Move(s) " << std::endl;
-////        Utils::printMoveList(EngineMC::line.);
-//        for (auto& move: EngineMC::bestMoves) {
-////            if (move.from + move.to == 0) break;
-//            Utils::printMove(move);
-//        }
+        timeEvaluation<state>(board, 2);
+        std::cout << "Best Move(s) " << std::endl;
+//        Utils::printMoveList(EngineMC::line.);
+        for (auto& move: EngineMC::bestMoves) {
+//            if (move.from + move.to == 0) break;
+            Utils::printMove(move);
+        }
 
         std::cout << EngineMC::nodesSearched << " nodes searched. " << std::endl;
         std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
