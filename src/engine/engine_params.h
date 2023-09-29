@@ -8,16 +8,16 @@
 namespace engine_params {
 
     struct EvaluationParams {
-        double MATERIAL_WEIGHT_PAWN = 1.;
-        double MATERIAL_WEIGHT_KNIGHT = 3.;
-        double MATERIAL_WEIGHT_BISHOP = 3.1;
-        double MATERIAL_WEIGHT_ROOK = 5.;
-        double MATERIAL_WEIGHT_QUEEN = 9.;
-        double MATERIAL_QUANTIFIER = 1;
+        float MATERIAL_WEIGHT_PAWN = 1.;
+        float MATERIAL_WEIGHT_KNIGHT = 3.;
+        float MATERIAL_WEIGHT_BISHOP = 3.1;
+        float MATERIAL_WEIGHT_ROOK = 5.;
+        float MATERIAL_WEIGHT_QUEEN = 9.;
+        float MATERIAL_QUANTIFIER = 1;
     };
 
     template<Piece_t piece>
-    constexpr double pieceValue(EvaluationParams params) {
+    constexpr float pieceValue(EvaluationParams params) {
         if constexpr (piece == Piece::Pawn) {
             return params.MATERIAL_WEIGHT_PAWN;
         }

@@ -108,10 +108,10 @@ namespace Utils {
     }
 
     void printMove(const Move m) {
-        if(m.from + m.to == 0) std::cout << "NULL" << std::endl;
+        if(m.from() + m.to() == 0) std::cout << "NULL" << std::endl;
         else if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
         else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling) << std::endl;
-        else std::cout << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to) << specialMove(m.flags) << std::endl;
+        else std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to()) << specialMove(m.flags) << std::endl;
     }
 
     void print_board(const Board &board) {
@@ -122,7 +122,7 @@ namespace Utils {
         for(auto& m: moves) {
             if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling);
             else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling);
-            else std::cout << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to) << specialMove(m.flags);
+            else std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to()) << specialMove(m.flags);
             std::cout << " - ";
         }
         std::cout << std::endl;
@@ -169,13 +169,13 @@ namespace Utils {
     std::string moveName(Move m) {
         char piece = piece_as_char<whiteMoving>(m.piece);
         std::stringstream bss{};
-        bss << piece << ": " << squarename(m.from) << " -> " << squarename(m.to);
+        bss << piece << ": " << squarename(m.from()) << " -> " << squarename(m.from());
         return bss.str();
     }
 
     std::string moveNameShort(Move m) {
         std::stringstream bss{};
-        bss << squarename(m.from) << squarename(m.to);
+        bss << squarename(m.from()) << squarename(m.to());
         return bss.str();
     }
 
@@ -183,7 +183,7 @@ namespace Utils {
         std::stringstream bss{};
         if(m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
         else if(m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
-        else bss << pieceString(m.piece) << squarename(m.from) << "-" << squarename(m.to);
+        else bss << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to());
         return bss.str();
     }
 

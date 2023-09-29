@@ -44,10 +44,14 @@ namespace MoveFlag {
 }
 
 struct Move {
-    BB from{0}, to{0};
-    uint8_t piece{0}, flags{0};
+    uint8_t fromIndex{0}, toIndex{0}, piece{0}, flags{0};
+
+    constexpr Move(BB from, BB to, Piece_t pc, Flag_t fl);
+    constexpr Move() = default;
+
+    [[nodiscard]] BB from() const;
+    [[nodiscard]] BB to() const;
 };
-[[maybe_unused]] constexpr Move NULLMOVE = Move{};
 
 
 // ---------- BOARD GEOMETRY ----------
@@ -181,6 +185,20 @@ template<bool whiteToMove> constexpr BB pawnOnLastRow() {
 template<bool whiteToMove> constexpr BB firstRank() {
     if constexpr (whiteToMove) return rank2;
     else return rank7;
+}
+
+constexpr Move::Move(BB from, BB to, Piece_t pc, Flag_t fl) :
+        fromIndex{static_cast<uint8_t>(singleBitOf(from))},
+        toIndex{static_cast<uint8_t>(singleBitOf(to))},
+        piece{pc}, flags{fl} {}
+
+[[maybe_unused]] const Move NULLMOVE = Move{0, 0, 0, 0};
+
+BB Move::from() const {
+    return newMask(fromIndex);
+}
+BB Move::to() const {
+    return newMask(toIndex);
 }
 
 #endif //DORY_CHESS_H

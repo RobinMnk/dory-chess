@@ -28,9 +28,9 @@ public:
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
-            double eval = EngineMC::beginEvaluation(currentBoard, currentState, 2);
+            auto [eval, line] = EngineMC::beginEvaluation(currentBoard, currentState, 6);
 
-            if (EngineMC::bestMoves.empty() || ply > 50) {
+            if (EngineMC::bestMoves.empty() || ply > 30) {
                 std::cout << "END of Game!" << std::endl;
                 break;
             }

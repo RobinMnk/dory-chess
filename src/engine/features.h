@@ -12,12 +12,12 @@ using Params = engine_params::EvaluationParams;
 
 namespace features {
 
-    double material(const Board& board, Params params) {
-        double mat = (bitCount(board.wPawns) - bitCount(board.bPawns)) * params.MATERIAL_WEIGHT_PAWN +
-                        (bitCount(board.wKnights) - bitCount(board.bKnights)) * params.MATERIAL_WEIGHT_KNIGHT +
-                        (bitCount(board.wBishops) - bitCount(board.bBishops)) * params.MATERIAL_WEIGHT_BISHOP +
-                        (bitCount(board.wRooks) - bitCount(board.bRooks)) * params.MATERIAL_WEIGHT_ROOK +
-                        (bitCount(board.wQueens) - bitCount(board.bQueens)) * params.MATERIAL_WEIGHT_QUEEN;
+    float material(const Board& board, Params params) {
+        float mat = static_cast<float>(bitCount(board.wPawns) - bitCount(board.bPawns)) * params.MATERIAL_WEIGHT_PAWN +
+                static_cast<float>(bitCount(board.wKnights) - bitCount(board.bKnights)) * params.MATERIAL_WEIGHT_KNIGHT +
+                static_cast<float>(bitCount(board.wBishops) - bitCount(board.bBishops)) * params.MATERIAL_WEIGHT_BISHOP +
+                static_cast<float>(bitCount(board.wRooks) - bitCount(board.bRooks)) * params.MATERIAL_WEIGHT_ROOK +
+                static_cast<float>(bitCount(board.wQueens) - bitCount(board.bQueens)) * params.MATERIAL_WEIGHT_QUEEN;
 
         return mat * params.MATERIAL_QUANTIFIER;
     }

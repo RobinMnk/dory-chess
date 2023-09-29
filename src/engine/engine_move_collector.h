@@ -16,17 +16,19 @@
 #include "../utils.h"
 #include "../zobrist.h"
 
-double INF = 99999;
+float INF = 99999;
 
-int DEPTH_MARGIN_SIZE = 6;
-double BEST_MOVE_MARGIN = 0.05;
+int DEPTH_MARGIN_SIZE = 2;
+float BEST_MOVE_MARGIN = 0.05;
 size_t MAX_NUMBER_BEST_MOVES = 6;
 size_t MARGIN_THRESHOLD = 3;
+
+using NMR = std::pair<float, std::vector<Move>>;
 
 class GameTree {
     struct TreeNode {
         int offset{};
-        double eval{};
+        float eval{};
         Move move; // TODO: Idea -> move to external vector and save only index here!
     };
 
@@ -63,18 +65,18 @@ public:
 };
 
 
-double subjectiveEval(double eval, State state) {
+float subjectiveEval(float eval, State state) {
     return state.whiteToMove ? eval : -eval;
 }
 
-bool sortMovePairs(const std::pair<double, Move> &a, const std::pair<double, Move> &b) {
-    return a.first > b.first;
+bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
+    return a.first < b.first;
 }
 
 const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
 
 struct TTEntry {
-    double value;
+    float value;
     uint8_t depth, flag;
 };
 
@@ -87,32 +89,34 @@ public:
 //        }};
 //    }
 
-    static double beginEvaluation(const Board& board, State state, int md) {
+    static NMR beginEvaluation(const Board& board, State state, int md) {
         boundaryDepth = md;
         maxDepth = md + DEPTH_MARGIN_SIZE;
         bestMoves.clear();
         lookup_table.clear();
         nodesSearched = 0;
-        evaluation = subjectiveEval(negamax<true>(board, state, 1, -INF, INF), state);
-        return evaluation;
+        auto [ev, line] = negamax<true>(board, state, 1, -INF, INF);
+        bestMoves.clear();
+        bestMoves.push_back(line.back());
+        return {subjectiveEval(ev, state), line};
     }
 
-    static double evaluation;
+    static float evaluation;
     static std::vector<Move> bestMoves;
     static BB nodesSearched, lookups;
 
-    static std::vector<std::pair<double, Move>> topLevelLegalMoves() {
+    static std::vector<std::pair<float, Move>> topLevelLegalMoves() {
         return moves[0];
     }
 private:
-    static std::array<std::vector<std::pair<double, Move>>, 16> moves;
+    static std::array<std::vector<std::pair<float, Move>>, 26> moves;
     static int maxDepth, boundaryDepth, currentDepth;
     static std::unordered_map<BB, TTEntry> lookup_table;
 
 
     template<bool topLevel>
-    static double negamax(const Board& board, State state, int depth, double alpha, double beta) {
-        double origAlpha = alpha;
+    static NMR negamax(const Board& board, State state, int depth, float alpha, float beta) {
+        float origAlpha = alpha;
 
         size_t boardHash;
         if constexpr (!topLevel) {
@@ -124,25 +128,26 @@ private:
                 if (entry.depth <= depth) {
                     lookups++;
                     if (entry.flag == TTFlagExact) {
-                        return entry.value;
+                        return {entry.value, {}};
                     } else if (entry.flag == TTFlagLowerBound) {
                         if (entry.value > alpha) alpha = entry.value;
                     } else if (entry.flag == TTFlagUpperBound) {
                         if (entry.value < beta) beta = entry.value;
                     }
 
-                    if (alpha >= beta) return entry.value;
+                    if (alpha >= beta) return {entry.value, {}};
                 }
             }
         }
 
         if (depth >= maxDepth) {
-            double heuristic_val = evaluation::position_evaluate(board);
+            float heuristic_val = evaluation::position_evaluate(board);
             nodesSearched++;
-            return subjectiveEval(heuristic_val, state);
+            return {subjectiveEval(heuristic_val, state), {}};
         }
 
-        double currentEval = -1000000;
+        float currentEval = -1000000;
+        std::vector<Move> bestLine;
 
         moves[depth].clear();
         currentDepth = depth;
@@ -151,7 +156,7 @@ private:
 
         if (checkmated) {
             nodesSearched++;
-            return -INF;
+            return {-INF, {}};
         }
 
 //        std::cout << depth << std::endl;
@@ -159,7 +164,7 @@ private:
         if (moves[depth].empty()) {
             // Stalemate!
             nodesSearched++;
-            return 0;
+            return {0, {}};
         }
 
         std::sort(moves[depth].begin(), moves[depth].end(), sortMovePairs);
@@ -169,54 +174,59 @@ private:
 
 //            std::cout << depth << " : " << Utils::moveNameNotation(move) << std::endl;
 
-            double eval{};
+            float eval{};
             bool expandMove = depth <= boundaryDepth;
             // Either expand Move or set heuristic val
             // expand if capture or check
             if(!expandMove) {
                 BB enemyPieces = state.whiteToMove ? board.enemyPieces<true>() : board.enemyPieces<false>();
-                if((move.to & enemyPieces) != 0) {
+                if(hasBitAt(enemyPieces, move.toIndex)) {
                     expandMove = true;
 //                    std::cout << "Extending Depth for " << Utils::moveNameNotation(move) << std::endl;
                 }
             }
 
+            std::vector<Move> line;
             if(expandMove) {
                 auto [nextBoard, nextState] = make_move(board, state, move);
-                eval = - negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
+                auto [ev, ln] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
+                eval = -ev;
+                line = ln;
             } else {
                 nodesSearched++;
-                double heuristic_val = evaluation::position_evaluate(board);
-                return subjectiveEval(heuristic_val, state);
+                float heuristic_val = evaluation::position_evaluate(board);
+                return {subjectiveEval(heuristic_val, state), {}};
             }
 
-            if constexpr (topLevel) {
-                std::cout << "EVAL: " << subjectiveEval(eval, state) << std::endl;
-                Utils::printMove(move);
-            }
+//            if constexpr (topLevel) {
+//                std::cout << "EVAL: " << subjectiveEval(eval, state) << std::endl;
+//                Utils::printMove(move);
+//            }
 
             if (eval > currentEval) {
                 currentEval = eval;
+                line.push_back(move);
+                bestLine = line;
 
-                if constexpr (topLevel) {
-                    bestMoves.clear();
-                    bestMoves.push_back(move);
-                }
+//                if constexpr (topLevel) {
+//                    bestMoves.clear();
+//                    bestMoves.push_back(move);
+//                }
 //            } else {
 //                if constexpr (topLevel) {
-//                    double margin = bestMoves.size() >= MARGIN_THRESHOLD ? 0 : BEST_MOVE_MARGIN;
+//                    float margin = bestMoves.size() >= MARGIN_THRESHOLD ? 0 : BEST_MOVE_MARGIN;
 //                    if (eval >= currentEval - margin && bestMoves.size() < MAX_NUMBER_BEST_MOVES) {
 //                        bestMoves.push_back(move);
 //                    }
 //                }
             }
 
-            if constexpr (!topLevel) {
+//            if constexpr (!topLevel) {
                 if (currentEval > alpha) {
                     alpha = currentEval;
                 }
                 if (alpha >= beta) break;
-            }
+//            }
         }
 
         if constexpr (!topLevel) {
@@ -231,7 +241,7 @@ private:
             lookup_table.insert({boardHash, entry});
         }
 
-        return currentEval;
+        return {currentEval, bestLine};
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
@@ -248,11 +258,11 @@ private:
     friend class MoveGenerator<EngineMC>;
 };
 
-std::array<std::vector<std::pair<double, Move>>, 16> EngineMC::moves{};
+std::array<std::vector<std::pair<float, Move>>, 26> EngineMC::moves{};
 int EngineMC::currentDepth{0};
 int EngineMC::boundaryDepth{0};
 int EngineMC::maxDepth{0};
-double EngineMC::evaluation{0};
+float EngineMC::evaluation{0};
 BB EngineMC::nodesSearched{0};
 BB EngineMC::lookups{0};
 std::vector<Move> EngineMC::bestMoves{};

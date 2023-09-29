@@ -10,20 +10,20 @@
 
 namespace evaluation {
 
-    double position_evaluate(const Board& board) {
+    float position_evaluate(const Board& board) {
         engine_params::EvaluationParams params;
         return features::material(board, params);
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static double move_heuristic(const Board &board, BB from, BB to) {
+    static float move_heuristic(const Board &board, BB from, BB to) {
         engine_params::EvaluationParams params;
 
-        double heuristic_val{0};
+        float heuristic_val{0};
 
         // is Capture
         if ((to & board.enemyPieces<state.whiteToMove>()) != 0) {
-            double valueDiff = engine_params::pieceValue<piece>(params);
+            float valueDiff = engine_params::pieceValue<piece>(params);
             if (board.enemyPawns<state.whiteToMove>() & to) {
                 valueDiff -= engine_params::pieceValue<Piece::Pawn>(params);
             }
@@ -44,7 +44,7 @@ namespace evaluation {
         }
 
         Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-        double position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
+        float position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
 
         heuristic_val += position_eval_diff;
 
