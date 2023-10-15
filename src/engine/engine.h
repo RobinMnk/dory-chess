@@ -2,8 +2,8 @@
 // Created by robin on 24.08.2023.
 //
 
-#ifndef DORY_ENGINE_MOVE_COLLECTOR_H
-#define DORY_ENGINE_MOVE_COLLECTOR_H
+#ifndef DORY_ENGINE_H
+#define DORY_ENGINE_H
 
 #include <iostream>
 #include <stack>
@@ -50,7 +50,7 @@ public:
 //        }};
 //    }
 
-    static NMR beginEvaluation(const Board& board, State state, int md) {
+    static NMR beginEvaluation(const BoardPtr& board, const State state, int md) {
         boundaryDepth = md;
         maxDepth = md + DEPTH_MARGIN_SIZE;
         bestMoves.clear();
@@ -75,10 +75,10 @@ private:
     static std::unordered_map<BB, TTEntry> lookup_table;
 
     template<bool topLevel>
-    static NMR negamax(const Board& board, State state, int depth, float alpha, float beta) {
+    static NMR negamax(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
         float origAlpha = alpha;
 
-        // Lookup position in table
+        //// Lookup position in table
         size_t boardHash;
         if constexpr (!topLevel) {
             boardHash = Zobrist::hash(board, state);
@@ -101,7 +101,7 @@ private:
             }
         }
 
-        // Recursion Base Case: Max Depth reached -> return heuristic position eval
+        //// Recursion Base Case: Max Depth reached -> return heuristic position eval
         if (depth > maxDepth) {
             nodesSearched++;
             float heuristic_val = evaluation::position_evaluate(board);
@@ -130,7 +130,7 @@ private:
         currentDepth = depth;
         generate<EngineMC>(board, state, pd, capturesOnly);
 
-        bool checkmated = pd->inCheck() && moves.empty();
+        bool checkmated = pd->inCheck() && moves[depth].empty();
 
         if (checkmated) {
             nodesSearched++;
@@ -156,7 +156,7 @@ private:
         float currentEval = -1000000;
         std::vector<Move> bestLine;
 
-        // Iterate through all moves
+        //// Iterate through all moves
         for(auto& move_pair: moves[depth]) {
             auto [info, move] = move_pair;
 
@@ -169,7 +169,7 @@ private:
             std::vector<Move> line;
 //            if(expandMove) {
             auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
-            auto [ev, ln] = negamax<false>(*nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
+            auto [ev, ln] = negamax<false>(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
             eval = -ev;
             line = ln;
 //            } else {
@@ -212,9 +212,9 @@ private:
 //            }
         }
 
-        // Save to lookup table
+        //// Save to lookup table
         if constexpr (!topLevel) {
-            uint8_t flag{};
+            uint8_t flag;
             if (currentEval <= origAlpha)
                 flag = TTFlagUpperBound;
             else if (currentEval >= beta)
@@ -229,7 +229,7 @@ private:
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static void registerMove(const Board &board, BB from, BB to) {
+    static void registerMove(const BoardPtr &board, BB from, BB to) {
         moves[currentDepth].emplace_back(
             evaluation::move_heuristic<state, piece, flags>(board, from, to),
             Move(from, to, piece, flags)
@@ -263,4 +263,4 @@ std::unordered_map<BB, TTEntry> EngineMC::lookup_table;
 //template<bool saveList, bool print>
 //std::vector<Board> EngineMC<saveList, print>::positions{};
 
-#endif //DORY_ENGINE_MOVE_COLLECTOR_H
+#endif //DORY_ENGINE_H

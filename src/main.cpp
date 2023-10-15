@@ -2,13 +2,12 @@
 
 #include "board.h"
 #include "fenreader.h"
-#include "engine/engine_move_collector.h"
+#include "engine/engine.h"
 #include "engine/monte_carlo.h"
 
 //using Collector = MoveCollectors::LimitedDFS<false, false>;
 
-template<State state>
-NMR timeEvaluation(const Board& board, int depth) {
+NMR timeEvaluation(const BoardPtr& board, const State state, int depth) {
     auto t1 = std::chrono::high_resolution_clock::now();
     auto [eval, line] = EngineMC::beginEvaluation(board, state, depth);
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -35,19 +34,16 @@ struct Runner {
     template<State state, int depth>
     static void main(Board& board) {
 
+        const BoardPtr& brd = std::make_unique<Board>(board);
+
         bool monte = false;
 
         if (monte) {
-
-            MonteCarlo mc;
-            auto fen = mc.simulateGame(board, state);
+            auto fen = MonteCarlo::simulateGame(brd, state);
             std::cout << "FEN: \n" << fen << std::endl;
 
-            timeEvaluation<state>(board, 2);
-
         } else {
-
-            auto [eval, line] = timeEvaluation<state>(board, 5);
+            auto [eval, line] = timeEvaluation(brd, state, 6);
 
             std::cout << "Best Move(s) " << std::endl;
             for (auto& move: line) {

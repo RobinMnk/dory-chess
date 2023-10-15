@@ -11,7 +11,7 @@ using PDptr = std::unique_ptr<PinData>;
 
 template<typename MC, State state, Piece_t piece, Flag_t flags>
 concept ValidMoveCollector =
-    requires(MC mc, const Board& board, BB from, BB to) {
+    requires(MC mc, const BoardPtr& board, BB from, BB to) {
         MC::template registerMove<state, piece, flags>(board, from, to);
     };
 
@@ -19,51 +19,51 @@ template<typename MC>
 class MoveGenerator {
 public:
     template<State>
-    static void generate(const Board& board, const PDptr& pd, bool capturesOnly=false);
+    static void generate(const BoardPtr& board, const PDptr& pd, bool capturesOnly=false);
 
 private:
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     requires ValidMoveCollector<MC, state, piece, flags>
-    static void generateSuccessorBoard(const Board& board, BB from, BB to);
+    static void generateSuccessorBoard(const BoardPtr& board, BB from, BB to);
 
     // - - - - - - Helper Functions - - - - - -
 
     template<State, Piece_t, Flag_t = MoveFlag::Silent>
-    static void addToList(const Board& board, int fromIndex, BB targets);
+    static void addToList(const BoardPtr& board, int fromIndex, BB targets);
 
     template<State>
-    static void handlePromotions(const Board& board, BB from, BB to);
+    static void handlePromotions(const BoardPtr& board, BB from, BB to);
 
     // - - - - - - Individual Piece Moves - - - - - -
 
     template<State>
-    static void pawnMoves(const Board& board, const PDptr& pd);
+    static void pawnMoves(const BoardPtr& board, const PDptr& pd);
 
     template<State>
-    static void knightMoves(const Board& board, const PDptr& pd);
+    static void knightMoves(const BoardPtr& board, const PDptr& pd);
 
     template<State>
-    static void bishopMoves(const Board& board, const PDptr& pd);
+    static void bishopMoves(const BoardPtr& board, const PDptr& pd);
 
     template<State>
-    static void rookMoves(const Board& board, const PDptr& pd);
+    static void rookMoves(const BoardPtr& board, const PDptr& pd);
 
     template<State>
-    static void queenMoves(const Board& board, const PDptr& pd);
+    static void queenMoves(const BoardPtr& board, const PDptr& pd);
 
     template<State>
-    static void kingMoves(const Board& board, const PDptr& pd);
+    static void kingMoves(const BoardPtr& board, const PDptr& pd);
 
     template<State>
-    static void castles(const Board& board, const PDptr& pd);
+    static void castles(const BoardPtr& board, const PDptr& pd);
 };
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::generate(const Board& board, const PDptr& pd, bool capturesOnly) {
+void MoveGenerator<MoveCollector>::generate(const BoardPtr& board, const PDptr& pd, bool capturesOnly) {
 
     if (capturesOnly)
-        pd->targetSquares &= board.enemyPieces<state.whiteToMove>();
+        pd->targetSquares &= board->enemyPieces<state.whiteToMove>();
 
     if(!pd->isDoubleCheck) {
         pawnMoves<state>(board, pd);
@@ -85,11 +85,11 @@ void MoveGenerator<MoveCollector>::generate(const Board& board, const PDptr& pd,
 template<typename MoveCollector>
 template<State state, Piece_t piece, Flag_t flags>
 requires ValidMoveCollector<MoveCollector, state, piece, flags>
-void MoveGenerator<MoveCollector>::generateSuccessorBoard(const Board& board, BB from, BB to) {
+void MoveGenerator<MoveCollector>::generateSuccessorBoard(const BoardPtr& board, BB from, BB to) {
     MoveCollector::template registerMove<state, piece, flags>(board, from, to);
 
 //    constexpr State nextState = getNextState<state, flags>();
-//    Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
+//    Board nextBoard = board->getNextBoard<state, piece, flags>(from, to);
 //    MoveCollector::template next<nextState>(nextBoard);
 }
 
@@ -97,7 +97,7 @@ void MoveGenerator<MoveCollector>::generateSuccessorBoard(const Board& board, BB
 
 template<typename MoveCollector>
 template<State state, Piece_t piece, Flag_t flags>
-void MoveGenerator<MoveCollector>::addToList(const Board& board, int fromIndex, BB targets) {
+void MoveGenerator<MoveCollector>::addToList(const BoardPtr& board, int fromIndex, BB targets) {
     BB fromBB = newMask(fromIndex);
     Bitloop(targets) {
         BB toBB = isolateLowestBit(targets);
@@ -107,7 +107,7 @@ void MoveGenerator<MoveCollector>::addToList(const Board& board, int fromIndex, 
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::handlePromotions(const Board& board, BB from, BB to) {
+void MoveGenerator<MoveCollector>::handlePromotions(const BoardPtr& board, BB from, BB to) {
     generateSuccessorBoard<state, Piece::Pawn, MoveFlag::PromoteQueen>(board, from, to);
     generateSuccessorBoard<state, Piece::Pawn, MoveFlag::PromoteRook>(board, from, to);
     generateSuccessorBoard<state, Piece::Pawn, MoveFlag::PromoteBishop>(board, from, to);
@@ -118,12 +118,12 @@ void MoveGenerator<MoveCollector>::handlePromotions(const Board& board, BB from,
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::pawnMoves(const Board& board, const PDptr& pd) {
+void MoveGenerator<MoveCollector>::pawnMoves(const BoardPtr& board, const PDptr& pd) {
     constexpr bool white = state.whiteToMove;
-    BB free = board.free();
-    BB enemy = board.enemyPieces<white>();
-    BB pawnsFwd = board.pawns<white>() & ~pd->pinsDiag;
-    BB pawnCapt = board.pawns<white>() & ~pd->pinsStr;
+    BB free = board->free();
+    BB enemy = board->enemyPieces<white>();
+    BB pawnsFwd = board->pawns<white>() & ~pd->pinsDiag;
+    BB pawnCapt = board->pawns<white>() & ~pd->pinsStr;
 
     // pawns that can move 1 or 2 squares
     BB pwnMov = pawnsFwd & backward<white>(free);
@@ -142,8 +142,8 @@ void MoveGenerator<MoveCollector>::pawnMoves(const Board& board, const PDptr& pd
 
     // handle en passant pawns
     BB epPawnL{0}, epPawnR{0};
-    if(board.hasEnPassant() != 0 && !pd->blockEP) {
-        BB enPassant = board.enPassantBB();
+    if(board->hasEnPassant() != 0 && !pd->blockEP) {
+        BB enPassant = board->enPassantBB();
         // left capture is ep square and is on checkmask
         epPawnL = pawnCapt & pawnCanGoLeft<white>() & pawnInvAtkLeft<white>(enPassant & forward<white>(pd->checkMask));
         // remove pinned ep pawns
@@ -212,9 +212,9 @@ void MoveGenerator<MoveCollector>::pawnMoves(const Board& board, const PDptr& pd
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::knightMoves(const Board& board, const PDptr& pd) {
+void MoveGenerator<MoveCollector>::knightMoves(const BoardPtr& board, const PDptr& pd) {
     BB allPins = pd->pinsStr | pd->pinsDiag;
-    BB movKnights = board.knights<state.whiteToMove>() & ~allPins;
+    BB movKnights = board->knights<state.whiteToMove>() & ~allPins;
 
     Bitloop(movKnights) {
         int ix = firstBitOf(movKnights);
@@ -225,12 +225,12 @@ void MoveGenerator<MoveCollector>::knightMoves(const Board& board, const PDptr& 
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::bishopMoves(const Board& board, const PDptr& pd) {
-    BB bishops = board.bishops<state.whiteToMove>() & ~pd->pinsStr;
+void MoveGenerator<MoveCollector>::bishopMoves(const BoardPtr& board, const PDptr& pd) {
+    BB bishops = board->bishops<state.whiteToMove>() & ~pd->pinsStr;
 
     Bitloop(bishops) {
         int ix = firstBitOf(bishops);
-        BB targets = PieceSteps::slideMask<true>(board.occ(), ix) & pd->targetSquares;
+        BB targets = PieceSteps::slideMask<true>(board->occ(), ix) & pd->targetSquares;
         if(hasBitAt(pd->pinsDiag, ix)) targets &= pd->pinsDiag;
         addToList<state, Piece::Bishop>(board, ix, targets);
     }
@@ -238,13 +238,13 @@ void MoveGenerator<MoveCollector>::bishopMoves(const Board& board, const PDptr& 
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::rookMoves(const Board& board, const PDptr& pd) {
-    BB rooks = board.rooks<state.whiteToMove>() & ~pd->pinsDiag;
+void MoveGenerator<MoveCollector>::rookMoves(const BoardPtr& board, const PDptr& pd) {
+    BB rooks = board->rooks<state.whiteToMove>() & ~pd->pinsDiag;
 
     Bitloop(rooks) {
         int ix = firstBitOf(rooks);
 
-        BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd->targetSquares;
+        BB targets = PieceSteps::slideMask<false>(board->occ(), ix) & pd->targetSquares;
         if(hasBitAt(pd->pinsStr, ix)) targets &= pd->pinsStr;
 
         if constexpr(canCastleShort<state>()) {
@@ -266,67 +266,67 @@ void MoveGenerator<MoveCollector>::rookMoves(const Board& board, const PDptr& pd
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::queenMoves(const Board& board, const PDptr& pd) {
-    BB queens = board.queens<state.whiteToMove>();
+void MoveGenerator<MoveCollector>::queenMoves(const BoardPtr& board, const PDptr& pd) {
+    BB queens = board->queens<state.whiteToMove>();
     BB queensPinStr = queens & pd->pinsStr & ~pd->pinsDiag;
     BB queensPinDiag = queens & pd->pinsDiag & ~pd->pinsStr;
     BB queensNoPin = queens & ~(pd->pinsDiag | pd->pinsStr);
 
     Bitloop(queensPinStr) {
         int ix = firstBitOf(queensPinStr);
-        BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd->targetSquares & pd->pinsStr;
+        BB targets = PieceSteps::slideMask<false>(board->occ(), ix) & pd->targetSquares & pd->pinsStr;
         addToList<state, Piece::Queen>(board, ix, targets);
     }
 
     Bitloop(queensPinDiag) {
         int ix = firstBitOf(queensPinDiag);
-        BB targets = PieceSteps::slideMask<true>(board.occ(), ix) & pd->targetSquares & pd->pinsDiag;
+        BB targets = PieceSteps::slideMask<true>(board->occ(), ix) & pd->targetSquares & pd->pinsDiag;
         addToList<state, Piece::Queen>(board, ix, targets);
     }
 
     Bitloop(queensNoPin) {
         int ix = firstBitOf(queensNoPin);
-        BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd->targetSquares;
-        targets |= PieceSteps::slideMask<true>(board.occ(), ix) & pd->targetSquares;
+        BB targets = PieceSteps::slideMask<false>(board->occ(), ix) & pd->targetSquares;
+        targets |= PieceSteps::slideMask<true>(board->occ(), ix) & pd->targetSquares;
         addToList<state, Piece::Queen>(board, ix, targets);
     }
 }
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::kingMoves(const Board& board, const PDptr& pd) {
-    int ix = board.kingSquare<state.whiteToMove>();
-    BB targets = PieceSteps::KING_MOVES[ix] & ~pd->attacked & board.enemyOrEmpty<state.whiteToMove>();
+void MoveGenerator<MoveCollector>::kingMoves(const BoardPtr& board, const PDptr& pd) {
+    int ix = board->kingSquare<state.whiteToMove>();
+    BB targets = PieceSteps::KING_MOVES[ix] & ~pd->attacked & board->enemyOrEmpty<state.whiteToMove>();
     addToList<state, Piece::King, MoveFlag::RemoveAllCastling>(board, ix, targets);
 }
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::castles(const Board& board, const PDptr& pd) {
+void MoveGenerator<MoveCollector>::castles(const BoardPtr& board, const PDptr& pd) {
     constexpr bool white = state.whiteToMove;
     constexpr BB startKing = STARTBOARD.king<white>();
     constexpr BB csMask = castleShortMask<white>();
     constexpr BB clMask = castleLongMask<white>();
-    BB kingBB = board.king<white>();
+    BB kingBB = board->king<white>();
 
     if constexpr (canCastleShort<state>())
         if(kingBB == startKing
-               && board.rooks<white>() & startingKingsideRook<white>()
+               && board->rooks<white>() & startingKingsideRook<white>()
                && (csMask & pd->attacked) == 0
-               && (csMask & board.occ()) == kingBB
+               && (csMask & board->occ()) == kingBB
         ) generateSuccessorBoard<state, Piece::King, MoveFlag::ShortCastling>(board, kingBB, kingBB << 2);
 
     if constexpr (canCastleLong<state>())
         if(kingBB == startKing
-           && board.rooks<white>() & startingQueensideRook<white>()
+           && board->rooks<white>() & startingQueensideRook<white>()
            && (clMask & pd->attacked) == 0
-           && (clMask & board.occ()) == kingBB
-           && board.free() & (startingQueensideRook<white>() << 1)
+           && (clMask & board->occ()) == kingBB
+           && board->free() & (startingQueensideRook<white>() << 1)
         ) generateSuccessorBoard<state, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);
 }
 
 template<typename MC>
-static void generate(const Board& board, State state, PDptr& pd, bool capturesOnly=false) {
+static void generate(const BoardPtr& board, State state, PDptr& pd, bool capturesOnly=false) {
     unsigned int state_code = state.code();
     switch (state_code) {
         case 0: MoveGenerator<MC>::template generate<toState(0)>(board, pd, capturesOnly); break;
