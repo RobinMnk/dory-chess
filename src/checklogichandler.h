@@ -11,23 +11,26 @@
 struct PinData {
     bool isDoubleCheck{false}, blockEP{false};
     BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
+
+    [[nodiscard]] bool inCheck() const {
+        return checkMask != FULL_BB;
+    }
 };
 
 class CheckLogicHandler {
-    template<State, bool>
+    template<bool, bool>
     static BB addPins(const Board& board, int kingSquare, bool& blockEP);
 
 public:
-    template<State>
-    static PinData reload(const Board& board);
+    template<bool>
+    static std::unique_ptr<PinData> reload(const Board& board);
 };
 
-template<State state, bool diag>
+template<bool whiteToMove, bool diag>
 BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP){
-    constexpr bool white = state.whiteToMove;
     std::array<BB, 8> kingLines = PieceSteps::LINES[kingSquare];
     auto dirs = diag ? PieceSteps::diagonal : PieceSteps::straight;
-    BB pieces = board.enemySliders<white, diag>();
+    BB pieces = board.enemySliders<whiteToMove, diag>();
     BB mask = 0;
 
     for(int dir_id: dirs) {
@@ -38,17 +41,17 @@ BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP)
             int ix = dir_off > 0 ? firstBitOf(sol) : lastBitOf(sol);
             BB kl = line & PieceSteps::FROM_TO[kingSquare][ix];
             if(
-                bitCount(kl & board.enemyPieces<white>()) == 1             // only enemyPieces piece on line is the slider
-                && bitCount(kl & board.myPieces<white>()) == 1             // I only have one piece on line (excluding king)
+                bitCount(kl & board.enemyPieces<whiteToMove>()) == 1             // only enemyPieces piece on line is the slider
+                && bitCount(kl & board.myPieces<whiteToMove>()) == 1             // I only have one piece on line (excluding king)
             ) mask |= kl;
 
             // handle very special case of two sideways pinned epPawns
             // add pin line through two pawns to prevent pinned en passant
             else if(board.hasEnPassant()
                 && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
-                && rankOf(kingSquare) == epRankNr<white>()
-                && bitCount(kl & board.pawns<white>()) == 1         // one own pawn
-                && bitCount(kl & board.enemyPawns<white>()) == 1    // one enemy pawn
+                && rankOf(kingSquare) == epRankNr<whiteToMove>()
+                && bitCount(kl & board.pawns<whiteToMove>()) == 1         // one own pawn
+                && bitCount(kl & board.enemyPawns<whiteToMove>()) == 1    // one enemy pawn
                 && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
             ) blockEP = true;
         }
@@ -56,9 +59,8 @@ BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP)
     return mask;
 }
 
-template<State state>
-PinData CheckLogicHandler::reload(const Board& board){
-    constexpr bool white = state.whiteToMove;
+template<bool white>
+std::unique_ptr<PinData> CheckLogicHandler::reload(const Board& board){
     BB attacked{0}, checkMask{0}, mask;
     int numChecks = 0;
     bool blockEP = false;
@@ -129,12 +131,12 @@ PinData CheckLogicHandler::reload(const Board& board){
     bool isDoubleCheck = numChecks > 1;
     if(isDoubleCheck) checkMask = 0;
 
-    BB pinsDiagonal = addPins<state, true>(board, kingSquare, blockEP);
-    BB pinsStraight = addPins<state, false>(board, kingSquare, blockEP);
+    BB pinsDiagonal = addPins<white, true>(board, kingSquare, blockEP);
+    BB pinsStraight = addPins<white, false>(board, kingSquare, blockEP);
     if(numChecks == 0) checkMask = FULL_BB;
-    BB targetSquares = board.enemyOrEmpty<state.whiteToMove>() & checkMask;
+    BB targetSquares = board.enemyOrEmpty<white>() & checkMask;
 
-    return { isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal };
+    return std::make_unique<PinData>(isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal);
 }
 
 #endif //DORY_CHECKLOGICHANDLER_H

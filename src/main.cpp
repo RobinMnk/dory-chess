@@ -8,22 +8,34 @@
 //using Collector = MoveCollectors::LimitedDFS<false, false>;
 
 template<State state>
-double timeEvaluation(const Board& board, int depth) {
+NMR timeEvaluation(const Board& board, int depth) {
     auto t1 = std::chrono::high_resolution_clock::now();
     auto [eval, line] = EngineMC::beginEvaluation(board, state, depth);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
-    std::cout << "Evaluation: " << eval << "     (time " << ms_int.count() << "ms)\n";
-    return eval;
+    std::cout << "Evaluation: " << eval << std::endl;
+
+    std::chrono::duration<double> seconds = t2 - t1;
+
+    std::cout << "Searched " << EngineMC::nodesSearched << " nodes in " << ms_int.count() << "ms";
+
+    double knps = (static_cast<double>(EngineMC::nodesSearched) / 1000) / seconds.count();
+    if (knps < 1000) {
+        std::cout << "\t\t(" << knps << " k nps)\n\n";
+    } else {
+        std::cout << "\t\t(" << (knps / 1000) << " M nps)\n\n";
+    }
+
+    return {eval, line};
 }
 
 struct Runner {
     template<State state, int depth>
     static void main(Board& board) {
 
-        bool monte = true;
+        bool monte = false;
 
         if (monte) {
 
@@ -35,22 +47,13 @@ struct Runner {
 
         } else {
 
-            auto t1 = std::chrono::high_resolution_clock::now();
-            auto [eval, line] = EngineMC::beginEvaluation(board, state, 6);
-            auto t2 = std::chrono::high_resolution_clock::now();
-
-            auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
-
-            std::cout << "Evaluation: " << eval << "     (time " << ms_int.count() << "ms)\n";
+            auto [eval, line] = timeEvaluation<state>(board, 5);
 
             std::cout << "Best Move(s) " << std::endl;
-//        Utils::printMoveList(EngineMC::line.);
             for (auto& move: line) {
-//            if (move.from + move.to == 0) break;
                 Utils::printMove(move);
             }
 
-            std::cout << EngineMC::nodesSearched << " nodes searched. " << std::endl;
             std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
         }
     }

@@ -18,51 +18,12 @@
 
 float INF = 99999;
 
-int DEPTH_MARGIN_SIZE = 2;
+int DEPTH_MARGIN_SIZE = 0;
 float BEST_MOVE_MARGIN = 0.05;
 size_t MAX_NUMBER_BEST_MOVES = 6;
 size_t MARGIN_THRESHOLD = 3;
 
 using NMR = std::pair<float, std::vector<Move>>;
-
-class GameTree {
-    struct TreeNode {
-        int offset{};
-        float eval{};
-        Move move; // TODO: Idea -> move to external vector and save only index here!
-    };
-
-    using TPT = std::shared_ptr<TreeNode>;
-
-    std::vector<std::vector<TPT>> tree{};
-    TPT root;
-    Board* startBoard;
-    State startState;
-
-public:
-    GameTree (const Board& board, State& state) : startBoard{new Board(board)}, startState(state) {
-        root = std::make_unique<TreeNode>();
-    }
-
-    void expand() {
-        TPT parent = root;
-
-        int index = 0, level = 0;
-        Board* currentBoard = startBoard;
-        State currentState = startState;
-
-        for(TPT node: tree.at(level)) {
-            if(index == root->offset) {
-                // Expand this node
-
-                continue;
-            }
-
-            index++;
-        }
-
-    }
-};
 
 
 float subjectiveEval(float eval, State state) {
@@ -70,7 +31,7 @@ float subjectiveEval(float eval, State state) {
 }
 
 bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
-    return a.first < b.first;
+    return a.first > b.first;
 }
 
 const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
@@ -113,11 +74,11 @@ private:
     static int maxDepth, boundaryDepth, currentDepth;
     static std::unordered_map<BB, TTEntry> lookup_table;
 
-
     template<bool topLevel>
     static NMR negamax(const Board& board, State state, int depth, float alpha, float beta) {
         float origAlpha = alpha;
 
+        // Lookup position in table
         size_t boardHash;
         if constexpr (!topLevel) {
             boardHash = Zobrist::hash(board, state);
@@ -140,26 +101,41 @@ private:
             }
         }
 
-        if (depth >= maxDepth) {
-            float heuristic_val = evaluation::position_evaluate(board);
+        // Recursion Base Case: Max Depth reached -> return heuristic position eval
+        if (depth > maxDepth) {
             nodesSearched++;
+            float heuristic_val = evaluation::position_evaluate(board);
             return {subjectiveEval(heuristic_val, state), {}};
         }
 
-        float currentEval = -1000000;
-        std::vector<Move> bestLine;
+
+//        bool expandMove = depth < boundaryDepth;
+        // Either expand Move or set heuristic val
+        // expand if capture or check
+//        if(!expandMove) {
+//            BB enemyPieces = state.whiteToMove ? board.enemyPieces<true>() : board.enemyPieces<false>();
+//            if(hasBitAt(enemyPieces, move.toIndex)) {
+//                expandMove = true;
+//                std::cout << "Extending Depth for " << Utils::moveNameNotation(move) << std::endl;
+//            }
+//        }
+
+        PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
+
+        // Definitely expand if in check pd.inCheck()
+
+        bool capturesOnly = depth >= boundaryDepth;
 
         moves[depth].clear();
         currentDepth = depth;
+        generate<EngineMC>(board, state, pd, capturesOnly);
 
-        bool checkmated = generate<EngineMC>(board, state);
+        bool checkmated = pd->inCheck() && moves.empty();
 
         if (checkmated) {
             nodesSearched++;
             return {-INF, {}};
         }
-
-//        std::cout << depth << std::endl;
 
         if (moves[depth].empty()) {
             // Stalemate!
@@ -167,36 +143,43 @@ private:
             return {0, {}};
         }
 
-        std::sort(moves[depth].begin(), moves[depth].end(), sortMovePairs);
+//        std::sort(moves[depth].begin(), moves[depth].end(), sortMovePairs);
 
+//        if constexpr (topLevel) {
+//            for(auto& x: moves[depth]) {
+//                std::cout << "(" << x.first << ", " << Utils::moveNameNotation(x.second) << ") ";
+//            }
+//            std::cout << std::endl;
+//        }
+
+
+        float currentEval = -1000000;
+        std::vector<Move> bestLine;
+
+        // Iterate through all moves
         for(auto& move_pair: moves[depth]) {
             auto [info, move] = move_pair;
 
+//            for (int i = 0; i < depth; i++)
+//                std::cout << " ";
 //            std::cout << depth << " : " << Utils::moveNameNotation(move) << std::endl;
 
-            float eval{};
-            bool expandMove = depth <= boundaryDepth;
-            // Either expand Move or set heuristic val
-            // expand if capture or check
-            if(!expandMove) {
-                BB enemyPieces = state.whiteToMove ? board.enemyPieces<true>() : board.enemyPieces<false>();
-                if(hasBitAt(enemyPieces, move.toIndex)) {
-                    expandMove = true;
-//                    std::cout << "Extending Depth for " << Utils::moveNameNotation(move) << std::endl;
-                }
-            }
 
+            float eval;
             std::vector<Move> line;
-            if(expandMove) {
-                auto [nextBoard, nextState] = make_move(board, state, move);
-                auto [ev, ln] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
-                eval = -ev;
-                line = ln;
-            } else {
-                nodesSearched++;
-                float heuristic_val = evaluation::position_evaluate(board);
-                return {subjectiveEval(heuristic_val, state), {}};
-            }
+//            if(expandMove) {
+            auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
+            auto [ev, ln] = negamax<false>(*nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
+            eval = -ev;
+            line = ln;
+//            } else {
+//                nodesSearched++;
+//                float heuristic_val = evaluation::position_evaluate(board);
+//                nodesSearched++;
+//                eval = subjectiveEval(heuristic_val, state);
+////                std::cout << "\t\t\t\t\t\t\t\t\t" << subjectiveEval(heuristic_val, state) << std::endl;
+////                return {subjectiveEval(heuristic_val, state), {}};
+//            }
 
 //            if constexpr (topLevel) {
 //                std::cout << "EVAL: " << subjectiveEval(eval, state) << std::endl;
@@ -229,6 +212,7 @@ private:
 //            }
         }
 
+        // Save to lookup table
         if constexpr (!topLevel) {
             uint8_t flag{};
             if (currentEval <= origAlpha)
@@ -247,8 +231,8 @@ private:
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static void registerMove(const Board &board, BB from, BB to) {
         moves[currentDepth].emplace_back(
-                evaluation::move_heuristic<state, piece, flags>(board, from, to),
-                Move(from, to, piece, flags)
+            evaluation::move_heuristic<state, piece, flags>(board, from, to),
+            Move(from, to, piece, flags)
         );
     }
 
