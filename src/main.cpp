@@ -43,7 +43,7 @@ struct Runner {
             std::cout << "FEN: \n" << fen << std::endl;
 
         } else {
-            auto [eval, line] = timeEvaluation(brd, state, 6);
+            auto [eval, line] = timeEvaluation(brd, state, 5);
 
             std::cout << "Best Move(s) " << std::endl;
             for (auto& move: line) {

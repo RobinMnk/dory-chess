@@ -22,6 +22,8 @@ public:
     static void generate(const BoardPtr& board, const PDptr& pd, bool capturesOnly=false);
 
 private:
+    static BB destinations;
+
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     requires ValidMoveCollector<MC, state, piece, flags>
     static void generateSuccessorBoard(const BoardPtr& board, BB from, BB to);
@@ -62,8 +64,7 @@ template<typename MoveCollector>
 template<State state>
 void MoveGenerator<MoveCollector>::generate(const BoardPtr& board, const PDptr& pd, bool capturesOnly) {
 
-    if (capturesOnly)
-        pd->targetSquares &= board->enemyPieces<state.whiteToMove>();
+    destinations = capturesOnly ? board->enemyPieces<state.whiteToMove>() : FULL_BB;
 
     if(!pd->isDoubleCheck) {
         pawnMoves<state>(board, pd);
@@ -77,16 +78,15 @@ void MoveGenerator<MoveCollector>::generate(const BoardPtr& board, const PDptr& 
     }
 
     kingMoves<state>(board, pd);
-
-//    // returns true if the current player is checkmated
-//    return moves_found == 0 && pd->checkMask < FULL_BB;
 }
 
 template<typename MoveCollector>
 template<State state, Piece_t piece, Flag_t flags>
 requires ValidMoveCollector<MoveCollector, state, piece, flags>
 void MoveGenerator<MoveCollector>::generateSuccessorBoard(const BoardPtr& board, BB from, BB to) {
-    MoveCollector::template registerMove<state, piece, flags>(board, from, to);
+    if ((to & destinations) != 0) {
+        MoveCollector::template registerMove<state, piece, flags>(board, from, to);
+    }
 
 //    constexpr State nextState = getNextState<state, flags>();
 //    Board nextBoard = board->getNextBoard<state, piece, flags>(from, to);
@@ -364,5 +364,8 @@ static void generate(const BoardPtr& board, State state, PDptr& pd, bool capture
         default: return;
     }
 }
+
+template<typename MC>
+BB MoveGenerator<MC>::destinations{};
 
 #endif //DORY_MOVEGEN_H

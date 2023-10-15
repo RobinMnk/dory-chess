@@ -19,7 +19,7 @@ struct State {
     bool wCastleShort, wCastleLong;
     bool bCastleShort, bCastleLong;
 
-    unsigned int code() const {
+    [[nodiscard]] unsigned int code() const {
         uint8_t state_code = 0;
         if(whiteToMove)   state_code |= 0b10000;
         if(wCastleShort) state_code |= 0b1000;

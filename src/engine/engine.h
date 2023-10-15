@@ -31,7 +31,7 @@ float subjectiveEval(float eval, State state) {
 }
 
 bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
-    return a.first > b.first;
+    return a.first < b.first;
 }
 
 const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
@@ -78,7 +78,7 @@ private:
     static NMR negamax(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
         float origAlpha = alpha;
 
-        //// Lookup position in table
+        /// Lookup position in table
         size_t boardHash;
         if constexpr (!topLevel) {
             boardHash = Zobrist::hash(board, state);
@@ -101,7 +101,7 @@ private:
             }
         }
 
-        //// Recursion Base Case: Max Depth reached -> return heuristic position eval
+        /// Recursion Base Case: Max Depth reached -> return heuristic position eval
         if (depth > maxDepth) {
             nodesSearched++;
             float heuristic_val = evaluation::position_evaluate(board);
@@ -122,25 +122,31 @@ private:
 
         PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
 
-        // Definitely expand if in check pd.inCheck()
-
-        bool capturesOnly = depth >= boundaryDepth;
-
         moves[depth].clear();
         currentDepth = depth;
-        generate<EngineMC>(board, state, pd, capturesOnly);
 
-        bool checkmated = pd->inCheck() && moves[depth].empty();
+        if(depth < boundaryDepth || pd->inCheck()) {
+            generate<EngineMC>(board, state, pd);
 
-        if (checkmated) {
-            nodesSearched++;
-            return {-INF, {}};
-        }
+            bool checkmated = pd->inCheck() && moves[depth].empty();
+            if (checkmated) {
+                nodesSearched++;
+                return {-INF, {}};
+            }
 
-        if (moves[depth].empty()) {
-            // Stalemate!
-            nodesSearched++;
-            return {0, {}};
+            if (moves[depth].empty()) {
+                // Stalemate!
+                nodesSearched++;
+                return {0, {}};
+            }
+        } else {
+            generate<EngineMC>(board, state, pd, true);
+
+            if(moves[depth].empty()) {
+                nodesSearched++;
+                float heuristic_val = evaluation::position_evaluate(board);
+                return {subjectiveEval(heuristic_val, state), {}};
+            }
         }
 
 //        std::sort(moves[depth].begin(), moves[depth].end(), sortMovePairs);
@@ -156,7 +162,7 @@ private:
         float currentEval = -1000000;
         std::vector<Move> bestLine;
 
-        //// Iterate through all moves
+        /// Iterate through all moves
         for(auto& move_pair: moves[depth]) {
             auto [info, move] = move_pair;
 
@@ -177,7 +183,6 @@ private:
 //                float heuristic_val = evaluation::position_evaluate(board);
 //                nodesSearched++;
 //                eval = subjectiveEval(heuristic_val, state);
-////                std::cout << "\t\t\t\t\t\t\t\t\t" << subjectiveEval(heuristic_val, state) << std::endl;
 ////                return {subjectiveEval(heuristic_val, state), {}};
 //            }
 
@@ -236,8 +241,8 @@ private:
         );
     }
 
-    template<State nextState>
-    static void next(Board& nextBoard) {}
+//    template<State nextState>
+//    static void next(Board& nextBoard) {}
 
     friend class MoveGenerator<EngineMC>;
 };
