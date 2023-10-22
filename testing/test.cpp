@@ -4,32 +4,33 @@
 
 #include <gtest/gtest.h>
 
-#include "../src/movecollectors.h"
 #include "../src/fenreader.h"
+#include "../src/old/movecollectors.h"
 
 using uLong = unsigned long long;
-using Collector = MoveCollectors::PerftCollector;
 
 struct Runner {
     template<State state, int depth>
-    static void main(Board& board) {
-        Collector::template generateGameTree<state, depth>(board);
+    static void main(BoardPtr& board) {
+        MoveCollectors::PerftCollector<depth>::template generateGameTree<state>(board);
     }
 };
 
 TEST(NodeCounts, StartingPosition) {
     PieceSteps::load();
-    Board board = STARTBOARD;
+    MoveCollectors::nodes.clear();
+    MoveCollectors::nodes.resize(7);
 
     std::vector<uLong> ground_truth{
             1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860
     };
 
-    Runner::template main<STARTSTATE, 6>(board);
+    BoardPtr board = std::make_unique<Board>(STARTBOARD);
+    MoveCollectors::PerftCollector<6>::template generateGameTree<STARTSTATE>(board);
 
     for(int i{1}; i <= 6; i++) {
         uLong expected = ground_truth.at(i);
-        uLong output = Collector::nodes.at(i);
+        uLong output = MoveCollectors::nodes.at(7 - i);
         ASSERT_EQ(output, expected);
     }
 }
@@ -37,11 +38,13 @@ TEST(NodeCounts, StartingPosition) {
 template<int depth>
 void runNodeCountTest(std::string_view fen, std::vector<uLong> ground_truth) {
     PieceSteps::load();
+    MoveCollectors::nodes.clear();
+    MoveCollectors::nodes.resize(depth + 1);
     Utils::loadFEN<Runner, depth>(fen);
 
     for(int i{1}; i <= depth; i++) {
         uLong expected = ground_truth.at(i);
-        uLong output = Collector::nodes.at(i);
+        uLong output = MoveCollectors::nodes.at(depth + 1 - i);
         ASSERT_EQ(output, expected);
     }
 }
@@ -103,8 +106,10 @@ TEST(NodeCounts, TestPos6) {
 template<int depth>
 void checkSingleDepth(std::string_view fen, uLong expected) {
     PieceSteps::load();
+    MoveCollectors::nodes.clear();
+    MoveCollectors::nodes.resize(depth + 1);
     Utils::loadFEN<Runner, depth>(fen);
-    uLong output = Collector::nodes.at(depth);
+    uLong output = MoveCollectors::nodes.at(1);
     ASSERT_EQ(output, expected);
 }
 

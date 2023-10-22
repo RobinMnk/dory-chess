@@ -19,11 +19,12 @@ template<typename MC>
 class MoveGenerator {
 public:
     template<State>
-    static void generate(const BoardPtr& board, const PDptr& pd, bool capturesOnly=false);
+    static void generate(const BoardPtr& board);
+
+    template<State>
+    static void generate(const BoardPtr& board, const PDptr& pd);
 
 private:
-    static BB destinations;
-
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     requires ValidMoveCollector<MC, state, piece, flags>
     static void generateSuccessorBoard(const BoardPtr& board, BB from, BB to);
@@ -62,9 +63,14 @@ private:
 
 template<typename MoveCollector>
 template<State state>
-void MoveGenerator<MoveCollector>::generate(const BoardPtr& board, const PDptr& pd, bool capturesOnly) {
+void MoveGenerator<MoveCollector>::generate(const BoardPtr& board) {
+    PDptr pd = CheckLogicHandler::reload<state.whiteToMove>(board);
+    generate<state>(board, pd);
+}
 
-    destinations = capturesOnly ? board->enemyPieces<state.whiteToMove>() : FULL_BB;
+template<typename MoveCollector>
+template<State state>
+void MoveGenerator<MoveCollector>::generate(const BoardPtr& board, const PDptr& pd) {
 
     if(!pd->isDoubleCheck) {
         pawnMoves<state>(board, pd);
@@ -84,12 +90,26 @@ template<typename MoveCollector>
 template<State state, Piece_t piece, Flag_t flags>
 requires ValidMoveCollector<MoveCollector, state, piece, flags>
 void MoveGenerator<MoveCollector>::generateSuccessorBoard(const BoardPtr& board, BB from, BB to) {
-    if ((to & destinations) != 0) {
-        MoveCollector::template registerMove<state, piece, flags>(board, from, to);
-    }
+//    if constexpr (capturesOnly) {
+//        if ((to & board->enemyPieces<state.whiteToMove>()) == 0)
+//            return;
+//
+//        MoveCollector::template registerMove<state, piece, flags>(board, from, to);
+//
+////        constexpr State nextState = getNextState<state, flags>();
+////        BoardPtr nextBoard = board->getNextBoard<state, piece, flags>(from, to);
+////        generate<nextState>(nextBoard);
+//    } else {
+
+    MoveCollector::template registerMove<state, piece, flags>(board, from, to);
 
 //    constexpr State nextState = getNextState<state, flags>();
 //    Board nextBoard = board->getNextBoard<state, piece, flags>(from, to);
+//    MoveCollector::template next<nextState>(nextBoard);
+//    }
+
+//    constexpr State nextState = getNextState<state, flags>();
+//    BoardPtr nextBoard = board->getNextBoard<state, piece, flags>(from, to);
 //    MoveCollector::template next<nextState>(nextBoard);
 }
 
@@ -326,46 +346,43 @@ void MoveGenerator<MoveCollector>::castles(const BoardPtr& board, const PDptr& p
 }
 
 template<typename MC>
-static void generate(const BoardPtr& board, State state, PDptr& pd, bool capturesOnly=false) {
+static void generate(const BoardPtr& board, State state, PDptr& pd) {
     unsigned int state_code = state.code();
     switch (state_code) {
-        case 0: MoveGenerator<MC>::template generate<toState(0)>(board, pd, capturesOnly); break;
-        case 1: MoveGenerator<MC>::template generate<toState(1)>(board, pd, capturesOnly); break;
-        case 2: MoveGenerator<MC>::template generate<toState(2)>(board, pd, capturesOnly); break;
-        case 3: MoveGenerator<MC>::template generate<toState(3)>(board, pd, capturesOnly); break;
-        case 4: MoveGenerator<MC>::template generate<toState(4)>(board, pd, capturesOnly); break;
-        case 5: MoveGenerator<MC>::template generate<toState(5)>(board, pd, capturesOnly); break;
-        case 6: MoveGenerator<MC>::template generate<toState(6)>(board, pd, capturesOnly); break;
-        case 7: MoveGenerator<MC>::template generate<toState(7)>(board, pd, capturesOnly); break;
-        case 8: MoveGenerator<MC>::template generate<toState(8)>(board, pd, capturesOnly); break;
-        case 9: MoveGenerator<MC>::template generate<toState(9)>(board, pd, capturesOnly); break;
-        case 10: MoveGenerator<MC>::template generate<toState(10)>(board, pd, capturesOnly); break;
-        case 11: MoveGenerator<MC>::template generate<toState(11)>(board, pd, capturesOnly); break;
-        case 12: MoveGenerator<MC>::template generate<toState(12)>(board, pd, capturesOnly); break;
-        case 13: MoveGenerator<MC>::template generate<toState(13)>(board, pd, capturesOnly); break;
-        case 14: MoveGenerator<MC>::template generate<toState(14)>(board, pd, capturesOnly); break;
-        case 15: MoveGenerator<MC>::template generate<toState(15)>(board, pd, capturesOnly); break;
-        case 16: MoveGenerator<MC>::template generate<toState(16)>(board, pd, capturesOnly); break;
-        case 17: MoveGenerator<MC>::template generate<toState(17)>(board, pd, capturesOnly); break;
-        case 18: MoveGenerator<MC>::template generate<toState(18)>(board, pd, capturesOnly); break;
-        case 19: MoveGenerator<MC>::template generate<toState(19)>(board, pd, capturesOnly); break;
-        case 20: MoveGenerator<MC>::template generate<toState(20)>(board, pd, capturesOnly); break;
-        case 21: MoveGenerator<MC>::template generate<toState(21)>(board, pd, capturesOnly); break;
-        case 22: MoveGenerator<MC>::template generate<toState(22)>(board, pd, capturesOnly); break;
-        case 23: MoveGenerator<MC>::template generate<toState(23)>(board, pd, capturesOnly); break;
-        case 24: MoveGenerator<MC>::template generate<toState(24)>(board, pd, capturesOnly); break;
-        case 25: MoveGenerator<MC>::template generate<toState(25)>(board, pd, capturesOnly); break;
-        case 26: MoveGenerator<MC>::template generate<toState(26)>(board, pd, capturesOnly); break;
-        case 27: MoveGenerator<MC>::template generate<toState(27)>(board, pd, capturesOnly); break;
-        case 28: MoveGenerator<MC>::template generate<toState(28)>(board, pd, capturesOnly); break;
-        case 29: MoveGenerator<MC>::template generate<toState(29)>(board, pd, capturesOnly); break;
-        case 30: MoveGenerator<MC>::template generate<toState(30)>(board, pd, capturesOnly); break;
-        case 31: MoveGenerator<MC>::template generate<toState(31)>(board, pd, capturesOnly); break;
+        case 0: MoveGenerator<MC>::template generate<toState(0)>(board, pd); break;
+        case 1: MoveGenerator<MC>::template generate<toState(1)>(board, pd); break;
+        case 2: MoveGenerator<MC>::template generate<toState(2)>(board, pd); break;
+        case 3: MoveGenerator<MC>::template generate<toState(3)>(board, pd); break;
+        case 4: MoveGenerator<MC>::template generate<toState(4)>(board, pd); break;
+        case 5: MoveGenerator<MC>::template generate<toState(5)>(board, pd); break;
+        case 6: MoveGenerator<MC>::template generate<toState(6)>(board, pd); break;
+        case 7: MoveGenerator<MC>::template generate<toState(7)>(board, pd); break;
+        case 8: MoveGenerator<MC>::template generate<toState(8)>(board, pd); break;
+        case 9: MoveGenerator<MC>::template generate<toState(9)>(board, pd); break;
+        case 10: MoveGenerator<MC>::template generate<toState(10)>(board, pd); break;
+        case 11: MoveGenerator<MC>::template generate<toState(11)>(board, pd); break;
+        case 12: MoveGenerator<MC>::template generate<toState(12)>(board, pd); break;
+        case 13: MoveGenerator<MC>::template generate<toState(13)>(board, pd); break;
+        case 14: MoveGenerator<MC>::template generate<toState(14)>(board, pd); break;
+        case 15: MoveGenerator<MC>::template generate<toState(15)>(board, pd); break;
+        case 16: MoveGenerator<MC>::template generate<toState(16)>(board, pd); break;
+        case 17: MoveGenerator<MC>::template generate<toState(17)>(board, pd); break;
+        case 18: MoveGenerator<MC>::template generate<toState(18)>(board, pd); break;
+        case 19: MoveGenerator<MC>::template generate<toState(19)>(board, pd); break;
+        case 20: MoveGenerator<MC>::template generate<toState(20)>(board, pd); break;
+        case 21: MoveGenerator<MC>::template generate<toState(21)>(board, pd); break;
+        case 22: MoveGenerator<MC>::template generate<toState(22)>(board, pd); break;
+        case 23: MoveGenerator<MC>::template generate<toState(23)>(board, pd); break;
+        case 24: MoveGenerator<MC>::template generate<toState(24)>(board, pd); break;
+        case 25: MoveGenerator<MC>::template generate<toState(25)>(board, pd); break;
+        case 26: MoveGenerator<MC>::template generate<toState(26)>(board, pd); break;
+        case 27: MoveGenerator<MC>::template generate<toState(27)>(board, pd); break;
+        case 28: MoveGenerator<MC>::template generate<toState(28)>(board, pd); break;
+        case 29: MoveGenerator<MC>::template generate<toState(29)>(board, pd); break;
+        case 30: MoveGenerator<MC>::template generate<toState(30)>(board, pd); break;
+        case 31: MoveGenerator<MC>::template generate<toState(31)>(board, pd); break;
         default: return;
     }
 }
-
-template<typename MC>
-BB MoveGenerator<MC>::destinations{};
 
 #endif //DORY_MOVEGEN_H

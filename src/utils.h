@@ -16,11 +16,11 @@ namespace Utils {
     using ByteBoard = std::array<uint8_t, 64>;
 
     static const std::array<char, 14> PIECE_TO_CHAR{
-        ' ', 'K', 'Q', 'R', 'B', 'N', 'P',
-        ' ', 'k', 'q', 'r', 'b', 'n', 'p',
+            ' ', 'K', 'Q', 'R', 'B', 'N', 'P',
+            ' ', 'k', 'q', 'r', 'b', 'n', 'p',
     };
     static const std::array<char, 8> FILE_NAMES{
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'
     };
 
     constexpr char filename(int file) {
@@ -54,7 +54,7 @@ namespace Utils {
         }
     }
 
-    ByteBoard to_byteboard(const Board& board) {
+    ByteBoard to_byteboard(const Board &board) {
         ByteBoard byteboard{};
         add_piece(byteboard, board.wPawns, 'P');
         add_piece(byteboard, board.bPawns, 'p');
@@ -87,42 +87,60 @@ namespace Utils {
 
     std::string specialMove(Flag_t flags) {
         switch (flags) {
-            case MoveFlag::PromoteBishop: return "=B";
-            case MoveFlag::PromoteKnight: return "=N";
-            case MoveFlag::PromoteRook: return "=R";
-            case MoveFlag::PromoteQueen: return "=Q";
-            case MoveFlag::ShortCastling: return "0-0";
-            case MoveFlag::LongCastling: return "0-0-0";
-            default: return "";
+            case MoveFlag::PromoteBishop:
+                return "=B";
+            case MoveFlag::PromoteKnight:
+                return "=N";
+            case MoveFlag::PromoteRook:
+                return "=R";
+            case MoveFlag::PromoteQueen:
+                return "=Q";
+            case MoveFlag::ShortCastling:
+                return "0-0";
+            case MoveFlag::LongCastling:
+                return "0-0-0";
+            default:
+                return "";
         }
     }
+
     std::string pieceString(Piece_t piece) {
         switch (piece) {
-            case Piece::King: return "K";
-            case Piece::Queen: return "Q";
-            case Piece::Rook: return "R";
-            case Piece::Bishop: return "B";
-            case Piece::Knight: return "N";
-            default: return "";
+            case Piece::King:
+                return "K";
+            case Piece::Queen:
+                return "Q";
+            case Piece::Rook:
+                return "R";
+            case Piece::Bishop:
+                return "B";
+            case Piece::Knight:
+                return "N";
+            default:
+                return "";
         }
     }
 
     void printMove(const Move m) {
-        if(m.from() + m.to() == 0) std::cout << "NULL" << std::endl;
-        else if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
-        else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling) << std::endl;
-        else std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to()) << specialMove(m.flags) << std::endl;
+        if (m.from() + m.to() == 0) std::cout << "NULL" << std::endl;
+        else if (m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
+        else if (m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling) << std::endl;
+        else
+            std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to())
+                      << specialMove(m.flags) << std::endl;
     }
 
     void print_board(const Board &board) {
         print_board(to_byteboard(board));
     }
 
-    void printMoveList(const std::vector<Move>& moves) {
-        for(auto& m: moves) {
-            if(m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling);
-            else if(m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling);
-            else std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to()) << specialMove(m.flags);
+    void printMoveList(const std::vector<Move> &moves) {
+        for (auto &m: moves) {
+            if (m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling);
+            else if (m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling);
+            else
+                std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to())
+                          << specialMove(m.flags);
             std::cout << " - ";
         }
         std::cout << std::endl;
@@ -181,14 +199,14 @@ namespace Utils {
 
     std::string moveNameNotation(Move m) {
         std::stringstream bss{};
-        if(m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
-        else if(m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
+        if (m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
+        else if (m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
         else bss << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to());
         return bss.str();
     }
 
     template<typename Collector, State state, int depth>
-    void time_movegen(const Board& board) {
+    void time_movegen(const Board &board) {
         auto t1 = std::chrono::high_resolution_clock::now();
         Collector::template generateGameTree<state, depth>(board);
         auto t2 = std::chrono::high_resolution_clock::now();
@@ -212,7 +230,7 @@ namespace Utils {
     struct MoveSimulator {
         Board board;
 
-        explicit MoveSimulator(Board& bd) : board{bd} {}
+        explicit MoveSimulator(Board &bd) : board{bd} {}
 
         template<Piece_t piece, Flag_t flag = MoveFlag::Silent>
         MoveSimulator<getNextState<state, flag>()> move(std::string_view from, std::string_view to) {

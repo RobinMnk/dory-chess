@@ -75,7 +75,7 @@ namespace Utils {
     }
 
     template<typename Main, int depth>
-    void run(uint8_t state_code, Board& board) {
+    void run(uint8_t state_code, BoardPtr board) {
         switch (state_code) {
             case 0:  Main::template main<toState( 0), depth>(board); break;
             case 1:  Main::template main<toState( 1), depth>(board); break;
@@ -140,11 +140,33 @@ namespace Utils {
             if(bcs) state_code |= 0b10;
             if(bcl) state_code |= 0b1;
 
-            run<Main, depth>(state_code, board);
+            run<Main, depth>(state_code, std::make_unique<Board>(board));
 
 //        } catch (std::exception& ex) {
 //            std::cerr << "Invalid FEN string!" << std::endl;
 //        }
+    }
+
+    std::pair<BoardPtr, State> loadFEN(std::string_view full_fen) {
+        std::stringstream stream(full_fen.data());
+        std::string segment;
+        std::vector<std::string> seglist;
+//        try {
+        while(std::getline(stream, segment, ' ')) seglist.push_back(segment);
+
+        // first position in FEN is board contents
+        Board board = getBoardFromFEN(seglist.at(0), seglist.at(3));
+
+        // second position is side to move
+        const bool w = seglist.at(1) == "w";
+
+        // castling rights
+        const bool wcs = seglist.at(2).find('K') != std::string::npos;
+        const bool wcl = seglist.at(2).find('Q') != std::string::npos;
+        const bool bcs = seglist.at(2).find('k') != std::string::npos;
+        const bool bcl = seglist.at(2).find('q') != std::string::npos;
+
+        return { std::make_unique<Board>(board), State(w, wcs, wcl, bcs, bcl)};
     }
 
     template<typename Main>
@@ -157,21 +179,21 @@ namespace Utils {
             case 5: loadFEN<Main, 5>(full_fen); break;
             case 6: loadFEN<Main, 6>(full_fen); break;
             case 7: loadFEN<Main, 7>(full_fen); break;
-            case 8: loadFEN<Main, 8>(full_fen); break;
-            case 9: loadFEN<Main, 9>(full_fen); break;
-            case 10: loadFEN<Main,10>(full_fen); break;
-            case 11: loadFEN<Main, 11>(full_fen); break;
-            case 12: loadFEN<Main, 12>(full_fen); break;
-            case 13: loadFEN<Main, 13>(full_fen); break;
-            case 14: loadFEN<Main, 14>(full_fen); break;
-            case 15: loadFEN<Main, 15>(full_fen); break;
+//            case 8: loadFEN<Main, 8>(full_fen); break;
+//            case 9: loadFEN<Main, 9>(full_fen); break;
+//            case 10: loadFEN<Main,10>(full_fen); break;
+//            case 11: loadFEN<Main, 11>(full_fen); break;
+//            case 12: loadFEN<Main, 12>(full_fen); break;
+//            case 13: loadFEN<Main, 13>(full_fen); break;
+//            case 14: loadFEN<Main, 14>(full_fen); break;
+//            case 15: loadFEN<Main, 15>(full_fen); break;
             default: std::cerr << "Depth not implemented!" << std::endl;
         }
     }
 
     template<typename Main>
     void startingPositionAtDepth(int depth) {
-        Board board = STARTBOARD;
+        BoardPtr board = std::make_unique<Board>(STARTBOARD);
         switch(depth) {
             case 1: Main::template main<STARTSTATE, 1>(board); break;
             case 2: Main::template main<STARTSTATE, 2>(board); break;

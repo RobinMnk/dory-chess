@@ -4,6 +4,7 @@
 #include "fenreader.h"
 #include "engine/engine.h"
 #include "engine/monte_carlo.h"
+#include "old/movecollectors.h"
 
 //using Collector = MoveCollectors::LimitedDFS<false, false>;
 
@@ -32,30 +33,47 @@ NMR timeEvaluation(const BoardPtr& board, const State state, int depth) {
 
 struct Runner {
     template<State state, int depth>
-    static void main(Board& board) {
+    static void main(const BoardPtr& board) {
 
-        const BoardPtr& brd = std::make_unique<Board>(board);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        MoveCollectors::LimitedDFS<6>::template generateGameTree<state>(board);
+        auto t2 = std::chrono::high_resolution_clock::now();
 
-        bool monte = false;
+        auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
-        if (monte) {
-            auto fen = MonteCarlo::simulateGame(brd, state);
-            std::cout << "FEN: \n" << fen << std::endl;
+        std::chrono::duration<double> seconds = t2 - t1;
 
+        std::cout << "Generated " <<  MoveCollectors::LimitedDFS<depth>::totalNodes << " nodes in " << ms_int.count() << "ms";
+
+        double knps = (static_cast<double>(MoveCollectors::LimitedDFS<depth>::totalNodes) / 1000) / seconds.count();
+        if (knps < 1000) {
+            std::cout << "\t\t(" << knps << " k nps)\n\n";
         } else {
-            auto [eval, line] = timeEvaluation(brd, state, 5);
-
-            std::cout << "Best Move(s) " << std::endl;
-            for (auto& move: line) {
-                Utils::printMove(move);
-            }
-
-            std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
+            std::cout << "\t\t(" << (knps / 1000) << " M nps)\n\n";
         }
+
+
+
+//        bool monte = false;
+//
+//        if (monte) {
+//            auto fen = MonteCarlo::simulateGame(board, state);
+//            std::cout << "FEN: \n" << fen << std::endl;
+//
+//        } else {
+//            auto [eval, line] = timeEvaluation(board, state, 5);
+//
+//            std::cout << "Best Move(s) " << std::endl;
+//            for (auto& move: line) {
+//                Utils::printMove(move);
+//            }
+//
+//            std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
+//        }
     }
 };
 
-int main(int argc, char* argv[]) {
+int main() {
     std::string fen, depth_str;
     std::getline(std::cin, fen);
     std::getline(std::cin, depth_str);
