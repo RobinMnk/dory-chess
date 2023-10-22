@@ -18,6 +18,7 @@
 
 float INF = 99999;
 
+int MAX_FORCING_MOVE_DEPTH = 3;
 int DEPTH_MARGIN_SIZE = 0;
 float BEST_MOVE_MARGIN = 0.05;
 size_t MAX_NUMBER_BEST_MOVES = 6;
@@ -70,44 +71,105 @@ public:
         return moves[0];
     }
 private:
-    static std::array<std::vector<std::pair<float, Move>>, 26> moves;
+    static std::array<std::vector<std::pair<float, Move>>, 32> moves;
     static int maxDepth, boundaryDepth, currentDepth;
     static std::unordered_map<BB, TTEntry> lookup_table;
 
+    static void saveToLookupTable(float eval, size_t boardHash, float alpha, float beta, int depth) {
+        uint8_t flag;
+        if (eval <= alpha)
+            flag = TTFlagUpperBound;
+        else if (eval >= beta)
+            flag = TTFlagLowerBound;
+        else flag = TTFlagExact;
+
+        TTEntry entry{ eval, static_cast<uint8_t>(depth), flag};
+        lookup_table.insert({ boardHash, entry });
+    }
+
+    static std::pair<NMR, bool> retrieveFromLookupTable(size_t boardHash, float alpha, float beta, int depth) {
+        auto res = lookup_table.find(boardHash);
+
+        if(res != lookup_table.end()) {
+            TTEntry entry = res->second;
+            if (entry.depth <= depth) {
+                lookups++;
+                if (entry.flag == TTFlagExact) {
+                    return {{ entry.value, {} }, true };
+                } else if (entry.flag == TTFlagLowerBound) {
+                    if (entry.value > alpha) alpha = entry.value;
+                } else if (entry.flag == TTFlagUpperBound) {
+                    if (entry.value < beta) beta = entry.value;
+                }
+
+                if (alpha >= beta) return { { entry.value, {} }, true };
+            }
+        }
+
+        return {{ 0, {} }, false};
+    }
+
+
+    static NMR Quiescence(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
+        float stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
+
+        if (stand_pat >= beta) {
+            nodesSearched++;
+            return { beta, {} };
+        }
+        if (alpha < stand_pat) {
+            alpha = stand_pat;
+        }
+
+        PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
+
+        moves.at(depth).clear();
+        currentDepth = depth;
+
+        generate<EngineMC>(board, state, pd);
+
+        if(moves.at(depth).empty()) {
+            nodesSearched++;
+            return {alpha, {}};
+        }
+
+        std::vector<Move> bestLine;
+
+        /// Iterate through all moves
+        for(auto& move_pair: moves.at(depth)) {
+            auto [info, move] = move_pair;
+            auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
+            auto [eval, line] = Quiescence(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
+            eval = -eval;
+
+            if (eval >= beta) {
+                return { beta, {} };
+            }
+            if (eval > alpha) {
+                alpha = eval;
+                line.push_back(move);
+                bestLine = line;
+            }
+        }
+        return { alpha, bestLine };
+    }
+
     template<bool topLevel>
     static NMR negamax(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
-        float origAlpha = alpha;
-
         /// Lookup position in table
         size_t boardHash;
         if constexpr (!topLevel) {
             boardHash = Zobrist::hash(board, state);
-            auto res = lookup_table.find(boardHash);
-
-            if(res != lookup_table.end()) {
-                TTEntry entry = res->second;
-                if (entry.depth <= depth) {
-                    lookups++;
-                    if (entry.flag == TTFlagExact) {
-                        return {entry.value, {}};
-                    } else if (entry.flag == TTFlagLowerBound) {
-                        if (entry.value > alpha) alpha = entry.value;
-                    } else if (entry.flag == TTFlagUpperBound) {
-                        if (entry.value < beta) beta = entry.value;
-                    }
-
-                    if (alpha >= beta) return {entry.value, {}};
-                }
+            std::pair<NMR, bool> res = retrieveFromLookupTable(boardHash, alpha, beta, depth);
+            if (res.second) {
+                return res.first;
             }
         }
 
-        /// Recursion Base Case: Max Depth reached -> return heuristic position eval
+    /// Recursion Base Case: Max Depth reached -> return heuristic position eval
         if (depth > maxDepth) {
-            nodesSearched++;
-            float heuristic_val = evaluation::position_evaluate(board);
-            return {subjectiveEval(heuristic_val, state), {}};
+            return Quiescence(board, state, 1, alpha, beta);
         }
-
 
 //        bool expandMove = depth < boundaryDepth;
         // Either expand Move or set heuristic val
@@ -122,37 +184,41 @@ private:
 
         PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
 
-        moves[depth].clear();
+        moves.at(depth).clear();
         currentDepth = depth;
 
-        if(depth < boundaryDepth || pd->inCheck()) {
-            generate<EngineMC>(board, state, pd);
+//        if constexpr (forcingMovesOnly) {
+//            generate<EngineMC, true>(board, state, pd);
+//
+//            if(moves.at(depth).empty()) {
+//                nodesSearched++;
+//                float heuristic_val = evaluation::position_evaluate(board);
+//                float eval = subjectiveEval(heuristic_val, state);
+//                saveToLookupTable(eval, boardHash, alpha, beta, depth);
+//                return {eval, {}};
+//            }
+//        } else {
 
-            bool checkmated = pd->inCheck() && moves[depth].empty();
-            if (checkmated) {
-                nodesSearched++;
-                return {-INF, {}};
-            }
+        generate<EngineMC>(board, state, pd);
 
-            if (moves[depth].empty()) {
-                // Stalemate!
-                nodesSearched++;
-                return {0, {}};
-            }
-        } else {
-            generate<EngineMC>(board, state, pd, true);
-
-            if(moves[depth].empty()) {
-                nodesSearched++;
-                float heuristic_val = evaluation::position_evaluate(board);
-                return {subjectiveEval(heuristic_val, state), {}};
-            }
+        bool checkmated = pd->inCheck() && moves.at(depth).empty();
+        if (checkmated) {
+            nodesSearched++;
+            return {-INF, {}};
         }
 
-//        std::sort(moves[depth].begin(), moves[depth].end(), sortMovePairs);
+        if (moves.at(depth).empty()) {
+            // Stalemate!
+            nodesSearched++;
+            return {0, {}};
+        }
+
+//        }
+
+//        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
 
 //        if constexpr (topLevel) {
-//            for(auto& x: moves[depth]) {
+//            for(auto& x: moves.at(depth)) {
 //                std::cout << "(" << x.first << ", " << Utils::moveNameNotation(x.second) << ") ";
 //            }
 //            std::cout << std::endl;
@@ -163,7 +229,7 @@ private:
         std::vector<Move> bestLine;
 
         /// Iterate through all moves
-        for(auto& move_pair: moves[depth]) {
+        for(auto& move_pair: moves.at(depth)) {
             auto [info, move] = move_pair;
 
 //            for (int i = 0; i < depth; i++)
@@ -171,13 +237,10 @@ private:
 //            std::cout << depth << " : " << Utils::moveNameNotation(move) << std::endl;
 
 
-            float eval;
-            std::vector<Move> line;
 //            if(expandMove) {
             auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
-            auto [ev, ln] = negamax<false>(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
-            eval = -ev;
-            line = ln;
+            auto [eval, line] = negamax<false>(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
+            eval = -eval;
 //            } else {
 //                nodesSearched++;
 //                float heuristic_val = evaluation::position_evaluate(board);
@@ -217,17 +280,9 @@ private:
 //            }
         }
 
-        //// Save to lookup table
+        /// Save to lookup table
         if constexpr (!topLevel) {
-            uint8_t flag;
-            if (currentEval <= origAlpha)
-                flag = TTFlagUpperBound;
-            else if (currentEval >= beta)
-                flag = TTFlagLowerBound;
-            else flag = TTFlagExact;
-
-            TTEntry entry{currentEval, static_cast<uint8_t>(depth), flag};
-            lookup_table.insert({boardHash, entry});
+            saveToLookupTable(currentEval, boardHash, alpha, beta, depth);
         }
 
         return {currentEval, bestLine};
@@ -247,7 +302,7 @@ private:
     friend class MoveGenerator<EngineMC>;
 };
 
-std::array<std::vector<std::pair<float, Move>>, 26> EngineMC::moves{};
+std::array<std::vector<std::pair<float, Move>>, 32> EngineMC::moves{};
 int EngineMC::currentDepth{0};
 int EngineMC::boundaryDepth{0};
 int EngineMC::maxDepth{0};
