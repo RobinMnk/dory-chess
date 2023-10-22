@@ -210,64 +210,64 @@ public:
     }
 
     template<State state, Piece_t piece, Flag_t flags>
-    [[nodiscard]] BoardPtr getNextBoard(BB from, BB to) const {
+    [[nodiscard]] constexpr Board getNextBoard(BB from, BB to) const {
         constexpr bool whiteMoved = state.whiteToMove;
         BB change = from | to;
 
         // Promotions
         if constexpr (flags == MoveFlag::PromoteQueen) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens | to, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens | to, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens | to, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens | to, wKingSq, bKingSq, 0};
         }
         if constexpr (flags == MoveFlag::PromoteRook) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks | to, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks | to, wQueens & ~to, bQueens, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks | to, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks | to, wQueens & ~to, bQueens, wKingSq, bKingSq, 0};
         }
         if constexpr (flags == MoveFlag::PromoteBishop) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops | to, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops | to, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights, bKnights & ~to, wBishops | to, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights, wBishops & ~to, bBishops | to, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0};
         }
         if constexpr (flags == MoveFlag::PromoteKnight) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns & ~from, bPawns, wKnights | to, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns, bPawns & ~from, wKnights & ~to, bKnights | to, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns & ~from, bPawns, wKnights | to, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns, bPawns & ~from, wKnights & ~to, bKnights | to, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0};
         }
 
         //Castles
         if constexpr (flags == MoveFlag::ShortCastling) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleShortRookMove<whiteMoved>(), bRooks, wQueens, bQueens, static_cast<uint8_t>(singleBitOf(to)), bKingSq, 0);
-            return std::make_unique<Board>(wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleShortRookMove<whiteMoved>(), wQueens, bQueens, wKingSq, static_cast<uint8_t>(singleBitOf(to)), 0);
+            if constexpr (whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleShortRookMove<whiteMoved>(), bRooks, wQueens, bQueens, static_cast<uint8_t>(singleBitOf(to)), bKingSq, 0};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleShortRookMove<whiteMoved>(), wQueens, bQueens, wKingSq, static_cast<uint8_t>(singleBitOf(to)), 0};
         }
         if constexpr (flags == MoveFlag::LongCastling) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleLongRookMove<whiteMoved>(), bRooks, wQueens, bQueens, static_cast<uint8_t>(singleBitOf(to)), bKingSq, 0);
-            return std::make_unique<Board>(wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleLongRookMove<whiteMoved>(), wQueens, bQueens, wKingSq, static_cast<uint8_t>(singleBitOf(to)), 0);
+            if constexpr (whiteMoved) return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks ^ castleLongRookMove<whiteMoved>(), bRooks, wQueens, bQueens, static_cast<uint8_t>(singleBitOf(to)), bKingSq, 0};
+            return {wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks ^ castleLongRookMove<whiteMoved>(), wQueens, bQueens, wKingSq, static_cast<uint8_t>(singleBitOf(to)), 0};
         }
 
         // Silent Moves
         if constexpr (piece == Piece::Pawn) {
             BB epMask = flags == MoveFlag::EnPassantCapture ? ~backward<whiteMoved>(newMask(enPassantSq)) : FULL_BB;
             uint8_t epField = flags == MoveFlag::PawnDoublePush ? singleBitOf(forward<whiteMoved>(from)) : 0;
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns ^ change, bPawns & epMask & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, epField);
-            return std::make_unique<Board>(wPawns & epMask & ~to, bPawns ^ change, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, epField);
+            if constexpr (whiteMoved) return {wPawns ^ change, bPawns & epMask & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, epField};
+            return {wPawns & epMask & ~to, bPawns ^ change, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, epField};
         }
         if constexpr (piece == Piece::Knight) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns, bPawns & ~to, wKnights ^ change, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns & ~to, bPawns, wKnights & ~to, bKnights ^ change, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights ^ change, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights ^ change, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0};
         }
         if constexpr (piece == Piece::Bishop) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops ^ change, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops ^ change, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops ^ change, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops ^ change, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, bKingSq, 0};
         }
         if constexpr (piece == Piece::Rook) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks ^ change, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks ^ change, wQueens & ~to, bQueens, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks ^ change, bRooks & ~to, wQueens, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks ^ change, wQueens & ~to, bQueens, wKingSq, bKingSq, 0};
         }
         if constexpr (piece == Piece::Queen) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens ^ change, bQueens & ~to, wKingSq, bKingSq, 0);
-            return std::make_unique<Board>(wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens ^ change, wKingSq, bKingSq, 0);
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens ^ change, bQueens & ~to, wKingSq, bKingSq, 0};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens ^ change, wKingSq, bKingSq, 0};
         }
         if constexpr (piece == Piece::King) {
-            if constexpr (whiteMoved) return std::make_unique<Board>(wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, static_cast<uint8_t>(singleBitOf(to)), bKingSq, 0);
-            return std::make_unique<Board>(wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, static_cast<uint8_t>(singleBitOf(to)), 0);
+            if constexpr (whiteMoved) return {wPawns, bPawns & ~to, wKnights, bKnights & ~to, wBishops, bBishops & ~to, wRooks, bRooks & ~to, wQueens, bQueens & ~to, static_cast<uint8_t>(singleBitOf(to)), bKingSq, 0};
+            return {wPawns & ~to, bPawns, wKnights & ~to, bKnights, wBishops & ~to, bBishops, wRooks & ~to, bRooks, wQueens & ~to, bQueens, wKingSq, static_cast<uint8_t>(singleBitOf(to)), 0};
         }
         throw std::exception();
     }
@@ -519,123 +519,123 @@ constexpr BB castleLongRookMove() {
 }
 
 
-template<Piece_t piece, Flag_t flags = MoveFlag::Silent>
-std::pair<BoardPtr, State> forkBoard(const BoardPtr& board, State state, Move move) {
-    unsigned int state_code = state.code();
-    switch (state_code) {
-        case 0:
-            return { board->getNextBoard<toState(0), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(0), flags>() };
-        case 1:
-            return { board->getNextBoard<toState(1), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(1), flags>() };
-        case 2:
-            return { board->getNextBoard<toState(2), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(2), flags>() };
-        case 3:
-            return { board->getNextBoard<toState(3), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(3), flags>() };
-        case 4:
-            return { board->getNextBoard<toState(4), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(4), flags>() };
-        case 5:
-            return { board->getNextBoard<toState(5), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(5), flags>() };
-        case 6:
-            return { board->getNextBoard<toState(6), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(6), flags>() };
-        case 7:
-            return { board->getNextBoard<toState(7), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(7), flags>() };
-        case 8:
-            return { board->getNextBoard<toState(8), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(8), flags>() };
-        case 9:
-            return { board->getNextBoard<toState(9), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(9), flags>() };
-        case 10:
-            return { board->getNextBoard<toState(10), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(10), flags>() };
-        case 11:
-            return { board->getNextBoard<toState(11), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(11), flags>() };
-        case 12:
-            return { board->getNextBoard<toState(12), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(12), flags>() };
-        case 13:
-            return { board->getNextBoard<toState(13), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(13), flags>() };
-        case 14:
-            return { board->getNextBoard<toState(14), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(14), flags>() };
-        case 15:
-            return { board->getNextBoard<toState(15), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(15), flags>() };
-        case 16:
-            return { board->getNextBoard<toState(16), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(16), flags>() };
-        case 17:
-            return { board->getNextBoard<toState(17), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(17), flags>() };
-        case 18:
-            return { board->getNextBoard<toState(18), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(18), flags>() };
-        case 19:
-            return { board->getNextBoard<toState(19), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(19), flags>() };
-        case 20:
-            return { board->getNextBoard<toState(20), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(20), flags>() };
-        case 21:
-            return { board->getNextBoard<toState(21), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(21), flags>() };
-        case 22:
-            return { board->getNextBoard<toState(22), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(22), flags>() };
-        case 23:
-            return { board->getNextBoard<toState(23), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(23), flags>() };
-        case 24:
-            return { board->getNextBoard<toState(24), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(24), flags>() };
-        case 25:
-            return { board->getNextBoard<toState(25), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(25), flags>() };
-        case 26:
-            return { board->getNextBoard<toState(26), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(26), flags>() };
-        case 27:
-            return { board->getNextBoard<toState(27), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(27), flags>() };
-        case 28:
-            return { board->getNextBoard<toState(28), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(28), flags>() };
-        case 29:
-            return { board->getNextBoard<toState(29), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(29), flags>() };
-        case 30:
-            return { board->getNextBoard<toState(30), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(30), flags>() };
-        case 31:
-            return { board->getNextBoard<toState(31), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(31), flags>() };
-        default: throw std::runtime_error("This should never happen");
-    }
-}
+//template<Piece_t piece, Flag_t flags = MoveFlag::Silent>
+//std::pair<BoardPtr, State> forkBoard(const BoardPtr& board, State state, Move move) {
+//    unsigned int state_code = state.code();
+//    switch (state_code) {
+//        case 0:
+//            return { board->getNextBoard<toState(0), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(0), flags>() };
+//        case 1:
+//            return { board->getNextBoard<toState(1), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(1), flags>() };
+//        case 2:
+//            return { board->getNextBoard<toState(2), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(2), flags>() };
+//        case 3:
+//            return { board->getNextBoard<toState(3), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(3), flags>() };
+//        case 4:
+//            return { board->getNextBoard<toState(4), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(4), flags>() };
+//        case 5:
+//            return { board->getNextBoard<toState(5), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(5), flags>() };
+//        case 6:
+//            return { board->getNextBoard<toState(6), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(6), flags>() };
+//        case 7:
+//            return { board->getNextBoard<toState(7), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(7), flags>() };
+//        case 8:
+//            return { board->getNextBoard<toState(8), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(8), flags>() };
+//        case 9:
+//            return { board->getNextBoard<toState(9), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(9), flags>() };
+//        case 10:
+//            return { board->getNextBoard<toState(10), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(10), flags>() };
+//        case 11:
+//            return { board->getNextBoard<toState(11), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(11), flags>() };
+//        case 12:
+//            return { board->getNextBoard<toState(12), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(12), flags>() };
+//        case 13:
+//            return { board->getNextBoard<toState(13), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(13), flags>() };
+//        case 14:
+//            return { board->getNextBoard<toState(14), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(14), flags>() };
+//        case 15:
+//            return { board->getNextBoard<toState(15), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(15), flags>() };
+//        case 16:
+//            return { board->getNextBoard<toState(16), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(16), flags>() };
+//        case 17:
+//            return { board->getNextBoard<toState(17), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(17), flags>() };
+//        case 18:
+//            return { board->getNextBoard<toState(18), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(18), flags>() };
+//        case 19:
+//            return { board->getNextBoard<toState(19), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(19), flags>() };
+//        case 20:
+//            return { board->getNextBoard<toState(20), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(20), flags>() };
+//        case 21:
+//            return { board->getNextBoard<toState(21), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(21), flags>() };
+//        case 22:
+//            return { board->getNextBoard<toState(22), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(22), flags>() };
+//        case 23:
+//            return { board->getNextBoard<toState(23), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(23), flags>() };
+//        case 24:
+//            return { board->getNextBoard<toState(24), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(24), flags>() };
+//        case 25:
+//            return { board->getNextBoard<toState(25), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(25), flags>() };
+//        case 26:
+//            return { board->getNextBoard<toState(26), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(26), flags>() };
+//        case 27:
+//            return { board->getNextBoard<toState(27), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(27), flags>() };
+//        case 28:
+//            return { board->getNextBoard<toState(28), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(28), flags>() };
+//        case 29:
+//            return { board->getNextBoard<toState(29), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(29), flags>() };
+//        case 30:
+//            return { board->getNextBoard<toState(30), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(30), flags>() };
+//        case 31:
+//            return { board->getNextBoard<toState(31), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(31), flags>() };
+//        default: throw std::runtime_error("This should never happen");
+//    }
+//}
 
-std::pair<BoardPtr, State> forkBoard(const BoardPtr& board, State state, Move move) {
-    switch (move.piece) {
-        case Piece::Pawn:
-            switch (move.flags) {
-                case MoveFlag::PawnDoublePush:
-                    return forkBoard<Piece::Pawn, MoveFlag::PawnDoublePush>(board, state, move);
-                case MoveFlag::EnPassantCapture:
-                    return forkBoard<Piece::Pawn, MoveFlag::EnPassantCapture>(board, state, move);
-                case MoveFlag::PromoteQueen:
-                    return forkBoard<Piece::Pawn, MoveFlag::PromoteQueen>(board, state, move);
-                case MoveFlag::PromoteRook:
-                    return forkBoard<Piece::Pawn, MoveFlag::PromoteRook>(board, state, move);
-                case MoveFlag::PromoteBishop:
-                    return forkBoard<Piece::Pawn, MoveFlag::PromoteBishop>(board, state, move);
-                case MoveFlag::PromoteKnight:
-                    return forkBoard<Piece::Pawn, MoveFlag::PromoteKnight>(board, state, move);
-            }
-            return forkBoard<Piece::Pawn>(board, state, move);
-        case Piece::Knight:
-            return forkBoard<Piece::Knight>(board, state, move);
-        case Piece::Bishop:
-            return forkBoard<Piece::Bishop>(board, state, move);
-        case Piece::Rook:
-            switch (move.flags) {
-                case MoveFlag::RemoveShortCastling:
-                    return forkBoard<Piece::Rook, MoveFlag::RemoveShortCastling>(board, state, move);
-                case MoveFlag::RemoveLongCastling:
-                    return forkBoard<Piece::Rook, MoveFlag::RemoveLongCastling>(board, state, move);
-            }
-            return forkBoard<Piece::Rook>(board, state, move);
-        case Piece::Queen:
-            return forkBoard<Piece::Queen>(board, state, move);
-        case Piece::King:
-            switch (move.flags) {
-                case MoveFlag::RemoveAllCastling:
-                    return forkBoard<Piece::King, MoveFlag::RemoveAllCastling>(board, state, move);
-                case MoveFlag::ShortCastling:
-                    return forkBoard<Piece::King, MoveFlag::ShortCastling>(board, state, move);
-                case MoveFlag::LongCastling:
-                    return forkBoard<Piece::King, MoveFlag::LongCastling>(board, state, move);
-            }
-            return forkBoard<Piece::King>(board, state, move);
-    }
-    throw std::runtime_error("INVALID PIECE MOVED");
-}
+//std::pair<BoardPtr, State> forkBoard(const BoardPtr& board, State state, Move move) {
+//    switch (move.piece) {
+//        case Piece::Pawn:
+//            switch (move.flags) {
+//                case MoveFlag::PawnDoublePush:
+//                    return forkBoard<Piece::Pawn, MoveFlag::PawnDoublePush>(board, state, move);
+//                case MoveFlag::EnPassantCapture:
+//                    return forkBoard<Piece::Pawn, MoveFlag::EnPassantCapture>(board, state, move);
+//                case MoveFlag::PromoteQueen:
+//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteQueen>(board, state, move);
+//                case MoveFlag::PromoteRook:
+//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteRook>(board, state, move);
+//                case MoveFlag::PromoteBishop:
+//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteBishop>(board, state, move);
+//                case MoveFlag::PromoteKnight:
+//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteKnight>(board, state, move);
+//            }
+//            return forkBoard<Piece::Pawn>(board, state, move);
+//        case Piece::Knight:
+//            return forkBoard<Piece::Knight>(board, state, move);
+//        case Piece::Bishop:
+//            return forkBoard<Piece::Bishop>(board, state, move);
+//        case Piece::Rook:
+//            switch (move.flags) {
+//                case MoveFlag::RemoveShortCastling:
+//                    return forkBoard<Piece::Rook, MoveFlag::RemoveShortCastling>(board, state, move);
+//                case MoveFlag::RemoveLongCastling:
+//                    return forkBoard<Piece::Rook, MoveFlag::RemoveLongCastling>(board, state, move);
+//            }
+//            return forkBoard<Piece::Rook>(board, state, move);
+//        case Piece::Queen:
+//            return forkBoard<Piece::Queen>(board, state, move);
+//        case Piece::King:
+//            switch (move.flags) {
+//                case MoveFlag::RemoveAllCastling:
+//                    return forkBoard<Piece::King, MoveFlag::RemoveAllCastling>(board, state, move);
+//                case MoveFlag::ShortCastling:
+//                    return forkBoard<Piece::King, MoveFlag::ShortCastling>(board, state, move);
+//                case MoveFlag::LongCastling:
+//                    return forkBoard<Piece::King, MoveFlag::LongCastling>(board, state, move);
+//            }
+//            return forkBoard<Piece::King>(board, state, move);
+//    }
+//    throw std::runtime_error("INVALID PIECE MOVED");
+//}
 
 #endif //DORY_BOARD_H
 

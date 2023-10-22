@@ -29,7 +29,7 @@ namespace MoveCollectors {
         static unsigned long long totalNodes;
 
         template<State state>
-        static void generateGameTree(const BoardPtr& board) {
+        static void generateGameTree(const Board& board) {
             if constexpr (depth > 0) {
                 MoveGenerator<LimitedDFS<depth>>::template generate<state>(board);
             }
@@ -37,13 +37,13 @@ namespace MoveCollectors {
 
     private:
         template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove(const BoardPtr& board, BB from, BB to) {
+        static void registerMove(const Board& board, BB from, BB to) {
             if constexpr (depth == 1) {
                 totalNodes++;
             }
 
             constexpr State nextState = getNextState<state, flags>();
-            BoardPtr nextBoard = board->getNextBoard<state, piece, flags>(from, to);
+            Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
             LimitedDFS<depth-1>::template generateGameTree<nextState>(nextBoard);
         }
 
@@ -100,7 +100,7 @@ namespace MoveCollectors {
     public:
 
         template<State state>
-        static void generateGameTree(const BoardPtr& board) {
+        static void generateGameTree(const Board& board) {
             if constexpr (depth > 0) {
                 MoveGenerator<PerftCollector<depth>>::template generate<state>(board);
             }
@@ -108,10 +108,10 @@ namespace MoveCollectors {
 
     private:
         template<State state,  Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove(const BoardPtr &board, BB from, BB to) {
+        static void registerMove(const Board& board, BB from, BB to) {
             nodes.at(depth)++;
             constexpr State nextState = getNextState<state, flags>();
-            BoardPtr nextBoard = board->getNextBoard<state, piece, flags>(from, to);
+            Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
             PerftCollector<depth-1>::template generateGameTree<nextState>(nextBoard);
         }
 
