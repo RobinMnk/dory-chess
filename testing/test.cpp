@@ -11,7 +11,7 @@ using uLong = unsigned long long;
 
 struct Runner {
     template<State state, int depth>
-    static void main(BoardPtr& board) {
+    static void main(const Board& board) {
         MoveCollectors::PerftCollector<depth>::template generateGameTree<state>(board);
     }
 };
@@ -25,8 +25,7 @@ TEST(NodeCounts, StartingPosition) {
             1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860
     };
 
-    BoardPtr board = std::make_unique<Board>(STARTBOARD);
-    MoveCollectors::PerftCollector<6>::template generateGameTree<STARTSTATE>(board);
+    MoveCollectors::PerftCollector<6>::template generateGameTree<STARTSTATE>(STARTBOARD);
 
     for(int i{1}; i <= 6; i++) {
         uLong expected = ground_truth.at(i);

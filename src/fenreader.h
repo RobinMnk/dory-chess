@@ -75,7 +75,7 @@ namespace Utils {
     }
 
     template<typename Main, int depth>
-    void run(uint8_t state_code, BoardPtr board) {
+    void run(uint8_t state_code, const Board& board) {
         switch (state_code) {
             case 0:  Main::template main<toState( 0), depth>(board); break;
             case 1:  Main::template main<toState( 1), depth>(board); break;
@@ -140,14 +140,14 @@ namespace Utils {
             if(bcs) state_code |= 0b10;
             if(bcl) state_code |= 0b1;
 
-            run<Main, depth>(state_code, std::make_unique<Board>(board));
+            run<Main, depth>(state_code, board);
 
 //        } catch (std::exception& ex) {
 //            std::cerr << "Invalid FEN string!" << std::endl;
 //        }
     }
 
-    std::pair<BoardPtr, State> loadFEN(std::string_view full_fen) {
+    std::pair<std::unique_ptr<Board>, State> loadFEN(std::string_view full_fen) {
         std::stringstream stream(full_fen.data());
         std::string segment;
         std::vector<std::string> seglist;
@@ -193,7 +193,8 @@ namespace Utils {
 
     template<typename Main>
     void startingPositionAtDepth(int depth) {
-        BoardPtr board = std::make_unique<Board>(STARTBOARD);
+//        BoardPtr board = std::make_unique<Board>(STARTBOARD);
+        Board board = STARTBOARD;
         switch(depth) {
             case 1: Main::template main<STARTSTATE, 1>(board); break;
             case 2: Main::template main<STARTSTATE, 2>(board); break;

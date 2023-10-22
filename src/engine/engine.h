@@ -51,7 +51,7 @@ public:
 //        }};
 //    }
 
-    static NMR beginEvaluation(const BoardPtr& board, const State state, int md) {
+    static NMR beginEvaluation(const Board& board, const State state, int md) {
         boundaryDepth = md;
         maxDepth = md + DEPTH_MARGIN_SIZE;
         bestMoves.clear();
@@ -110,7 +110,11 @@ private:
     }
 
 
+<<<<<<< HEAD
     static NMR Quiescence(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
+=======
+    static NMR Quiescence(const Board& board, const State state, int depth, float alpha, float beta) {
+>>>>>>> stack_usage
         float stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
 
         if (stand_pat >= beta) {
@@ -121,12 +125,19 @@ private:
             alpha = stand_pat;
         }
 
+<<<<<<< HEAD
         PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
 
         moves.at(depth).clear();
         currentDepth = depth;
 
         generate<EngineMC>(board, state, pd);
+=======
+        moves.at(depth).clear();
+        currentDepth = depth;
+
+        generate<EngineMC>(board, state);
+>>>>>>> stack_usage
 
         if(moves.at(depth).empty()) {
             nodesSearched++;
@@ -138,8 +149,13 @@ private:
         /// Iterate through all moves
         for(auto& move_pair: moves.at(depth)) {
             auto [info, move] = move_pair;
+<<<<<<< HEAD
             auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
             auto [eval, line] = Quiescence(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
+=======
+            auto [nextBoard, nextState] = forkBoard(board, state, move);
+            auto [eval, line] = Quiescence(nextBoard, nextState, depth + 1,  -beta,  -alpha);
+>>>>>>> stack_usage
             eval = -eval;
 
             if (eval >= beta) {
@@ -155,7 +171,11 @@ private:
     }
 
     template<bool topLevel>
+<<<<<<< HEAD
     static NMR negamax(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
+=======
+    static NMR negamax(const Board& board, const State state, int depth, float alpha, float beta) {
+>>>>>>> stack_usage
         /// Lookup position in table
         size_t boardHash;
         if constexpr (!topLevel) {
@@ -168,7 +188,15 @@ private:
 
     /// Recursion Base Case: Max Depth reached -> return heuristic position eval
         if (depth > maxDepth) {
+<<<<<<< HEAD
             return Quiescence(board, state, 1, alpha, beta);
+=======
+//            return Quiescence(board, state, 1, alpha, beta);
+            float heuristic_val = evaluation::position_evaluate(board);
+            float eval = subjectiveEval(heuristic_val, state);
+            saveToLookupTable(eval, boardHash, alpha, beta, depth);
+            return {eval, {}};
+>>>>>>> stack_usage
         }
 
 //        bool expandMove = depth < boundaryDepth;
@@ -182,8 +210,11 @@ private:
 //            }
 //        }
 
+<<<<<<< HEAD
         PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
 
+=======
+>>>>>>> stack_usage
         moves.at(depth).clear();
         currentDepth = depth;
 
@@ -199,9 +230,15 @@ private:
 //            }
 //        } else {
 
+<<<<<<< HEAD
         generate<EngineMC>(board, state, pd);
 
         bool checkmated = pd->inCheck() && moves.at(depth).empty();
+=======
+        generate<EngineMC>(board, state);
+
+        bool checkmated = MoveGenerator<EngineMC>::pd->inCheck() && moves.at(depth).empty();
+>>>>>>> stack_usage
         if (checkmated) {
             nodesSearched++;
             return {-INF, {}};
@@ -238,8 +275,13 @@ private:
 
 
 //            if(expandMove) {
+<<<<<<< HEAD
             auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
             auto [eval, line] = negamax<false>(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
+=======
+            auto [nextBoard, nextState] = forkBoard(board, state, move);
+            auto [eval, line] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
+>>>>>>> stack_usage
             eval = -eval;
 //            } else {
 //                nodesSearched++;
@@ -289,15 +331,12 @@ private:
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static void registerMove(const BoardPtr &board, BB from, BB to) {
+    static void registerMove(const Board &board, BB from, BB to) {
         moves[currentDepth].emplace_back(
             evaluation::move_heuristic<state, piece, flags>(board, from, to),
             Move(from, to, piece, flags)
         );
     }
-
-//    template<State nextState>
-//    static void next(Board& nextBoard) {}
 
     friend class MoveGenerator<EngineMC>;
 };

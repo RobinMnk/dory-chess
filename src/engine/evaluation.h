@@ -10,7 +10,7 @@
 
 namespace evaluation {
 
-    float position_evaluate(const BoardPtr& board) {
+    float position_evaluate(const Board& board) {
         engine_params::EvaluationParams params;
         return features::material(board, params);
     }
@@ -25,34 +25,34 @@ namespace evaluation {
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static float move_heuristic(const BoardPtr &board, BB from, BB to) {
+    static float move_heuristic(const Board &board, BB from, BB to) {
         engine_params::EvaluationParams params;
 
         float heuristic_val{0};
 
         // is Capture
-        if ((to & board->enemyPieces<state.whiteToMove>()) != 0) {
+        if ((to & board.enemyPieces<state.whiteToMove>()) != 0) {
             float valueDiff = -engine_params::pieceValue<piece>(params);
-            if (board->enemyPawns<state.whiteToMove>() & to) {
+            if (board.enemyPawns<state.whiteToMove>() & to) {
                 valueDiff += engine_params::pieceValue<Piece::Pawn>(params);
             }
-            if (board->enemyKnights<state.whiteToMove>() & to) {
+            if (board.enemyKnights<state.whiteToMove>() & to) {
                 valueDiff += engine_params::pieceValue<Piece::Knight>(params);
             }
-            if (board->enemyBishops<state.whiteToMove>() & to) {
+            if (board.enemyBishops<state.whiteToMove>() & to) {
                 valueDiff += engine_params::pieceValue<Piece::Bishop>(params);
             }
-            if (board->enemyRooks<state.whiteToMove>() & to) {
+            if (board.enemyRooks<state.whiteToMove>() & to) {
                 valueDiff += engine_params::pieceValue<Piece::Rook>(params);
             }
-            if (board->enemyQueens<state.whiteToMove>() & to) {
+            if (board.enemyQueens<state.whiteToMove>() & to) {
                 valueDiff += engine_params::pieceValue<Piece::Queen>(params);
             }
 
             heuristic_val += 9 + valueDiff;
         }
 
-        BoardPtr nextBoard = board->getNextBoard<state, piece, flags>(from, to);
+        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
         float position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
         heuristic_val += position_eval_diff;
 
