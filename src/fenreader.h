@@ -147,7 +147,7 @@ namespace Utils {
 //        }
     }
 
-    std::pair<BoardPtr, State> loadFEN(std::string_view full_fen) {
+    std::pair<std::unique_ptr<Board>, State> loadFEN(std::string_view full_fen) {
         std::stringstream stream(full_fen.data());
         std::string segment;
         std::vector<std::string> seglist;

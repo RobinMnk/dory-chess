@@ -16,12 +16,12 @@ concept ValidMoveCollector =
 template<typename MC>
 class MoveGenerator {
 public:
+    static PDptr pd;
+
     template<State>
     static void generate(const Board& board);
 
 private:
-    static PDptr pd;
-
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     requires ValidMoveCollector<MC, state, piece, flags>
     static void generateSuccessorBoard(const Board& board, BB from, BB to);
@@ -337,41 +337,41 @@ void MoveGenerator<MoveCollector>::castles(const Board& board) {
 }
 
 template<typename MC>
-static void generate(const Board& board, State state, PinData& pd) {
+static void generate(const Board& board, State state) {
     unsigned int state_code = state.code();
     switch (state_code) {
-        case 0: MoveGenerator<MC>::template generate<toState(0)>(board, pd); break;
-        case 1: MoveGenerator<MC>::template generate<toState(1)>(board, pd); break;
-        case 2: MoveGenerator<MC>::template generate<toState(2)>(board, pd); break;
-        case 3: MoveGenerator<MC>::template generate<toState(3)>(board, pd); break;
-        case 4: MoveGenerator<MC>::template generate<toState(4)>(board, pd); break;
-        case 5: MoveGenerator<MC>::template generate<toState(5)>(board, pd); break;
-        case 6: MoveGenerator<MC>::template generate<toState(6)>(board, pd); break;
-        case 7: MoveGenerator<MC>::template generate<toState(7)>(board, pd); break;
-        case 8: MoveGenerator<MC>::template generate<toState(8)>(board, pd); break;
-        case 9: MoveGenerator<MC>::template generate<toState(9)>(board, pd); break;
-        case 10: MoveGenerator<MC>::template generate<toState(10)>(board, pd); break;
-        case 11: MoveGenerator<MC>::template generate<toState(11)>(board, pd); break;
-        case 12: MoveGenerator<MC>::template generate<toState(12)>(board, pd); break;
-        case 13: MoveGenerator<MC>::template generate<toState(13)>(board, pd); break;
-        case 14: MoveGenerator<MC>::template generate<toState(14)>(board, pd); break;
-        case 15: MoveGenerator<MC>::template generate<toState(15)>(board, pd); break;
-        case 16: MoveGenerator<MC>::template generate<toState(16)>(board, pd); break;
-        case 17: MoveGenerator<MC>::template generate<toState(17)>(board, pd); break;
-        case 18: MoveGenerator<MC>::template generate<toState(18)>(board, pd); break;
-        case 19: MoveGenerator<MC>::template generate<toState(19)>(board, pd); break;
-        case 20: MoveGenerator<MC>::template generate<toState(20)>(board, pd); break;
-        case 21: MoveGenerator<MC>::template generate<toState(21)>(board, pd); break;
-        case 22: MoveGenerator<MC>::template generate<toState(22)>(board, pd); break;
-        case 23: MoveGenerator<MC>::template generate<toState(23)>(board, pd); break;
-        case 24: MoveGenerator<MC>::template generate<toState(24)>(board, pd); break;
-        case 25: MoveGenerator<MC>::template generate<toState(25)>(board, pd); break;
-        case 26: MoveGenerator<MC>::template generate<toState(26)>(board, pd); break;
-        case 27: MoveGenerator<MC>::template generate<toState(27)>(board, pd); break;
-        case 28: MoveGenerator<MC>::template generate<toState(28)>(board, pd); break;
-        case 29: MoveGenerator<MC>::template generate<toState(29)>(board, pd); break;
-        case 30: MoveGenerator<MC>::template generate<toState(30)>(board, pd); break;
-        case 31: MoveGenerator<MC>::template generate<toState(31)>(board, pd); break;
+        case 0: MoveGenerator<MC>::template generate<toState(0)>(board); break;
+        case 1: MoveGenerator<MC>::template generate<toState(1)>(board); break;
+        case 2: MoveGenerator<MC>::template generate<toState(2)>(board); break;
+        case 3: MoveGenerator<MC>::template generate<toState(3)>(board); break;
+        case 4: MoveGenerator<MC>::template generate<toState(4)>(board); break;
+        case 5: MoveGenerator<MC>::template generate<toState(5)>(board); break;
+        case 6: MoveGenerator<MC>::template generate<toState(6)>(board); break;
+        case 7: MoveGenerator<MC>::template generate<toState(7)>(board); break;
+        case 8: MoveGenerator<MC>::template generate<toState(8)>(board); break;
+        case 9: MoveGenerator<MC>::template generate<toState(9)>(board); break;
+        case 10: MoveGenerator<MC>::template generate<toState(10)>(board); break;
+        case 11: MoveGenerator<MC>::template generate<toState(11)>(board); break;
+        case 12: MoveGenerator<MC>::template generate<toState(12)>(board); break;
+        case 13: MoveGenerator<MC>::template generate<toState(13)>(board); break;
+        case 14: MoveGenerator<MC>::template generate<toState(14)>(board); break;
+        case 15: MoveGenerator<MC>::template generate<toState(15)>(board); break;
+        case 16: MoveGenerator<MC>::template generate<toState(16)>(board); break;
+        case 17: MoveGenerator<MC>::template generate<toState(17)>(board); break;
+        case 18: MoveGenerator<MC>::template generate<toState(18)>(board); break;
+        case 19: MoveGenerator<MC>::template generate<toState(19)>(board); break;
+        case 20: MoveGenerator<MC>::template generate<toState(20)>(board); break;
+        case 21: MoveGenerator<MC>::template generate<toState(21)>(board); break;
+        case 22: MoveGenerator<MC>::template generate<toState(22)>(board); break;
+        case 23: MoveGenerator<MC>::template generate<toState(23)>(board); break;
+        case 24: MoveGenerator<MC>::template generate<toState(24)>(board); break;
+        case 25: MoveGenerator<MC>::template generate<toState(25)>(board); break;
+        case 26: MoveGenerator<MC>::template generate<toState(26)>(board); break;
+        case 27: MoveGenerator<MC>::template generate<toState(27)>(board); break;
+        case 28: MoveGenerator<MC>::template generate<toState(28)>(board); break;
+        case 29: MoveGenerator<MC>::template generate<toState(29)>(board); break;
+        case 30: MoveGenerator<MC>::template generate<toState(30)>(board); break;
+        case 31: MoveGenerator<MC>::template generate<toState(31)>(board); break;
         default: return;
     }
 }
