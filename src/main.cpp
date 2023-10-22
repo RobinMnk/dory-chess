@@ -34,10 +34,10 @@
 struct Runner {
     template<State state, int depth>
     static void main(const Board& board) {
-        MoveCollectors::nodes.resize(7);
+        MoveCollectors::nodes.resize(depth + 1);
 
         auto t1 = std::chrono::high_resolution_clock::now();
-        MoveCollectors::PerftCollector<6>::template generateGameTree<state>(board);
+        MoveCollectors::PerftCollector<depth>::template generateGameTree<state>(board);
         auto t2 = std::chrono::high_resolution_clock::now();
 
         auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);

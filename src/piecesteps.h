@@ -13,9 +13,9 @@ const uint8_t END_OF_ARRAY = 0x7f;
 
 namespace PieceSteps {
 
-    const std::array<int, 8> directions{8, 9, 1, -7, -8, -9, -1, 7};
-    const std::array<int, 4> diagonal{1, 3, 5, 7}, straight{0, 2, 4, 6};
-    const int DIR_LEFT = 6, DIR_RIGHT = 2;
+    constexpr std::array<int, 8> directions{8, 9, 1, -7, -8, -9, -1, 7};
+    constexpr std::array<int, 4> diagonal{1, 3, 5, 7}, straight{0, 2, 4, 6};
+    constexpr int DIR_LEFT = 6, DIR_RIGHT = 2;
 
     std::array<std::array<BB, 8>, 64> LINES{};
 

@@ -8,6 +8,10 @@
 #ifndef DORY_CHECKLOGICHANDLER_H
 #define DORY_CHECKLOGICHANDLER_H
 
+struct PinData;
+
+using PDptr = std::unique_ptr<PinData>;
+
 struct PinData {
     bool isDoubleCheck{false}, blockEP{false};
     BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
@@ -23,47 +27,61 @@ class CheckLogicHandler {
 
 public:
     template<bool>
-    static PinData reload(const Board& board);
+    static void reload(const Board& board, const PDptr& pd);
 };
 
-template<bool whiteToMove, bool diag>
-BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP){
-    std::array<BB, 8> kingLines = PieceSteps::LINES[kingSquare];
-    auto dirs = diag ? PieceSteps::diagonal : PieceSteps::straight;
-    BB pieces = board.enemySliders<whiteToMove, diag>();
-    BB mask = 0;
+template<bool whiteToMove, int dir>
+void handlePin(const Board& board, BB line, BB pieces, int kingSquare, BB& mask, bool& blockEP) {
+    constexpr int dir_off = PieceSteps::directions[dir];
+    BB sol = line & pieces;
+    if(sol) {
+        int ix;
+        if constexpr (dir_off > 0) ix = firstBitOf(sol);
+        else ix = lastBitOf(sol);
 
-    for(int dir_id: dirs) {
-        int dir_off = PieceSteps::directions[dir_id];
-        BB line = kingLines[dir_id];
-        BB sol = line & pieces;
-        if(sol) {
-            int ix = dir_off > 0 ? firstBitOf(sol) : lastBitOf(sol);
-            BB kl = line & PieceSteps::FROM_TO[kingSquare][ix];
-            if(
-                bitCount(kl & board.enemyPieces<whiteToMove>()) == 1             // only enemyPieces piece on line is the slider
-                && bitCount(kl & board.myPieces<whiteToMove>()) == 1             // I only have one piece on line (excluding king)
-            ) mask |= kl;
+        BB kl = line & PieceSteps::FROM_TO[kingSquare][ix];
+        if(bitCount(kl & board.enemyPieces<whiteToMove>()) == 1             // only enemyPieces piece on line is the slider
+            && bitCount(kl & board.myPieces<whiteToMove>()) == 1            // I only have one piece on line (excluding king)
+        ) mask |= kl;
 
-            // handle very special case of two sideways pinned epPawns
-            // add pin line through two pawns to prevent pinned en passant
-            else if(board.hasEnPassant()
-                && (dir_id == PieceSteps::DIR_LEFT || dir_id == PieceSteps::DIR_RIGHT)
+        // handle very special case of two sideways pinned epPawns
+        // add pin line through two pawns to prevent pinned en passant
+        else if(board.hasEnPassant()
+                && (dir == PieceSteps::DIR_LEFT || dir == PieceSteps::DIR_RIGHT)
                 && rankOf(kingSquare) == epRankNr<whiteToMove>()
                 && bitCount(kl & board.pawns<whiteToMove>()) == 1         // one own pawn
                 && bitCount(kl & board.enemyPawns<whiteToMove>()) == 1    // one enemy pawn
                 && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
-            ) blockEP = true;
-        }
+                ) blockEP = true;
     }
+}
+
+
+template<bool whiteToMove, bool diag>
+BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP){
+    std::array<BB, 8> kingLines = PieceSteps::LINES[kingSquare];
+    BB pieces = board.enemySliders<whiteToMove, diag>();
+    BB mask = 0;
+
+    if constexpr (diag) {
+        handlePin<whiteToMove, 1>(board, kingLines[1], pieces, kingSquare, mask, blockEP);
+        handlePin<whiteToMove, 3>(board, kingLines[3], pieces, kingSquare, mask, blockEP);
+        handlePin<whiteToMove, 5>(board, kingLines[5], pieces, kingSquare, mask, blockEP);
+        handlePin<whiteToMove, 7>(board, kingLines[7], pieces, kingSquare, mask, blockEP);
+    } else {
+        handlePin<whiteToMove, 0>(board, kingLines[0], pieces, kingSquare, mask, blockEP);
+        handlePin<whiteToMove, 2>(board, kingLines[2], pieces, kingSquare, mask, blockEP);
+        handlePin<whiteToMove, 4>(board, kingLines[4], pieces, kingSquare, mask, blockEP);
+        handlePin<whiteToMove, 6>(board, kingLines[6], pieces, kingSquare, mask, blockEP);
+    }
+
     return mask;
 }
 
 template<bool white>
-PinData CheckLogicHandler::reload(const Board& board){
+void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
     BB attacked{0}, checkMask{0}, mask;
     int numChecks = 0;
-    bool blockEP = false;
     int kingSquare = board.kingSquare<white>();
 
     BB pawnBB = board.enemyPawns<white>();
@@ -128,15 +146,15 @@ PinData CheckLogicHandler::reload(const Board& board){
         }
     }
 
-    bool isDoubleCheck = numChecks > 1;
-    if(isDoubleCheck) checkMask = 0;
-
-    BB pinsDiagonal = addPins<white, true>(board, kingSquare, blockEP);
-    BB pinsStraight = addPins<white, false>(board, kingSquare, blockEP);
+    pd->isDoubleCheck = numChecks > 1;
+    if(pd->isDoubleCheck) checkMask = 0;
     if(numChecks == 0) checkMask = FULL_BB;
-    BB targetSquares = board.enemyOrEmpty<white>() & checkMask;
 
-    return PinData(isDoubleCheck, blockEP, attacked, checkMask, targetSquares, pinsStraight, pinsDiagonal);
+    pd->pinsDiag = addPins<white, true>(board, kingSquare, pd->blockEP);
+    pd->pinsStr  = addPins<white, false>(board, kingSquare, pd->blockEP);
+    pd->targetSquares = board.enemyOrEmpty<white>() & checkMask;
+    pd->attacked = attacked;
+    pd->checkMask = checkMask;
 }
 
 #endif //DORY_CHECKLOGICHANDLER_H
