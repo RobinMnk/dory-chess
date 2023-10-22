@@ -11,10 +11,10 @@
 #include <memory>
 #include <thread>
 #include <unordered_map>
-#include "../movegen.h"
 #include "evaluation.h"
 #include "../utils.h"
 #include "../zobrist.h"
+#include "../movegen.h"
 
 float INF = 99999;
 
@@ -57,9 +57,9 @@ public:
         bestMoves.clear();
         lookup_table.clear();
         nodesSearched = 0;
-        auto [ev, line] = negamax<true>(board, state, 1, -INF, INF);
-        bestMoves.clear();
-        bestMoves.push_back(line.back());
+        auto [ev, line] = negamax<true, false>(board, state, 1, -INF, INF);
+//        bestMoves.clear();
+//        bestMoves.push_back(line.back());
         return {subjectiveEval(ev, state), line};
     }
 
@@ -71,7 +71,7 @@ public:
         return moves[0];
     }
 private:
-    static std::array<std::vector<std::pair<float, Move>>, 32> moves;
+    static std::array<std::vector<std::pair<float, Move>>, 48> moves;
     static int maxDepth, boundaryDepth, currentDepth;
     static std::unordered_map<BB, TTEntry> lookup_table;
 
@@ -109,12 +109,7 @@ private:
         return {{ 0, {} }, false};
     }
 
-
-<<<<<<< HEAD
-    static NMR Quiescence(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
-=======
-    static NMR Quiescence(const Board& board, const State state, int depth, float alpha, float beta) {
->>>>>>> stack_usage
+    static NMR Quiescence(const Board& board, const State state, int depth, float alpha, float beta, size_t boardHash) {
         float stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
 
         if (stand_pat >= beta) {
@@ -125,19 +120,10 @@ private:
             alpha = stand_pat;
         }
 
-<<<<<<< HEAD
-        PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
-
         moves.at(depth).clear();
         currentDepth = depth;
 
-        generate<EngineMC>(board, state, pd);
-=======
-        moves.at(depth).clear();
-        currentDepth = depth;
-
-        generate<EngineMC>(board, state);
->>>>>>> stack_usage
+        generate<EngineMC, true>(board, state);
 
         if(moves.at(depth).empty()) {
             nodesSearched++;
@@ -149,13 +135,8 @@ private:
         /// Iterate through all moves
         for(auto& move_pair: moves.at(depth)) {
             auto [info, move] = move_pair;
-<<<<<<< HEAD
-            auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
-            auto [eval, line] = Quiescence(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
-=======
             auto [nextBoard, nextState] = forkBoard(board, state, move);
-            auto [eval, line] = Quiescence(nextBoard, nextState, depth + 1,  -beta,  -alpha);
->>>>>>> stack_usage
+            auto [eval, line] = Quiescence(nextBoard, nextState, depth + 1,  -beta,  -alpha, boardHash);
             eval = -eval;
 
             if (eval >= beta) {
@@ -167,15 +148,14 @@ private:
                 bestLine = line;
             }
         }
+
+        saveToLookupTable(alpha, boardHash, alpha, beta, depth);
+
         return { alpha, bestLine };
     }
 
-    template<bool topLevel>
-<<<<<<< HEAD
-    static NMR negamax(const BoardPtr& board, const State state, int depth, float alpha, float beta) {
-=======
+    template<bool topLevel, bool quiescene>
     static NMR negamax(const Board& board, const State state, int depth, float alpha, float beta) {
->>>>>>> stack_usage
         /// Lookup position in table
         size_t boardHash;
         if constexpr (!topLevel) {
@@ -186,17 +166,23 @@ private:
             }
         }
 
-    /// Recursion Base Case: Max Depth reached -> return heuristic position eval
-        if (depth > maxDepth) {
-<<<<<<< HEAD
-            return Quiescence(board, state, 1, alpha, beta);
-=======
-//            return Quiescence(board, state, 1, alpha, beta);
-            float heuristic_val = evaluation::position_evaluate(board);
-            float eval = subjectiveEval(heuristic_val, state);
-            saveToLookupTable(eval, boardHash, alpha, beta, depth);
-            return {eval, {}};
->>>>>>> stack_usage
+        /// Recursion Base Case: Max Depth reached -> return heuristic position eval
+
+        if constexpr (quiescene) {
+            float stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
+
+            if (stand_pat >= beta) {
+                nodesSearched++;
+                return { beta, {} };
+            }
+            if (alpha < stand_pat) {
+                alpha = stand_pat;
+            }
+        } else {
+            if (depth > maxDepth) {
+//                return Quiescence(board, state, depth, alpha, beta, boardHash);
+                return negamax<false, true>(board, state, depth, alpha, beta);
+            }
         }
 
 //        bool expandMove = depth < boundaryDepth;
@@ -210,11 +196,6 @@ private:
 //            }
 //        }
 
-<<<<<<< HEAD
-        PDptr pd = state.whiteToMove ? CheckLogicHandler::reload<true>(board) : CheckLogicHandler::reload<false>(board);
-
-=======
->>>>>>> stack_usage
         moves.at(depth).clear();
         currentDepth = depth;
 
@@ -230,24 +211,25 @@ private:
 //            }
 //        } else {
 
-<<<<<<< HEAD
-        generate<EngineMC>(board, state, pd);
+        generate<EngineMC, quiescene>(board, state);
 
-        bool checkmated = pd->inCheck() && moves.at(depth).empty();
-=======
-        generate<EngineMC>(board, state);
+        if constexpr (quiescene) {
+            if (moves.at(depth).empty()) {
+                nodesSearched++;
+                return {alpha, {}};
+            }
+        } else {
+            bool checkmated = MoveGenerator<EngineMC>::pd->inCheck() && moves.at(depth).empty();
+            if (checkmated) {
+                nodesSearched++;
+                return {-INF, {}};
+            }
 
-        bool checkmated = MoveGenerator<EngineMC>::pd->inCheck() && moves.at(depth).empty();
->>>>>>> stack_usage
-        if (checkmated) {
-            nodesSearched++;
-            return {-INF, {}};
-        }
-
-        if (moves.at(depth).empty()) {
-            // Stalemate!
-            nodesSearched++;
-            return {0, {}};
+            if (moves.at(depth).empty()) {
+                // Stalemate!
+                nodesSearched++;
+                return {0, {}};
+            }
         }
 
 //        }
@@ -275,13 +257,8 @@ private:
 
 
 //            if(expandMove) {
-<<<<<<< HEAD
-            auto [nextBoardPtr, nextState] = forkBoard(board, state, move);
-            auto [eval, line] = negamax<false>(nextBoardPtr, nextState, depth + 1,  -beta,  -alpha);
-=======
             auto [nextBoard, nextState] = forkBoard(board, state, move);
-            auto [eval, line] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
->>>>>>> stack_usage
+            auto [eval, line] = negamax<false, quiescene>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
             eval = -eval;
 //            } else {
 //                nodesSearched++;
@@ -296,10 +273,20 @@ private:
 //                Utils::printMove(move);
 //            }
 
-            if (eval > currentEval) {
-                currentEval = eval;
-                line.push_back(move);
-                bestLine = line;
+            if constexpr (quiescene) {
+                if (eval >= beta) {
+                    return { beta, {} };
+                }
+                if (eval > alpha) {
+                    alpha = eval;
+                    line.push_back(move);
+                    bestLine = line;
+                }
+            } else {
+                if (eval > currentEval) {
+                    currentEval = eval;
+                    line.push_back(move);
+                    bestLine = line;
 
 //                if constexpr (topLevel) {
 //                    bestMoves.clear();
@@ -312,13 +299,14 @@ private:
 //                        bestMoves.push_back(move);
 //                    }
 //                }
-            }
+                }
 
 //            if constexpr (!topLevel) {
                 if (currentEval > alpha) {
                     alpha = currentEval;
                 }
                 if (alpha >= beta) break;
+            }
 //            }
         }
 
@@ -327,6 +315,9 @@ private:
             saveToLookupTable(currentEval, boardHash, alpha, beta, depth);
         }
 
+        if constexpr (quiescene) {
+            return { alpha, bestLine };
+        }
         return {currentEval, bestLine};
     }
 
@@ -338,10 +329,11 @@ private:
         );
     }
 
-    friend class MoveGenerator<EngineMC>;
+    friend class MoveGenerator<EngineMC, true>;
+    friend class MoveGenerator<EngineMC, false>;
 };
 
-std::array<std::vector<std::pair<float, Move>>, 32> EngineMC::moves{};
+std::array<std::vector<std::pair<float, Move>>, 48> EngineMC::moves{};
 int EngineMC::currentDepth{0};
 int EngineMC::boundaryDepth{0};
 int EngineMC::maxDepth{0};

@@ -64,7 +64,7 @@ void enumerateMoves(const Board& board) {
 struct Runner {
     template<State state, int depth>
     static void main(const Board& board) {
-        auto [eval, line] = timeEvaluation(board, state, 5);
+        auto [eval, line] = timeEvaluation(board, state, depth);
 
         std::cout << "Best Move(s) " << std::endl;
         for (auto& move: line) {
