@@ -12,44 +12,44 @@ double USE_ENGINE_BEST_MOVES_PROBABILITY = 1;
 
 
 
-class GameTree {
-    struct TreeNode {
-        uint8_t wins{0}, total{0};
-        float eval{};
-        Move move;
-    };
-
-    using TPT = std::shared_ptr<TreeNode>;
-
-    std::vector<std::vector<TPT>> tree{};
-    TPT root;
-    Board* startBoard;
-    State startState;
-
-public:
-    GameTree (const Board& board, State& state) : startBoard{new Board(board)}, startState(state) {
-        root = std::make_unique<TreeNode>();
-    }
-
-    void expand() {
-        TPT parent = root;
-
-        int index = 0, level = 0;
-        Board* currentBoard = startBoard;
-        State currentState = startState;
-
-        for(TPT node: tree.at(level)) {
-//            if(index == root->offset) {
-//                // Expand this node
+//class GameTree {
+//    struct TreeNode {
+//        uint8_t wins{0}, total{0};
+//        float eval{};
+//        Move move;
+//    };
 //
-//                continue;
-//            }
-
-            index++;
-        }
-
-    }
-};
+//    using TPT = std::shared_ptr<TreeNode>;
+//
+//    std::vector<std::vector<TPT>> tree{};
+//    TPT root;
+//    Board* startBoard;
+//    State startState;
+//
+//public:
+//    GameTree (const Board& board, State& state) : startBoard{new Board(board)}, startState(state) {
+//        root = std::make_unique<TreeNode>();
+//    }
+//
+//    void expand() {
+//        TPT parent = root;
+//
+//        int index = 0, level = 0;
+//        Board* currentBoard = startBoard;
+//        State currentState = startState;
+//
+//        for(TPT node: tree.at(level)) {
+////            if(index == root->offset) {
+////                // Expand this node
+////
+////                continue;
+////            }
+//
+//            index++;
+//        }
+//
+//    }
+//};
 
 
 class MonteCarlo {

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ranges>
 
 #include "board.h"
 #include "engine/engine.h"
@@ -61,18 +62,34 @@ void enumerateMoves(const Board& board) {
     }
 }
 
+
+void printLine(std::vector<Move> line, float eval) {
+    std::cout << eval << ":  ";
+    for (auto& it : std::ranges::reverse_view(line)) {
+        std::cout << Utils::moveNameNotation(it) << " ";
+    }
+    std::cout << std::endl;
+}
+
 struct Runner {
     template<State state, int depth>
     static void main(const Board& board) {
-//        auto [eval, line] = timeEvaluation(board, state, depth);
-//
+        auto [ev, ln] = timeEvaluation(board, state, depth);
+
+        std::cout << "Lines:" << std::endl;
+
+        for(auto& [line, eval]: EngineMC::bestLines) {
+            printLine(line, eval);
+        }
+
 //        std::cout << "Best Move(s) " << std::endl;
-//        for (auto& move: line) {
+//        printLine(ln, ev);
+//        for (auto& move: ln) {
 //            Utils::printMove(move);
 //        }
-//
-//        std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
-        monteCarlo(board, state);
+
+        std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
+//        monteCarlo(board, state);
     }
 };
 
