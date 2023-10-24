@@ -32,7 +32,7 @@ float subjectiveEval(float eval, State state) {
 }
 
 bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
-    return a.first < b.first;
+    return a.first > b.first;
 }
 
 const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
@@ -234,7 +234,7 @@ private:
 
 //        }
 
-//        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
+        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
 
 //        if constexpr (topLevel) {
 //            for(auto& x: moves.at(depth)) {

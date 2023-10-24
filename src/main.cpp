@@ -32,8 +32,8 @@ NMR timeEvaluation(const Board& board, const State state, int depth) {
 }
 
 void monteCarlo(const Board& board, const State state) {
-//    auto fen = MonteCarlo::simulateGame(board, state);
-//    std::cout << "FEN: \n" << fen << std::endl;
+    auto fen = MonteCarlo::simulateGame(board, state);
+    std::cout << "FEN: \n" << fen << std::endl;
 }
 
 
@@ -64,14 +64,15 @@ void enumerateMoves(const Board& board) {
 struct Runner {
     template<State state, int depth>
     static void main(const Board& board) {
-        auto [eval, line] = timeEvaluation(board, state, depth);
-
-        std::cout << "Best Move(s) " << std::endl;
-        for (auto& move: line) {
-            Utils::printMove(move);
-        }
-
-        std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
+//        auto [eval, line] = timeEvaluation(board, state, depth);
+//
+//        std::cout << "Best Move(s) " << std::endl;
+//        for (auto& move: line) {
+//            Utils::printMove(move);
+//        }
+//
+//        std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
+        monteCarlo(board, state);
     }
 };
 

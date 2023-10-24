@@ -56,7 +56,7 @@ namespace evaluation {
         float position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
         heuristic_val += position_eval_diff;
 
-        heuristic_val -= piece;
+//        heuristic_val -= piece;
 
 //        heuristic_val += isForwardMove<state>(from, to);
 
