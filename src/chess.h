@@ -19,7 +19,7 @@ using square = uint64_t;
 
 using Piece_t = uint8_t;
 namespace Piece {
-    const Piece_t King = 1;
+    const Piece_t King = 7;
     const Piece_t Queen = 2;
     const Piece_t Rook = 3;
     const Piece_t Bishop = 4;

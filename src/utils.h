@@ -202,7 +202,16 @@ namespace Utils {
         if (m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
         else if (m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
         else bss << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to());
+        bss << specialMove(m.flags);
         return bss.str();
+    }
+
+    void printLine(std::vector<Move> line, float eval) {
+        std::cout << eval << ":  ";
+        for (auto& it : std::ranges::reverse_view(line)) {
+            std::cout << Utils::moveNameNotation(it) << " ";
+        }
+        std::cout << std::endl;
     }
 
     template<typename Collector, State state, int depth>

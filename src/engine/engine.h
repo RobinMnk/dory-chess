@@ -16,13 +16,13 @@
 #include "../zobrist.h"
 #include "../movegen.h"
 
-float INF = 99999;
-constexpr int NUM_LINES = 5;
+const float INF = 99999;
+unsigned int NUM_LINES = 1;
+const float BEST_MOVE_MARGIN = 0.1;
+const int MAX_ITER_DEPTH = 6;
 
-int DEPTH_MARGIN_SIZE = 0;
-float BEST_MOVE_MARGIN = 0.1;
-
-using NMR = std::pair<float, std::vector<Move>>;
+using Line = std::vector<Move>;
+using NMR = std::pair<float, Line>;
 
 
 float subjectiveEval(float eval, State state) {
@@ -33,44 +33,21 @@ bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move>
     return a.first > b.first;
 }
 
-const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
 
-struct TTEntry {
-    float value;
-    uint8_t depth, flag;
-};
+class TranspositionTable {
+    static const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
 
-class EngineMC {
+    struct TTEntry {
+        float value;
+        uint8_t depth, flag;
+    };
+    std::unordered_map<BB, TTEntry> lookup_table;
+
 public:
-//    template<State state>
-//    static void start(const Board& board, int depth) {
-//        std::jthread thr{[&board, &depth]{
-//            beginEvaluation<state>(board, depth);
-//        }};
-//    }
+    unsigned long long lookups{0};
+    bool resultValid{false};
 
-    static NMR beginEvaluation(const Board& board, const State state, int md) {
-        boundaryDepth = md;
-        maxDepth = md + DEPTH_MARGIN_SIZE;
-        lookup_table.clear();
-        nodesSearched = 0;
-        auto [ev, line] = negamax<true, false>(board, state, 1, -INF, INF);
-        return {subjectiveEval(ev, state), line};
-    }
-
-    static float evaluation;
-    static std::vector<std::pair<std::vector<Move>, float>> bestLines;
-    static BB nodesSearched, lookups;
-
-    static std::vector<std::pair<float, Move>> topLevelLegalMoves() {
-        return moves[0];
-    }
-private:
-    static std::array<std::vector<std::pair<float, Move>>, 48> moves;
-    static int maxDepth, boundaryDepth, currentDepth;
-    static std::unordered_map<BB, TTEntry> lookup_table;
-
-    static void saveToLookupTable(float eval, size_t boardHash, float alpha, float beta, int depth) {
+    void insert(float eval, size_t boardHash, float alpha, float beta, int depth) {
         uint8_t flag;
         if (eval <= alpha)
             flag = TTFlagUpperBound;
@@ -79,40 +56,96 @@ private:
         else flag = TTFlagExact;
 
         TTEntry entry{ eval, static_cast<uint8_t>(depth), flag};
-        lookup_table.insert({ boardHash, entry });
+        lookup_table.emplace(boardHash, entry);
     }
 
-    static std::pair<NMR, bool> retrieveFromLookupTable(size_t boardHash, float alpha, float beta, int depth) {
+    NMR lookup(size_t boardHash, float& alpha, float& beta, int depth) {
         auto res = lookup_table.find(boardHash);
 
+        resultValid = false;
         if(res != lookup_table.end()) {
+            lookups++;
             TTEntry entry = res->second;
-            if (entry.depth <= depth) {
-                lookups++;
+            if (entry.depth >= depth) {
                 if (entry.flag == TTFlagExact) {
-                    return {{ entry.value, {} }, true };
+                    resultValid = true;
+                    return { entry.value, {} };
                 } else if (entry.flag == TTFlagLowerBound) {
                     if (entry.value > alpha) alpha = entry.value;
                 } else if (entry.flag == TTFlagUpperBound) {
                     if (entry.value < beta) beta = entry.value;
                 }
 
-                if (alpha >= beta) return { { entry.value, {} }, true };
+                resultValid = true;
+                if (alpha >= beta) return { entry.value, {} };
             }
         }
-
-        return {{ 0, {} }, false};
+        return { 0, {} };
     }
+
+    void reset() {
+        lookup_table.clear();
+        lookups = 0;
+    }
+
+    size_t size() {
+        return lookup_table.size() * sizeof(TTEntry) / 1024;
+    }
+};
+
+class EngineMC {
+public:
+    static TranspositionTable trTable;
+    static float evaluation;
+    static std::vector<std::pair<Line, float>> bestLines;
+    static BB nodesSearched;
+
+    static void iterativeDeepening(const Board& board, const State state) {
+        reset();
+        for(int depth = 1; depth < MAX_ITER_DEPTH; depth++) {
+            searchDepth(board, state, depth);
+        }
+    }
+
+    static NMR searchDepth(const Board& board, const State state, int md) {
+        maxDepth = md;
+        bestLines.clear();
+        auto [ev, line] = negamax<true, false>(board, state, 1, -INF, INF);
+        return {subjectiveEval(ev, state), line};
+    }
+
+
+    static Line bestMoves() {
+        Line res;
+        for(auto& [line, eval]: bestLines) {
+            res.push_back(line.back());
+        }
+        return res;
+    }
+
+    static std::vector<std::pair<float, Move>> topLevelLegalMoves() {
+        return moves[1];
+    }
+
+    static void reset() {
+        trTable.reset();
+        nodesSearched = 0;
+    }
+
+private:
+    static std::array<std::vector<std::pair<float, Move>>, 48> moves;
+    static int maxDepth, currentDepth;
 
     template<bool topLevel, bool quiescene>
     static NMR negamax(const Board& board, const State state, int depth, float alpha, float beta) {
         /// Lookup position in table
-        size_t boardHash;
+        size_t boardHash{0};
+        float origAlpha = alpha;
         if constexpr (!topLevel) {
             boardHash = Zobrist::hash(board, state);
-            std::pair<NMR, bool> res = retrieveFromLookupTable(boardHash, alpha, beta, depth);
-            if (res.second) {
-                return res.first;
+            NMR res = trTable.lookup(boardHash, alpha, beta, depth);
+            if (trTable.resultValid) {
+                return res;
             }
         }
 
@@ -148,12 +181,15 @@ private:
             bool checkmated = MoveGenerator<EngineMC>::pd->inCheck() && moves.at(depth).empty();
             if (checkmated) {
                 nodesSearched++;
-                return {-INF, {}};
+                float eval = -(INF - static_cast<float>(depth));
+                trTable.insert(eval, boardHash, origAlpha, beta, depth);
+                return {eval, {}};
             }
 
             if (moves.at(depth).empty()) {
                 // Stalemate!
                 nodesSearched++;
+                trTable.insert(0, boardHash, origAlpha, beta, depth);
                 return {0, {}};
             }
         }
@@ -171,7 +207,7 @@ private:
 
 
         float currentEval = -1000000;
-        std::vector<Move> bestLine;
+        Line bestLine;
 
         /// Iterate through all moves
         for(auto& move_pair: moves.at(depth)) {
@@ -208,6 +244,7 @@ private:
                     bestLine = line;
 
                     if constexpr (topLevel) {
+//                        Utils::printLine(line, subjectiveEval(eval, state));
 
                         bestLines.clear();
                         bestLines.emplace_back(line, subjectiveEval(eval, state));
@@ -234,7 +271,7 @@ private:
 
         /// Save to lookup table
         if constexpr (!topLevel) {
-            saveToLookupTable(currentEval, boardHash, alpha, beta, depth);
+            trTable.insert(currentEval, boardHash, origAlpha, beta, depth);
         }
 
         if constexpr (quiescene) {
@@ -257,23 +294,9 @@ private:
 
 std::array<std::vector<std::pair<float, Move>>, 48> EngineMC::moves{};
 int EngineMC::currentDepth{0};
-int EngineMC::boundaryDepth{0};
 int EngineMC::maxDepth{0};
-float EngineMC::evaluation{0};
 BB EngineMC::nodesSearched{0};
-BB EngineMC::lookups{0};
-std::vector<std::pair<std::vector<Move>, float>> EngineMC::bestLines{};
-std::unordered_map<BB, TTEntry> EngineMC::lookup_table;
-
-
-
-
-//template<int d>
-//Move EngineMC<d>::bestMove{};
-
-//template<bool saveList, bool print>
-//unsigned long long EngineMC<saveList, print>::totalNodes{0};
-//template<bool saveList, bool print>
-//std::vector<Board> EngineMC<saveList, print>::positions{};
+std::vector<std::pair<Line, float>> EngineMC::bestLines{};
+TranspositionTable EngineMC::trTable{};
 
 #endif //DORY_ENGINE_H

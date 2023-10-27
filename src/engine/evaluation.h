@@ -49,20 +49,20 @@ namespace evaluation {
                 valueDiff += engine_params::pieceValue<Piece::Queen>(params);
             }
 
-            heuristic_val += 9 + valueDiff;
+            heuristic_val += 16 + valueDiff * 8;
         }
 
         Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
         float position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
         heuristic_val += position_eval_diff;
 
-//        heuristic_val -= piece;
+        heuristic_val += pieceValue<piece>(params);
 
 //        heuristic_val += isForwardMove<state>(from, to);
 
         return heuristic_val;
     }
-};
+}
 
 
 #endif //DORY_EVALUATION_H

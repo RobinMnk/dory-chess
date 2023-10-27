@@ -10,8 +10,9 @@
 //using Collector = MoveCollectors::LimitedDFS<false, false>;
 
 NMR timeEvaluation(const Board& board, const State state, int depth) {
+    EngineMC::reset();
     auto t1 = std::chrono::high_resolution_clock::now();
-    auto [eval, line] = EngineMC::beginEvaluation(board, state, depth);
+    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
@@ -63,44 +64,44 @@ void enumerateMoves(const Board& board) {
 }
 
 
-void printLine(std::vector<Move> line, float eval) {
-    std::cout << eval << ":  ";
-    for (auto& it : std::ranges::reverse_view(line)) {
-        std::cout << Utils::moveNameNotation(it) << " ";
-    }
-    std::cout << std::endl;
-}
-
 struct Runner {
     template<State state, int depth>
     static void main(const Board& board) {
         auto [ev, ln] = timeEvaluation(board, state, depth);
 
+//        EngineMC::iterativeDeepening(board, state);
+
         std::cout << "Lines:" << std::endl;
 
         for(auto& [line, eval]: EngineMC::bestLines) {
-            printLine(line, eval);
+            Utils::printLine(line, eval);
         }
 
 //        std::cout << "Best Move(s) " << std::endl;
-//        printLine(ln, ev);
-//        for (auto& move: ln) {
-//            Utils::printMove(move);
+////        printLine(ln, ev);
+//        for (auto& move: EngineMC::topLevelLegalMoves()) {
+//            Utils::printMove(move.second);
 //        }
 
-        std::cout << "Table lookups: " << EngineMC:: lookups << std::endl;
+        std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
+        std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;
+
+
 //        monteCarlo(board, state);
     }
 };
 
 int main() {
-    std::string fen, depth_str;
+    std::string fen, depth_str, num_lines_str;
     std::getline(std::cin, fen);
     std::getline(std::cin, depth_str);
     int depth = static_cast<int>(std::strtol(depth_str.c_str(), nullptr, 10));
+    std::getline(std::cin, num_lines_str);
+    auto num_lines = static_cast<unsigned int>(std::strtol(num_lines_str.c_str(), nullptr, 10));
 
     PieceSteps::load();
     Zobrist::init();
+    NUM_LINES = num_lines;
 
     if (fen == "startpos" || fen == "start") {
         std::cout << "Starting from Startposition" << std::endl;

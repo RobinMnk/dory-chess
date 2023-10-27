@@ -53,7 +53,7 @@ double USE_ENGINE_BEST_MOVES_PROBABILITY = 1;
 
 
 class MonteCarlo {
-    Utils::Random random{};
+    static Utils::Random random;
 public:
 
     static std::basic_string<char, std::char_traits<char>, std::allocator<char>> simulateGame(const Board& startBoard, State startState) {
@@ -62,6 +62,8 @@ public:
         Board currentBoard = startBoard;
         State currentState = startState;
 
+        EngineMC::reset();
+
         int ply = 0;
         std::stringstream fen{};
         while(true) {
@@ -69,21 +71,24 @@ public:
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
-            auto [eval, line] = EngineMC::beginEvaluation(currentBoard, currentState, 6);
+            auto [eval, line] = EngineMC::searchDepth(currentBoard, currentState, 6);
 
-            if (ply > 50) {
+            if (ply > 150 || EngineMC::topLevelLegalMoves().empty()) {
                 std::cout << "END of Game!" << std::endl;
                 break;
             }
 
-            nextMove = line.back();
+//            printf("%zu\n", EngineMC::bestMoves().size());
+//            printf("%zu\n", EngineMC::topLevelLegalMoves().size());
 
-//            if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
-//                nextMove = random.randomElementOf(EngineMC::bestMoves);
-//            } else {
-//                std::cout << "We should not be here!:  " << std::endl;
-//                nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
-//            }
+//            nextMove = line.back();
+
+            if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
+                nextMove = random.randomElementOf(EngineMC::bestMoves());
+            } else {
+                std::cout << "Picking legal move at random" << std::endl;
+                nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
+            }
 
 //            std::cout << "Eval:  " << eval << std::endl;
             Utils::printMove(nextMove);
@@ -106,6 +111,8 @@ public:
         return fen.str();
     }
 };
+
+Utils::Random MonteCarlo::random{};
 
 
 #endif //DORY_MONTE_CARLO_H
