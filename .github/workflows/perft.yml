@@ -2,7 +2,7 @@ name: Perft Test
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master, engine" ]
   pull_request:
     branches: [ "master" ]
 
