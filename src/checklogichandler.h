@@ -150,11 +150,13 @@ void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
     if(pd->isDoubleCheck) checkMask = 0;
     if(numChecks == 0) checkMask = FULL_BB;
 
-    pd->pinsDiag = addPins<white, true>(board, kingSquare, pd->blockEP);
-    pd->pinsStr  = addPins<white, false>(board, kingSquare, pd->blockEP);
+    bool blockEP = false;
+    pd->pinsDiag = addPins<white, true>(board, kingSquare, blockEP);
+    pd->pinsStr  = addPins<white, false>(board, kingSquare, blockEP);
     pd->targetSquares = board.enemyOrEmpty<white>() & checkMask;
     pd->attacked = attacked;
     pd->checkMask = checkMask;
+    pd->blockEP = blockEP;
 }
 
 #endif //DORY_CHECKLOGICHANDLER_H

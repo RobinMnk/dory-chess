@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
+#include <ranges>
 #include "board.h"
 
 #ifndef DORY_UTILS_H
@@ -206,7 +207,7 @@ namespace Utils {
         return bss.str();
     }
 
-    void printLine(std::vector<Move> line, float eval) {
+    void printLine(std::vector<Move>& line, float eval) {
         std::cout << eval << ":  ";
         for (auto& it : std::ranges::reverse_view(line)) {
             std::cout << Utils::moveNameNotation(it) << " ";
