@@ -16,10 +16,10 @@
 #include "../zobrist.h"
 #include "../movegen.h"
 
-const float INF = 99999;
+const float INF = 999;
 unsigned int NUM_LINES = 1;
 const float BEST_MOVE_MARGIN = 0.1;
-const int MAX_ITER_DEPTH = 6;
+const int MAX_ITER_DEPTH = 30;
 
 using Line = std::vector<Move>;
 using NMR = std::pair<float, Line>;
@@ -35,38 +35,39 @@ bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move>
 
 
 class TranspositionTable {
-    static const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
 
     struct TTEntry {
         float value;
-        uint8_t depth, flag;
+        uint8_t depthDiff, flag;
     };
     std::unordered_map<BB, TTEntry> lookup_table;
 
 public:
+    static const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
     unsigned long long lookups{0};
     bool resultValid{false};
 
-    void insert(float eval, size_t boardHash, float alpha, float beta, int depth) {
-        uint8_t flag;
-        if (eval <= alpha)
-            flag = TTFlagUpperBound;
-        else if (eval >= beta)
-            flag = TTFlagLowerBound;
-        else flag = TTFlagExact;
+    void insert(float eval, size_t boardHash, float alpha, float beta, int depthDiff, uint8_t flag=0) {
+        if (flag == 0) {
+            if (eval <= alpha)
+                flag = TTFlagUpperBound;
+            else if (eval >= beta)
+                flag = TTFlagLowerBound;
+            else flag = TTFlagExact;
+        }
 
-        TTEntry entry{ eval, static_cast<uint8_t>(depth), flag};
+        TTEntry entry{ eval, static_cast<uint8_t>(depthDiff), flag};
         lookup_table.emplace(boardHash, entry);
     }
 
-    NMR lookup(size_t boardHash, float& alpha, float& beta, int depth) {
+    NMR lookup(size_t boardHash, float& alpha, float& beta, int depthDiff) {
         auto res = lookup_table.find(boardHash);
 
         resultValid = false;
         if(res != lookup_table.end()) {
             lookups++;
             TTEntry entry = res->second;
-            if (entry.depth >= depth) {
+            if (entry.depthDiff >= depthDiff) {
                 if (entry.flag == TTFlagExact) {
                     resultValid = true;
                     return { entry.value, {} };
@@ -100,11 +101,21 @@ public:
     static std::vector<std::pair<Line, float>> bestLines;
     static BB nodesSearched;
 
-    static void iterativeDeepening(const Board& board, const State state) {
+    static NMR iterativeDeepening(const Board& board, const State state) {
         reset();
-        for(int depth = 1; depth < MAX_ITER_DEPTH; depth++) {
-            searchDepth(board, state, depth);
+        Line bestLine;
+        float bestEval = -100000;
+        for(int depth = 1; depth <= MAX_ITER_DEPTH; depth++) {
+            std::cout << "Searching Depth " << depth << std::endl;
+            auto [eval, line] = searchDepth(board, state, depth);
+            eval = subjectiveEval(eval, state);
+            if (eval > bestEval) {
+                bestEval = eval;
+                bestLine = line;
+                Utils::printLine(line, eval);
+            }
         }
+        return { bestEval, bestLine };
     }
 
     static NMR searchDepth(const Board& board, const State state, int md) {
@@ -139,15 +150,15 @@ private:
     template<bool topLevel, bool quiescene>
     static NMR negamax(const Board& board, const State state, int depth, float alpha, float beta) {
         /// Lookup position in table
-        size_t boardHash{0};
+        size_t boardHash;
         float origAlpha = alpha;
-        if constexpr (!topLevel) {
+//        if constexpr (!topLevel) {
             boardHash = Zobrist::hash(board, state);
-            NMR res = trTable.lookup(boardHash, alpha, beta, depth);
+            NMR res = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
             if (trTable.resultValid) {
                 return res;
             }
-        }
+//        }
 
         /// Recursion Base Case: Max Depth reached -> return heuristic position eval
 
@@ -206,22 +217,22 @@ private:
 //        }
 
 
-        float currentEval = -1000000;
+        float currentEval = -10000000;
         Line bestLine;
 
         /// Iterate through all moves
         for(auto& move_pair: moves.at(depth)) {
             auto [info, move] = move_pair;
 
-//            for (int i = 0; i < depth; i++)
-//                std::cout << " ";
-//            std::cout << depth << " : " << Utils::moveNameNotation(move) << std::endl;
-
 
 //            if(expandMove) {
             auto [nextBoard, nextState] = forkBoard(board, state, move);
             auto [eval, line] = negamax<false, quiescene>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
             eval = -eval;
+
+//            for (int i = 0; i < depth; i++)
+//                std::cout << " ";
+//            std::cout << depth << " : " << Utils::moveNameNotation(move) << "  " << eval << std::endl;
 
 //            if constexpr (topLevel) {
 //                std::cout << "EVAL: " << subjectiveEval(eval, state) << std::endl;
@@ -269,10 +280,24 @@ private:
             }
         }
 
-        /// Save to lookup table
-        if constexpr (!topLevel) {
-            trTable.insert(currentEval, boardHash, origAlpha, beta, depth);
+        if constexpr (quiescene) {
+            if (alpha == -10000000) {
+                std::cerr << "Something went really wrong here!! (" << moves[depth].size() << " legal moves available )" << std::endl;
+            }
+        } else {
+            if (currentEval == -10000000) {
+                std::cerr << "Something went really wrong here!! (" << moves[depth].size() << " legal moves available )" << std::endl;
+            }
         }
+
+        /// Save to lookup table
+//        if constexpr (!topLevel) {
+            if constexpr (quiescene) {
+                trTable.insert(alpha, boardHash, origAlpha, beta, depth, TranspositionTable::TTFlagUpperBound);
+            } else {
+                trTable.insert(currentEval, boardHash, origAlpha, beta, depth);
+            }
+//        }
 
         if constexpr (quiescene) {
             return { alpha, bestLine };

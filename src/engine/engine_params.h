@@ -10,7 +10,7 @@ namespace engine_params {
     struct EvaluationParams {
         float MATERIAL_WEIGHT_PAWN = 1.;
         float MATERIAL_WEIGHT_KNIGHT = 3.;
-        float MATERIAL_WEIGHT_BISHOP = 3.1;
+        float MATERIAL_WEIGHT_BISHOP = 3.25;
         float MATERIAL_WEIGHT_ROOK = 5.;
         float MATERIAL_WEIGHT_QUEEN = 9.;
         float MATERIAL_QUANTIFIER = 1;

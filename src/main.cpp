@@ -4,10 +4,8 @@
 #include "board.h"
 #include "engine/engine.h"
 #include "engine/monte_carlo.h"
-#include "old/movecollectors.h"
+#include "movecollectors.h"
 #include "fenreader.h"
-
-//using Collector = MoveCollectors::LimitedDFS<false, false>;
 
 NMR timeEvaluation(const Board& board, const State state, int depth) {
     EngineMC::reset();
@@ -67,16 +65,16 @@ void enumerateMoves(const Board& board) {
 struct Runner {
     template<State state, int depth>
     static void main(const Board& board) {
-        auto [ev, ln] = timeEvaluation(board, state, depth);
+//        auto [ev, ln] = timeEvaluation(board, state, 1);
 
-//        EngineMC::iterativeDeepening(board, state);
+        auto [ev, ln] = EngineMC::iterativeDeepening(board, state);
 
-        std::cout << "Lines:" << std::endl;
+//        std::cout << "Lines:" << std::endl;
 
-        for(auto& [line, eval]: EngineMC::bestLines) {
-            Utils::printLine(line, eval);
-        }
-
+//        for(auto& [line, eval]: EngineMC::bestLines) {
+//            Utils::printLine(line, eval);
+//        }
+//
 //        std::cout << "Best Move(s) " << std::endl;
 ////        printLine(ln, ev);
 //        for (auto& move: EngineMC::topLevelLegalMoves()) {
@@ -85,6 +83,7 @@ struct Runner {
 
         std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
         std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;
+        std::cout << "Searched " << EngineMC::nodesSearched << " nodes";
 
 
 //        monteCarlo(board, state);
