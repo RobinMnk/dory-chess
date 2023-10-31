@@ -317,7 +317,7 @@ private:
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static void registerMove(const Board &board, BB from, BB to) {
         moves[currentDepth].emplace_back(
-            evaluation::move_heuristic<state, piece, flags>(board, from, to),
+            evaluation::move_heuristic<state, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd),
             Move(from, to, piece, flags)
         );
     }

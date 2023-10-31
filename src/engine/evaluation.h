@@ -7,6 +7,9 @@
 
 #include "features.h"
 #include "engine_params.h"
+#include "engine.h"
+#include "../movecollectors.h"
+#include "../movegen.h"
 
 namespace evaluation {
 
@@ -25,7 +28,7 @@ namespace evaluation {
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static float move_heuristic(const Board &board, BB from, BB to) {
+    static float move_heuristic(const Board &board, BB from, BB to, PDptr& pd) {
         engine_params::EvaluationParams params;
 
         float heuristic_val{0};
@@ -52,13 +55,32 @@ namespace evaluation {
             heuristic_val += 16 + valueDiff * 8;
         }
 
-        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-        float position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
-        heuristic_val += position_eval_diff;
+        if constexpr (flags == MoveFlag::PromoteBishop) {
+            heuristic_val += 13;
+        }
+        if constexpr (flags == MoveFlag::PromoteKnight) {
+            heuristic_val += 13;
+        }
+        if constexpr (flags == MoveFlag::PromoteRook) {
+            heuristic_val += 15;
+        }
+        if constexpr (flags == MoveFlag::PromoteQueen) {
+            heuristic_val += 20;
+        }
+
+//        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
+//        float position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
+//        heuristic_val += position_eval_diff;
 
         heuristic_val += pieceValue<piece>(params) / 2;
 
-//        heuristic_val += isForwardMove<state>(from, to);
+//        heuristic_val += isForwardMove<state>(from, to) / 4;
+
+//        if(to & pd->attacked) {
+//            heuristic_val += 2;
+//        }
+
+
 
         return heuristic_val;
     }
