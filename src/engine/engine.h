@@ -16,20 +16,20 @@
 #include "../zobrist.h"
 #include "../movegen.h"
 
-const float INF = 999;
+const int INF = 999;
 unsigned int NUM_LINES = 1;
-const float BEST_MOVE_MARGIN = 0.1;
+const int BEST_MOVE_MARGIN = 0.1;
 const int MAX_ITER_DEPTH = 5;
 
 using Line = std::vector<Move>;
-using NMR = std::pair<float, Line>;
+using NMR = std::pair<int, Line>;
 
 
-float subjectiveEval(float eval, State state) {
+int subjectiveEval(int eval, State state) {
     return state.whiteToMove ? eval : -eval;
 }
 
-bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
+bool sortMovePairs(const std::pair<int, Move> &a, const std::pair<int, Move> &b) {
     return a.first > b.first;
 }
 
@@ -37,7 +37,7 @@ bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move>
 class TranspositionTable {
 
     struct TTEntry {
-        float value;
+        int value;
         int8_t depthDiff;
         uint8_t flag;
     };
@@ -48,7 +48,7 @@ public:
     unsigned long long lookups{0};
     bool resultValid{false};
 
-    void insert(float eval, size_t boardHash, float alpha, float beta, int depthDiff, uint8_t flag=0) {
+    void insert(int eval, size_t boardHash, int alpha, int beta, int depthDiff, uint8_t flag=0) {
         if (flag == 0) {
             if (eval <= alpha)
                 flag = TTFlagUpperBound;
@@ -61,7 +61,7 @@ public:
         lookup_table.emplace(boardHash, entry);
     }
 
-    NMR lookup(size_t boardHash, float& alpha, float& beta, int depthDiff) {
+    NMR lookup(size_t boardHash, int& alpha, int& beta, int depthDiff) {
         auto res = lookup_table.find(boardHash);
 
         resultValid = false;
@@ -100,14 +100,14 @@ public:
 class EngineMC {
 public:
     static TranspositionTable trTable;
-    static float evaluation;
-    static std::vector<std::pair<Line, float>> bestLines;
+    static int evaluation;
+    static std::vector<std::pair<Line, int>> bestLines;
     static BB nodesSearched;
 
     static NMR iterativeDeepening(const Board& board, const State state, int md=MAX_ITER_DEPTH) {
         reset();
         Line bestLine;
-        float bestEval = -100000;
+        int bestEval = -100000;
         for(int depth = 1; depth <= md; depth++) {
             std::cout << "Searching Depth " << depth << std::endl;
             auto [eval, line] = searchDepth(board, state, depth);
@@ -137,7 +137,7 @@ public:
         return res;
     }
 
-    static std::vector<std::pair<float, Move>> topLevelLegalMoves() {
+    static std::vector<std::pair<int, Move>> topLevelLegalMoves() {
         return moves[1];
     }
 
@@ -147,14 +147,14 @@ public:
     }
 
 private:
-    static std::array<std::vector<std::pair<float, Move>>, 48> moves;
+    static std::array<std::vector<std::pair<int, Move>>, 48> moves;
     static int maxDepth, currentDepth;
 
     template<bool topLevel, bool quiescene>
-    static NMR negamax(const Board& board, const State state, int depth, float alpha, float beta) {
+    static NMR negamax(const Board& board, const State state, int depth, int alpha, int beta) {
         /// Lookup position in table
         size_t boardHash;
-        float origAlpha = alpha;
+        int origAlpha = alpha;
 //        if constexpr (!topLevel) {
             boardHash = Zobrist::hash(board, state);
             NMR res = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
@@ -166,7 +166,7 @@ private:
         /// Recursion Base Case: Max Depth reached -> return heuristic position eval
 
         if constexpr (quiescene) {
-            float stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
+            int stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
 
             if (stand_pat >= beta) {
                 nodesSearched++;
@@ -179,7 +179,7 @@ private:
         } else {
             if (depth > maxDepth) {
 //                nodesSearched++;
-//                float eval = subjectiveEval(evaluation::position_evaluate(board), state);
+//                int eval = subjectiveEval(evaluation::position_evaluate(board), state);
 //                return { eval, {} };
 
                 return negamax<false, true>(board, state, depth, alpha, beta);
@@ -201,7 +201,7 @@ private:
             bool checkmated = MoveGenerator<EngineMC>::pd->inCheck() && moves.at(depth).empty();
             if (checkmated) {
                 nodesSearched++;
-                float eval = -(INF - static_cast<float>(depth));
+                int eval = -(INF - static_cast<int>(depth));
                 trTable.insert(eval, boardHash, origAlpha, beta, maxDepth - depth);
                 return {eval, {}};
             }
@@ -226,7 +226,7 @@ private:
 //        }
 
 
-        float currentEval = -10000000;
+        int currentEval = -10000000;
         Line bestLine;
 
         /// Iterate through all moves
@@ -326,11 +326,11 @@ private:
     friend class MoveGenerator<EngineMC, false>;
 };
 
-std::array<std::vector<std::pair<float, Move>>, 48> EngineMC::moves{};
+std::array<std::vector<std::pair<int, Move>>, 48> EngineMC::moves{};
 int EngineMC::currentDepth{0};
 int EngineMC::maxDepth{0};
 BB EngineMC::nodesSearched{0};
-std::vector<std::pair<Line, float>> EngineMC::bestLines{};
+std::vector<std::pair<Line, int>> EngineMC::bestLines{};
 TranspositionTable EngineMC::trTable{};
 
 #endif //DORY_ENGINE_H

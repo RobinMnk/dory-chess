@@ -207,8 +207,8 @@ namespace Utils {
         return bss.str();
     }
 
-    void printLine(std::vector<Move>& line, float eval) {
-        std::cout << eval << ":  ";
+    void printLine(std::vector<Move>& line, int eval) {
+        std::cout << static_cast<float>(eval) / 100 << ":  ";
         for (auto& it : std::ranges::reverse_view(line)) {
             std::cout << Utils::moveNameNotation(it) << " ";
         }

@@ -13,7 +13,7 @@
 
 namespace evaluation {
 
-    float position_evaluate(const Board& board) {
+    int position_evaluate(const Board& board) {
         engine_params::EvaluationParams params;
         return features::material(board, params);
     }
@@ -28,14 +28,14 @@ namespace evaluation {
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static float move_heuristic(const Board &board, BB from, BB to, PDptr& pd) {
+    static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd) {
         engine_params::EvaluationParams params;
 
-        float heuristic_val{0};
+        int heuristic_val{0};
 
         // is Capture
         if ((to & board.enemyPieces<state.whiteToMove>()) != 0) {
-            float valueDiff = -engine_params::pieceValue<piece>(params);
+            int valueDiff = -engine_params::pieceValue<piece>(params);
             if (board.enemyPawns<state.whiteToMove>() & to) {
                 valueDiff += engine_params::pieceValue<Piece::Pawn>(params);
             }
@@ -52,32 +52,32 @@ namespace evaluation {
                 valueDiff += engine_params::pieceValue<Piece::Queen>(params);
             }
 
-            heuristic_val += 16 + valueDiff * 8;
+            heuristic_val += 1000 + valueDiff;
         }
 
         if constexpr (flags == MoveFlag::PromoteBishop) {
-            heuristic_val += 13;
+            heuristic_val += 1300;
         }
         if constexpr (flags == MoveFlag::PromoteKnight) {
-            heuristic_val += 13;
+            heuristic_val += 1300;
         }
         if constexpr (flags == MoveFlag::PromoteRook) {
-            heuristic_val += 15;
+            heuristic_val += 1500;
         }
         if constexpr (flags == MoveFlag::PromoteQueen) {
-            heuristic_val += 20;
+            heuristic_val += 2000;
         }
 
 //        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-//        float position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
+//        int position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
 //        heuristic_val += position_eval_diff;
 
-        heuristic_val += pieceValue<piece>(params) / 2;
+        heuristic_val += pieceValue<piece>(params) / 200;
 
 //        heuristic_val += isForwardMove<state>(from, to) / 4;
 
 //        if(to & pd->attacked) {
-//            heuristic_val += 2;
+//            heuristic_val -= pieceValue<piece>(params) / 900;
 //        }
 
 
