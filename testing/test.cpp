@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "../src/fenreader.h"
-#include "../src/old/movecollectors.h"
+#include "../src/movecollectors.h"
 
 using uLong = unsigned long long;
 

@@ -7,15 +7,16 @@
 #include "movecollectors.h"
 #include "fenreader.h"
 
-NMR timeEvaluation(const Board& board, const State state, int depth) {
+void timeEvaluation(const Board& board, const State state, int depth) {
     EngineMC::reset();
     auto t1 = std::chrono::high_resolution_clock::now();
-    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
+//    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
+    auto [ev, ln] = EngineMC::iterativeDeepening(board, state, depth);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
-    std::cout << "Evaluation: " << eval << std::endl;
+//    std::cout << "Evaluation: " << eval << std::endl;
 
     std::chrono::duration<double> seconds = t2 - t1;
 
@@ -28,7 +29,7 @@ NMR timeEvaluation(const Board& board, const State state, int depth) {
         std::cout << "\t\t(" << (knps / 1000) << " M nps)\n\n";
     }
 
-    return {eval, line};
+//    return {eval, line};
 }
 
 void monteCarlo(const Board& board, const State state) {
@@ -67,13 +68,13 @@ struct Runner {
     static void main(const Board& board) {
 //        auto [ev, ln] = timeEvaluation(board, state, 1);
 
-        auto [ev, ln] = EngineMC::iterativeDeepening(board, state);
+        timeEvaluation(board, state, 4);
 
 //        std::cout << "Lines:" << std::endl;
 
-//        for(auto& [line, eval]: EngineMC::bestLines) {
-//            Utils::printLine(line, eval);
-//        }
+        for(auto& [line, eval]: EngineMC::bestLines) {
+            Utils::printLine(line, eval);
+        }
 //
 //        std::cout << "Best Move(s) " << std::endl;
 ////        printLine(ln, ev);
@@ -102,13 +103,14 @@ int main() {
     Zobrist::init();
     NUM_LINES = num_lines;
 
-    if (fen == "startpos" || fen == "start") {
-        std::cout << "Starting from Startposition" << std::endl;
-        Utils::startingPositionAtDepth<Runner>(depth);
-    } else {
-        std::cout << "Running from custom position" << std::endl;
-        Utils::loadFEN<Runner>(fen, depth);
-    }
+
+
+    auto [board, state] = Utils::loadFEN(fen);
+    timeEvaluation(board, state, depth);
+
+    std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
+    std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;
+    std::cout << "Searched " << EngineMC::nodesSearched << " nodes";
 
     return 0;
 }

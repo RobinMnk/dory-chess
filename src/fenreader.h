@@ -147,8 +147,12 @@ namespace Utils {
 //        }
     }
 
-    std::pair<std::unique_ptr<Board>, State> loadFEN(std::string_view full_fen) {
-        std::stringstream stream(full_fen.data());
+    std::pair<Board, State> loadFEN(std::string_view fen) {
+        if (fen == "startpos" || fen == "start") {
+            return { STARTBOARD, STARTSTATE };
+        }
+
+        std::stringstream stream(fen.data());
         std::string segment;
         std::vector<std::string> seglist;
 //        try {
@@ -166,7 +170,7 @@ namespace Utils {
         const bool bcs = seglist.at(2).find('k') != std::string::npos;
         const bool bcl = seglist.at(2).find('q') != std::string::npos;
 
-        return { std::make_unique<Board>(board), State(w, wcs, wcl, bcs, bcl)};
+        return { board, State(w, wcs, wcl, bcs, bcl)};
     }
 
     template<typename Main>

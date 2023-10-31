@@ -19,7 +19,7 @@
 const float INF = 999;
 unsigned int NUM_LINES = 1;
 const float BEST_MOVE_MARGIN = 0.1;
-const int MAX_ITER_DEPTH = 30;
+const int MAX_ITER_DEPTH = 5;
 
 using Line = std::vector<Move>;
 using NMR = std::pair<float, Line>;
@@ -38,7 +38,8 @@ class TranspositionTable {
 
     struct TTEntry {
         float value;
-        uint8_t depthDiff, flag;
+        int8_t depthDiff;
+        uint8_t flag;
     };
     std::unordered_map<BB, TTEntry> lookup_table;
 
@@ -56,7 +57,7 @@ public:
             else flag = TTFlagExact;
         }
 
-        TTEntry entry{ eval, static_cast<uint8_t>(depthDiff), flag};
+        TTEntry entry{ eval, static_cast<int8_t>(depthDiff), flag};
         lookup_table.emplace(boardHash, entry);
     }
 
@@ -65,11 +66,11 @@ public:
 
         resultValid = false;
         if(res != lookup_table.end()) {
-            lookups++;
             TTEntry entry = res->second;
             if (entry.depthDiff >= depthDiff) {
                 if (entry.flag == TTFlagExact) {
                     resultValid = true;
+                    lookups++;
                     return { entry.value, {} };
                 } else if (entry.flag == TTFlagLowerBound) {
                     if (entry.value > alpha) alpha = entry.value;
@@ -78,6 +79,7 @@ public:
                 }
 
                 resultValid = true;
+                lookups++;
                 if (alpha >= beta) return { entry.value, {} };
             }
         }
@@ -85,8 +87,9 @@ public:
     }
 
     void reset() {
-        lookup_table.clear();
         lookups = 0;
+        lookup_table.clear();
+        lookup_table.reserve(145000);
     }
 
     size_t size() {
@@ -101,11 +104,11 @@ public:
     static std::vector<std::pair<Line, float>> bestLines;
     static BB nodesSearched;
 
-    static NMR iterativeDeepening(const Board& board, const State state) {
+    static NMR iterativeDeepening(const Board& board, const State state, int md=MAX_ITER_DEPTH) {
         reset();
         Line bestLine;
         float bestEval = -100000;
-        for(int depth = 1; depth <= MAX_ITER_DEPTH; depth++) {
+        for(int depth = 1; depth <= md; depth++) {
             std::cout << "Searching Depth " << depth << std::endl;
             auto [eval, line] = searchDepth(board, state, depth);
             eval = subjectiveEval(eval, state);
@@ -167,6 +170,7 @@ private:
 
             if (stand_pat >= beta) {
                 nodesSearched++;
+                trTable.insert(beta, boardHash, origAlpha, beta, maxDepth - depth);
                 return { beta, {} };
             }
             if (alpha < stand_pat) {
@@ -174,6 +178,10 @@ private:
             }
         } else {
             if (depth > maxDepth) {
+//                nodesSearched++;
+//                float eval = subjectiveEval(evaluation::position_evaluate(board), state);
+//                return { eval, {} };
+
                 return negamax<false, true>(board, state, depth, alpha, beta);
             }
         }
@@ -186,6 +194,7 @@ private:
         if constexpr (quiescene) {
             if (moves.at(depth).empty()) {
                 nodesSearched++;
+                trTable.insert(alpha, boardHash, origAlpha, beta, maxDepth - depth);
                 return {alpha, {}};
             }
         } else {
@@ -193,14 +202,14 @@ private:
             if (checkmated) {
                 nodesSearched++;
                 float eval = -(INF - static_cast<float>(depth));
-                trTable.insert(eval, boardHash, origAlpha, beta, depth);
+                trTable.insert(eval, boardHash, origAlpha, beta, maxDepth - depth);
                 return {eval, {}};
             }
 
             if (moves.at(depth).empty()) {
                 // Stalemate!
                 nodesSearched++;
-                trTable.insert(0, boardHash, origAlpha, beta, depth);
+                trTable.insert(0, boardHash, origAlpha, beta, maxDepth - depth);
                 return {0, {}};
             }
         }
@@ -271,12 +280,12 @@ private:
                     }
                 }
 
-                if constexpr (!topLevel) {
+//                if constexpr (!topLevel) {
                     if (currentEval > alpha) {
                         alpha = currentEval;
                     }
                     if (alpha >= beta) break;
-                }
+//                }
             }
         }
 
@@ -293,9 +302,9 @@ private:
         /// Save to lookup table
 //        if constexpr (!topLevel) {
             if constexpr (quiescene) {
-                trTable.insert(alpha, boardHash, origAlpha, beta, depth, TranspositionTable::TTFlagUpperBound);
+                trTable.insert(alpha, boardHash, origAlpha, beta, maxDepth - depth);
             } else {
-                trTable.insert(currentEval, boardHash, origAlpha, beta, depth);
+                trTable.insert(currentEval, boardHash, origAlpha, beta, maxDepth - depth);
             }
 //        }
 
