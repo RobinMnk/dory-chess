@@ -14,7 +14,7 @@ using PDptr = std::unique_ptr<PinData>;
 
 struct PinData {
     bool isDoubleCheck{false}, blockEP{false};
-    BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0};
+    BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0}, pawnAtk{0};
 
     [[nodiscard]] bool inCheck() const {
         return checkMask != FULL_BB;
@@ -80,7 +80,7 @@ BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP)
 
 template<bool white>
 void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
-    BB attacked{0}, checkMask{0}, mask;
+    BB attacked{0}, checkMask{0}, mask, pawnAtk{0};
     int numChecks = 0;
     int kingSquare = board.kingSquare<white>();
 
@@ -99,6 +99,7 @@ void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
     // Pawns
     mask = pawnAtkLeft<!white>(pawnBB & pawnCanGoLeft<!white>());     // pawn attack to the left
     attacked |= mask;
+    pawnAtk |= mask;
     if(mask & myKing) {
         numChecks++;
         checkMask |= pawnInvAtkLeft<!white>(myKing);
@@ -106,6 +107,7 @@ void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
 
     mask = pawnAtkRight<!white>(pawnBB & pawnCanGoRight<!white>());    // pawn attack to the right
     attacked |= mask;
+    pawnAtk |= mask;
     if(mask & myKing) {
         numChecks++;
         checkMask |= pawnInvAtkRight<!white>(myKing);
@@ -157,6 +159,7 @@ void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
     pd->attacked = attacked;
     pd->checkMask = checkMask;
     pd->blockEP = blockEP;
+    pd->pawnAtk = pawnAtk;
 }
 
 #endif //DORY_CHECKLOGICHANDLER_H

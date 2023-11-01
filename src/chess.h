@@ -51,6 +51,15 @@ struct Move {
 
     [[nodiscard]] BB from() const;
     [[nodiscard]] BB to() const;
+
+    [[nodiscard]] uint64_t rep() const {
+        return (fromIndex << 24) | (toIndex << 16) | (piece << 8) | flags;
+
+    }
+
+    bool operator==(const Move other) const {
+        return rep() == other.rep();
+    }
 };
 
 
