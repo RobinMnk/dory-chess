@@ -74,6 +74,12 @@ namespace evaluation {
 
         heuristic_val += pieceValue<piece>(params) / 200;
 
+//        if constexpr (piece != Piece::Pawn) {
+            if (to & pd->pawnAtk) {
+                heuristic_val -= pieceValue<piece>(params) * 2;
+            }
+//        }
+
 //        heuristic_val += isForwardMove<state>(from, to) / 4;
 
 //        if(to & pd->attacked) {

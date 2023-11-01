@@ -29,11 +29,6 @@ int subjectiveEval(int eval, State state) {
     return state.whiteToMove ? eval : -eval;
 }
 
-bool sortMovePairs(const std::pair<int, Move> &a, const std::pair<int, Move> &b) {
-    return a.first > b.first;
-}
-
-
 class TranspositionTable {
 
     struct TTEntry {
@@ -103,6 +98,7 @@ public:
     static int evaluation;
     static std::vector<std::pair<Line, int>> bestLines;
     static BB nodesSearched;
+    static Move bestMove;
 
     static NMR iterativeDeepening(const Board& board, const State state, int md=MAX_ITER_DEPTH) {
         reset();
@@ -128,6 +124,12 @@ public:
         return {subjectiveEval(ev, state), line};
     }
 
+    template<bool topLevel>
+    static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
+        if constexpr (topLevel)
+            return bestMove == a.second || ((bestMove != b.second) && a.first > b.first);
+        return a.first > b.first;
+    }
 
     static Line bestMoves() {
         Line res;
@@ -216,7 +218,7 @@ private:
 
 //        }
 
-        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
+        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs<topLevel>);
 
 //        if constexpr (topLevel) {
 //            for(auto& x: moves.at(depth)) {
@@ -226,7 +228,6 @@ private:
 //        }
 
 
-        int currentEval = -10000000;
         Line bestLine;
 
         /// Iterate through all moves
@@ -258,8 +259,8 @@ private:
                     bestLine = line;
                 }
             } else {
-                if (eval > currentEval) {
-                    currentEval = eval;
+                if (eval > alpha) {
+                    alpha = eval;
                     line.push_back(move);
                     bestLine = line;
 
@@ -268,11 +269,12 @@ private:
 
                         bestLines.clear();
                         bestLines.emplace_back(line, subjectiveEval(eval, state));
+                        bestMove = move;
                     }
                 } else {
                     if constexpr (topLevel) {
                         if (bestLines.size() < NUM_LINES) {
-                            if (eval >= currentEval - BEST_MOVE_MARGIN) {
+                            if (eval >= alpha - BEST_MOVE_MARGIN) {
                                 line.push_back(move);
                                 bestLines.emplace_back(line, subjectiveEval(eval, state));
                             }
@@ -280,38 +282,16 @@ private:
                     }
                 }
 
-//                if constexpr (!topLevel) {
-                    if (currentEval > alpha) {
-                        alpha = currentEval;
-                    }
-                    if (alpha >= beta) break;
-//                }
-            }
-        }
-
-        if constexpr (quiescene) {
-            if (alpha == -10000000) {
-                std::cerr << "Something went really wrong here!! (" << moves[depth].size() << " legal moves available )" << std::endl;
-            }
-        } else {
-            if (currentEval == -10000000) {
-                std::cerr << "Something went really wrong here!! (" << moves[depth].size() << " legal moves available )" << std::endl;
+                if (alpha >= beta) break;
             }
         }
 
         /// Save to lookup table
 //        if constexpr (!topLevel) {
-            if constexpr (quiescene) {
-                trTable.insert(alpha, boardHash, origAlpha, beta, maxDepth - depth);
-            } else {
-                trTable.insert(currentEval, boardHash, origAlpha, beta, maxDepth - depth);
-            }
+            trTable.insert(alpha, boardHash, origAlpha, beta, maxDepth - depth);
 //        }
 
-        if constexpr (quiescene) {
-            return { alpha, bestLine };
-        }
-        return {currentEval, bestLine};
+        return { alpha, bestLine };
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
@@ -332,5 +312,6 @@ int EngineMC::maxDepth{0};
 BB EngineMC::nodesSearched{0};
 std::vector<std::pair<Line, int>> EngineMC::bestLines{};
 TranspositionTable EngineMC::trTable{};
+Move EngineMC::bestMove{};
 
 #endif //DORY_ENGINE_H
