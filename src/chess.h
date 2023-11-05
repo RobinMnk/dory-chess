@@ -96,9 +96,9 @@ static constexpr int fileOf(int square) {
 }
 
 template<bool whiteToMove>
-static constexpr int epRankNr() {
-    if constexpr (whiteToMove) return 4;
-    else return 3;
+static constexpr BB epRank() {
+    if constexpr (whiteToMove) return rank5;
+    else return rank4;
 }
 
 

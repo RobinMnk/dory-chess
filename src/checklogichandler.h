@@ -46,13 +46,16 @@ void handlePin(const Board& board, BB line, BB pieces, int kingSquare, BB& mask,
 
         // handle very special case of two sideways pinned epPawns
         // add pin line through two pawns to prevent pinned en passant
-        else if(board.hasEnPassant()
-                && (dir == PieceSteps::DIR_LEFT || dir == PieceSteps::DIR_RIGHT)
-                && rankOf(kingSquare) == epRankNr<whiteToMove>()
-                && bitCount(kl & board.pawns<whiteToMove>()) == 1         // one own pawn
-                && bitCount(kl & board.enemyPawns<whiteToMove>()) == 1    // one enemy pawn
-                && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
+        else {
+            if constexpr (dir == PieceSteps::DIR_LEFT || dir == PieceSteps::DIR_RIGHT) {
+                if(board.hasEnPassant()
+                   && hasBitAt(epRank<whiteToMove>(), kingSquare)
+                   && bitCount(kl & board.pawns<whiteToMove>()) == 1         // one own pawn
+                   && bitCount(kl & board.enemyPawns<whiteToMove>()) == 1    // one enemy pawn
+                   && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
                 ) blockEP = true;
+            }
+        }
     }
 }
 
