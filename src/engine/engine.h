@@ -129,7 +129,6 @@ public:
     }
 
     static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
-//        return priorityMove == a.second || ((priorityMove != b.second) && a.first > b.first);
         return a.first > b.first;
     }
 
@@ -246,42 +245,28 @@ private:
 //                Utils::printMove(move);
 //            }
 
-            if constexpr (quiescene) {
-                if (eval >= beta) {
-                    return { beta, {} };
-                }
-                if (eval > alpha) {
-                    alpha = eval;
-                    line.push_back(move);
-                    localBestLine = line;
-                    localBestMove = move;
+            if (eval > alpha) {
+                alpha = eval;
+                line.push_back(move);
+                localBestLine = line;
+                localBestMove = move;
+
+                if constexpr (topLevel) {
+                    bestLines.clear();
+                    bestLines.emplace_back(line, subjectiveEval(eval, state));
+                    bestMove = move;
                 }
             } else {
-                if (eval > alpha) {
-                    alpha = eval;
-                    line.push_back(move);
-                    localBestLine = line;
-                    localBestMove = move;
-
-                    if constexpr (topLevel) {
-//                        Utils::printLine(line, subjectiveEval(eval, state));
-
-                        bestLines.clear();
-                        bestLines.emplace_back(line, subjectiveEval(eval, state));
-                        bestMove = move;
-                    }
-                } else {
-                    if constexpr (topLevel) {
-                        if (bestLines.size() < NUM_LINES) {
-                            if (eval >= alpha - BEST_MOVE_MARGIN) {
-                                line.push_back(move);
-                                bestLines.emplace_back(line, subjectiveEval(eval, state));
-                            }
+                if constexpr (topLevel) {
+                    if (bestLines.size() < NUM_LINES) {
+                        if (eval >= alpha - BEST_MOVE_MARGIN) {
+                            line.push_back(move);
+                            bestLines.emplace_back(line, subjectiveEval(eval, state));
                         }
                     }
                 }
-
             }
+
             if (alpha >= beta) {
                 break;
             }
