@@ -18,7 +18,7 @@
 
 const int INF = 999;
 unsigned int NUM_LINES = 1;
-const int BEST_MOVE_MARGIN = 0.1;
+const int BEST_MOVE_MARGIN = 10;
 const int MAX_ITER_DEPTH = 5;
 
 using Line = std::vector<Move>;
@@ -30,55 +30,58 @@ int subjectiveEval(int eval, State state) {
 }
 
 class TranspositionTable {
-
+public:
     struct TTEntry {
         int value;
+        Move move;
         int8_t depthDiff;
         uint8_t flag;
     };
+private:
+    constexpr static const TTEntry NullEntry{0, NULLMOVE, 0, 0};
     std::unordered_map<BB, TTEntry> lookup_table;
-
 public:
     static const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
     unsigned long long lookups{0};
-    bool resultValid{false};
 
-    void insert(int eval, size_t boardHash, int alpha, int beta, int depthDiff, uint8_t flag=0) {
-        if (flag == 0) {
-            if (eval <= alpha)
-                flag = TTFlagUpperBound;
-            else if (eval >= beta)
-                flag = TTFlagLowerBound;
-            else flag = TTFlagExact;
-        }
+    void insert(size_t boardHash, int eval, Move move, int depthDiff, int alpha, int beta) {
+        uint8_t flag;
+        if (eval <= alpha)
+            flag = TTFlagUpperBound;
+        else if (eval >= beta)
+            flag = TTFlagLowerBound;
+        else flag = TTFlagExact;
 
-        TTEntry entry{ eval, static_cast<int8_t>(depthDiff), flag};
+        TTEntry entry{ eval, move, static_cast<int8_t>(depthDiff), flag};
         lookup_table.emplace(boardHash, entry);
     }
 
-    NMR lookup(size_t boardHash, int& alpha, int& beta, int depthDiff) {
+    std::pair<TTEntry, bool> lookup(size_t boardHash, int& alpha, int& beta, int depthDiff) {
         auto res = lookup_table.find(boardHash);
 
-        resultValid = false;
+        bool resultValid = false;
         if(res != lookup_table.end()) {
             TTEntry entry = res->second;
             if (entry.depthDiff >= depthDiff) {
                 if (entry.flag == TTFlagExact) {
                     resultValid = true;
-                    lookups++;
-                    return { entry.value, {} };
                 } else if (entry.flag == TTFlagLowerBound) {
                     if (entry.value > alpha) alpha = entry.value;
                 } else if (entry.flag == TTFlagUpperBound) {
                     if (entry.value < beta) beta = entry.value;
                 }
 
-                resultValid = true;
-                lookups++;
-                if (alpha >= beta) return { entry.value, {} };
+                if (alpha >= beta) {
+                    resultValid = true;
+                }
             }
+            // entry is returned whenever one is found, so we can use the stored move in next searches
+            // even if the value is invalid
+            return { entry, resultValid };
         }
-        return { 0, {} };
+
+        // Board position not stored in table
+        return { NullEntry, false };
     }
 
     void reset() {
@@ -93,6 +96,7 @@ public:
 };
 
 class EngineMC {
+    static Move priorityMove;
 public:
     static TranspositionTable trTable;
     static int evaluation;
@@ -124,10 +128,8 @@ public:
         return {subjectiveEval(ev, state), line};
     }
 
-    template<bool topLevel>
     static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
-        if constexpr (topLevel)
-            return bestMove == a.second || ((bestMove != b.second) && a.first > b.first);
+//        return priorityMove == a.second || ((priorityMove != b.second) && a.first > b.first);
         return a.first > b.first;
     }
 
@@ -149,30 +151,27 @@ public:
     }
 
 private:
-    static std::array<std::vector<std::pair<int, Move>>, 48> moves;
+    static std::array<std::vector<std::pair<int, Move>>, 128> moves;
     static int maxDepth, currentDepth;
 
     template<bool topLevel, bool quiescene>
     static NMR negamax(const Board& board, const State state, int depth, int alpha, int beta) {
         /// Lookup position in table
-        size_t boardHash;
         int origAlpha = alpha;
-//        if constexpr (!topLevel) {
-            boardHash = Zobrist::hash(board, state);
-            NMR res = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
-            if (trTable.resultValid) {
-                return res;
-            }
-//        }
+        size_t boardHash = Zobrist::hash(board, state);
+        auto [ttEntry, resultValid] = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
+        if (resultValid) {
+            trTable.lookups++;
+            return { ttEntry.value, {} };
+        }
 
         /// Recursion Base Case: Max Depth reached -> return heuristic position eval
-
         if constexpr (quiescene) {
             int stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
 
             if (stand_pat >= beta) {
                 nodesSearched++;
-                trTable.insert(beta, boardHash, origAlpha, beta, maxDepth - depth);
+                trTable.insert(boardHash, beta, NULLMOVE, maxDepth - depth, origAlpha, beta);
                 return { beta, {} };
             }
             if (alpha < stand_pat) {
@@ -182,10 +181,18 @@ private:
             if (depth > maxDepth) {
 //                nodesSearched++;
 //                int eval = subjectiveEval(evaluation::position_evaluate(board), state);
+//                trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
 //                return { eval, {} };
 
                 return negamax<false, true>(board, state, depth, alpha, beta);
             }
+        }
+
+        if constexpr (topLevel) {
+            priorityMove = bestMove;
+        } else {
+            // ttEntry.move may be NULLMOVE, but that does not hurt us
+            priorityMove = ttEntry.move;
         }
 
         moves.at(depth).clear();
@@ -196,7 +203,7 @@ private:
         if constexpr (quiescene) {
             if (moves.at(depth).empty()) {
                 nodesSearched++;
-                trTable.insert(alpha, boardHash, origAlpha, beta, maxDepth - depth);
+                trTable.insert(boardHash, alpha, NULLMOVE, maxDepth - depth, origAlpha, beta);
                 return {alpha, {}};
             }
         } else {
@@ -204,38 +211,28 @@ private:
             if (checkmated) {
                 nodesSearched++;
                 int eval = -(INF - static_cast<int>(depth));
-                trTable.insert(eval, boardHash, origAlpha, beta, maxDepth - depth);
+                trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
                 return {eval, {}};
             }
 
             if (moves.at(depth).empty()) {
                 // Stalemate!
                 nodesSearched++;
-                trTable.insert(0, boardHash, origAlpha, beta, maxDepth - depth);
+                trTable.insert(boardHash, 0, NULLMOVE, maxDepth - depth, origAlpha, beta);
                 return {0, {}};
             }
         }
 
-//        }
 
-        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs<topLevel>);
+        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
 
-//        if constexpr (topLevel) {
-//            for(auto& x: moves.at(depth)) {
-//                std::cout << "(" << x.first << ", " << Utils::moveNameNotation(x.second) << ") ";
-//            }
-//            std::cout << std::endl;
-//        }
-
-
-        Line bestLine;
+        Line localBestLine;
+        Move localBestMove;
 
         /// Iterate through all moves
         for(auto& move_pair: moves.at(depth)) {
             auto [info, move] = move_pair;
 
-
-//            if(expandMove) {
             auto [nextBoard, nextState] = forkBoard(board, state, move);
             auto [eval, line] = negamax<false, quiescene>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
             eval = -eval;
@@ -256,13 +253,15 @@ private:
                 if (eval > alpha) {
                     alpha = eval;
                     line.push_back(move);
-                    bestLine = line;
+                    localBestLine = line;
+                    localBestMove = move;
                 }
             } else {
                 if (eval > alpha) {
                     alpha = eval;
                     line.push_back(move);
-                    bestLine = line;
+                    localBestLine = line;
+                    localBestMove = move;
 
                     if constexpr (topLevel) {
 //                        Utils::printLine(line, subjectiveEval(eval, state));
@@ -282,23 +281,23 @@ private:
                     }
                 }
 
-                if (alpha >= beta) break;
+            }
+            if (alpha >= beta) {
+                break;
             }
         }
 
         /// Save to lookup table
-//        if constexpr (!topLevel) {
-            trTable.insert(alpha, boardHash, origAlpha, beta, maxDepth - depth);
-//        }
+        trTable.insert(boardHash, alpha, localBestMove, maxDepth - depth, origAlpha, beta);
 
-        return { alpha, bestLine };
+        return {alpha, localBestLine };
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static void registerMove(const Board &board, BB from, BB to) {
         moves[currentDepth].emplace_back(
-            evaluation::move_heuristic<state, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd),
-            Move(from, to, piece, flags)
+            evaluation::move_heuristic<state, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd, priorityMove),
+            createMoveFromBB(from, to, piece, flags)
         );
     }
 
@@ -306,12 +305,13 @@ private:
     friend class MoveGenerator<EngineMC, false>;
 };
 
-std::array<std::vector<std::pair<int, Move>>, 48> EngineMC::moves{};
+std::array<std::vector<std::pair<int, Move>>, 128> EngineMC::moves{};
 int EngineMC::currentDepth{0};
 int EngineMC::maxDepth{0};
 BB EngineMC::nodesSearched{0};
 std::vector<std::pair<Line, int>> EngineMC::bestLines{};
 TranspositionTable EngineMC::trTable{};
 Move EngineMC::bestMove{};
+Move EngineMC::priorityMove{};
 
 #endif //DORY_ENGINE_H

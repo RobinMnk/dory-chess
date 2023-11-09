@@ -46,20 +46,15 @@ namespace MoveFlag {
 struct Move {
     uint8_t fromIndex{0}, toIndex{0}, piece{0}, flags{0};
 
-    constexpr Move(BB from, BB to, Piece_t pc, Flag_t fl);
+    constexpr Move(uint8_t fromIx, uint8_t toIx, Piece_t pc, Flag_t fl) : fromIndex{fromIx}, toIndex{toIx}, piece{pc}, flags{fl} {}
     constexpr Move() = default;
 
     [[nodiscard]] BB from() const;
     [[nodiscard]] BB to() const;
 
-    [[nodiscard]] uint64_t rep() const {
-        return (fromIndex << 24) | (toIndex << 16) | (piece << 8) | flags;
+    bool operator==(const Move& other) const = default;
 
-    }
-
-    bool operator==(const Move other) const {
-        return rep() == other.rep();
-    }
+    [[nodiscard]] bool is(BB fromBB, BB toBB, Piece_t pc, Flag_t fl) const;
 };
 
 
@@ -196,12 +191,19 @@ template<bool whiteToMove> constexpr BB firstRank() {
     else return rank7;
 }
 
-constexpr Move::Move(BB from, BB to, Piece_t pc, Flag_t fl) :
-        fromIndex{static_cast<uint8_t>(singleBitOf(from))},
-        toIndex{static_cast<uint8_t>(singleBitOf(to))},
-        piece{pc}, flags{fl} {}
+constexpr Move createMoveFromBB(BB from, BB to, Piece_t pc, Flag_t fl) {
+    return {
+        static_cast<uint8_t>(singleBitOf(from)),
+        static_cast<uint8_t>(singleBitOf(to)),
+        pc, fl
+    };
+}
 
-[[maybe_unused]] const Move NULLMOVE = Move{0, 0, 0, 0};
+bool Move::is(BB fromBB, BB toBB, Piece_t pc, Flag_t fl) const {
+    return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
+}
+
+constexpr static const Move NULLMOVE{0, 0, 0, 0};
 
 BB Move::from() const {
     return newMask(fromIndex);

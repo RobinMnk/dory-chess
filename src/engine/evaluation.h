@@ -28,7 +28,11 @@ namespace evaluation {
     }
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd) {
+    static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd, Move priorityMove) {
+        if(priorityMove.is(from, to, piece, flags)) {
+            return 999999;
+        }
+
         engine_params::EvaluationParams params;
 
         int heuristic_val{0};
@@ -77,6 +81,8 @@ namespace evaluation {
 //        if constexpr (piece != Piece::Pawn) {
             if (to & pd->pawnAtk) {
                 heuristic_val -= pieceValue<piece>(params) * 2;
+            } else if (to & pd->attacked) {
+                heuristic_val -= pieceValue<piece>(params);
             }
 //        }
 
