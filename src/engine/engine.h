@@ -16,7 +16,7 @@
 #include "../zobrist.h"
 #include "../movegen.h"
 
-const int INF = 999;
+const int INF = 999999;
 unsigned int NUM_LINES = 1;
 const int BEST_MOVE_MARGIN = 10;
 const int MAX_ITER_DEPTH = 5;
@@ -111,8 +111,7 @@ public:
         for(int depth = 1; depth <= md; depth++) {
             std::cout << "Searching Depth " << depth << std::endl;
             auto [eval, line] = searchDepth(board, state, depth);
-            eval = subjectiveEval(eval, state);
-            if (eval > bestEval) {
+            if (bestLine.empty() || line.back() != bestLine.back() || eval != bestEval) {
                 bestEval = eval;
                 bestLine = line;
                 Utils::printLine(line, eval);
@@ -267,9 +266,11 @@ private:
                 }
             }
 
+//            if constexpr (!topLevel) {
             if (alpha >= beta) {
                 break;
             }
+//            }
         }
 
         /// Save to lookup table

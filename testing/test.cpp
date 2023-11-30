@@ -9,6 +9,11 @@
 
 using uLong = unsigned long long;
 
+/**
+ * Best Move found at depth 2
+ * k7/p7/6b1/8/2K5/8/n3R1p1/8 w - - 0 1
+ */
+
 struct Runner {
     template<State state, int depth>
     static void main(const Board& board) {

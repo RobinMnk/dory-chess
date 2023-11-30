@@ -56,7 +56,7 @@ class MonteCarlo {
     static Utils::Random random;
 public:
 
-    static std::basic_string<char, std::char_traits<char>, std::allocator<char>> simulateGame(const Board& startBoard, State startState) {
+    static std::string simulateGame(const Board& startBoard, State startState, int depth) {
 
         Move nextMove;
         Board currentBoard = startBoard;
@@ -71,7 +71,7 @@ public:
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
-            auto [eval, line] = EngineMC::searchDepth(currentBoard, currentState, 6);
+            auto [eval, line] = EngineMC::searchDepth(currentBoard, currentState, depth);
 
             if (ply > 150 || EngineMC::topLevelLegalMoves().empty()) {
                 std::cout << "END of Game!" << std::endl;

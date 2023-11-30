@@ -11,10 +11,13 @@ void timeEvaluation(const Board& board, const State state, int depth) {
     EngineMC::reset();
     auto t1 = std::chrono::high_resolution_clock::now();
 //    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
-    auto [ev, ln] = EngineMC::iterativeDeepening(board, state, depth);
+    auto [eval, line] = EngineMC::iterativeDeepening(board, state, depth);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
+
+    std::cout << "\n" << std::endl;
+    Utils::printLine(line, eval);
 
 //    std::cout << "Evaluation: " << eval << std::endl;
 
@@ -32,8 +35,8 @@ void timeEvaluation(const Board& board, const State state, int depth) {
 //    return {eval, line};
 }
 
-void monteCarlo(const Board& board, const State state) {
-    auto fen = MonteCarlo::simulateGame(board, state);
+void monteCarlo(const Board& board, const State state, int depth) {
+    auto fen = MonteCarlo::simulateGame(board, state, depth);
     std::cout << "FEN: \n" << fen << std::endl;
 }
 
@@ -106,7 +109,8 @@ int main() {
 
 
     auto [board, state] = Utils::loadFEN(fen);
-    timeEvaluation(board, state, depth);
+//    timeEvaluation(board, state, depth);
+    monteCarlo(board, state, depth);
 
     std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
     std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;
