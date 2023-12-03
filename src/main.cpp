@@ -1,5 +1,4 @@
 #include <iostream>
-#include <ranges>
 
 #include "board.h"
 #include "engine/engine.h"
@@ -107,10 +106,9 @@ int main() {
     NUM_LINES = num_lines;
 
 
-
     auto [board, state] = Utils::loadFEN(fen);
-//    timeEvaluation(board, state, depth);
-    monteCarlo(board, state, depth);
+    timeEvaluation(board, state, depth);
+//    monteCarlo(board, state, depth);
 
     std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
     std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;

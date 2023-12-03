@@ -15,7 +15,10 @@ namespace evaluation {
 
     int position_evaluate(const Board& board) {
         engine_params::EvaluationParams params;
-        return features::material(board, params);
+
+        int material = (features::material<true>(board, params) - features::material<false>(board, params)) * params.MATERIAL_QUANTIFIER;
+
+        return material;
     }
 
     template<State state>
