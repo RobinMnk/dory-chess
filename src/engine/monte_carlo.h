@@ -8,7 +8,7 @@
 #include "engine.h"
 #include "../random.h"
 
-double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.75;
+double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.9;
 
 
 //class GameTree {
@@ -55,17 +55,31 @@ class MonteCarlo {
     static Utils::Random random;
 public:
 
+    static void runSimulations(const Board& board, State state, int depth, int numSimulations) {
+        int wins{0}, losses{0};
+        for(int i = 1; i <= numSimulations; i++) {
+            int res = simulateGame(board, state, depth);
+            if(res == 1) wins++;
+            else if (res == -1) losses++;
+
+        }
+        std::cout << "\n" << wins << " wins, " << losses << " losses, " << numSimulations << " games" << std::endl;
+    }
+
     static int simulateGame(const Board& startBoard, State startState, int depth) {
-        Move nextMove;
         Board currentBoard = startBoard;
         State currentState = startState;
+        bool white = startState.whiteToMove;
 
         EngineMC::reset();
 
-        int ply = 0;
+        int action_counter = 0;
+        Move nextMove;
 //        std::stringstream fen{};
-        while(true) {
-//            ply++;
+
+
+        // After 200 moves of simulation a game is considered a draw
+        for(int ply{0}; ply < 400; ply++) {
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
@@ -74,19 +88,18 @@ public:
             if (line.empty()) {
                 // Game over
                 if(eval > (INF - 50)) {
-                    // Checkmate
-                    std::cout << "Checkmate - " << (currentState.whiteToMove ? "Black" : "White") << " wins!  (" << (ply / 2) << " moves)\n" << std::endl;
-
-                    return currentState.whiteToMove != startState.whiteToMove ? 1 : -1;
+                    // White wins by Checkmate
+                    std::cout << "Checkmate - White wins!  (" << (ply / 2) << " moves)" << std::endl;
+                    return white ? 1 : -1;
+                } else if(eval < -(INF - 50)) {
+                    // Black wins by Checkmate
+                    std::cout << "Checkmate - Black wins!  (" << (ply / 2) << " moves)" << std::endl;
+                    return white ? -1 : 1;
                 }
-                std::cout << "Draw!" << std::endl;
+                std::cout << "Draw - Threefold repetition!  (" << (ply / 2) << " moves)" << std::endl;
                 return 0;
             }
 
-            if (ply++ > 500) {
-                std::cout << "Game aborted" << std::endl;
-                return 0;
-            }
 
 //            printf("%zu\n", EngineMC::bestMoves().size());
 //            printf("%zu\n", EngineMC::topLevelLegalMoves().size());
@@ -103,6 +116,16 @@ public:
 //            std::cout << "Eval:  " << eval << std::endl;
 //            Utils::printMove(nextMove);
 
+            // Count moves since last pawn move or capture
+            if(nextMove.piece == Piece::Pawn || currentBoard.isCapture(currentState, nextMove)) {
+                action_counter = 0;
+                EngineMC::repTable.reset();
+            } else if(action_counter++ >= 100) {
+                std::cout << "Draw - 50 move rule!  (" << (ply / 2) << " moves)" << std::endl;
+                return 0;
+            }
+
+
             EngineMC::repTable.insert(Zobrist::hash(currentBoard, currentState));
 
             currentBoard.makeMove(currentState, nextMove);
@@ -114,9 +137,12 @@ public:
 //            fen << Utils::moveNameNotation(nextMove) << " ";
         }
 
+        std::cout << "Game aborted" << std::endl;
+        return 0;
+
 //        fen << "\n";
 //        return fen.str();
-        throw std::runtime_error("Game simulation aborted unexpectedly");
+//        throw std::runtime_error("Game simulation aborted unexpectedly");
     }
 };
 

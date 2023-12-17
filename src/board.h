@@ -205,6 +205,15 @@ public:
         else return wQueens | (diag ? wBishops : wRooks);
     }
 
+    template<bool whiteToMove>
+    bool isCapture(Move& move) {
+        return move.to() & enemyPieces<whiteToMove>();
+    }
+
+    bool isCapture(State state, Move& move) {
+        return state.whiteToMove ? isCapture<true>(move) : isCapture<false>(move);
+    }
+
     template<State state, Piece_t piece, Flag_t flags>
     [[nodiscard]] constexpr Board getNextBoard(BB from, BB to) const {
         constexpr bool whiteMoved = state.whiteToMove;

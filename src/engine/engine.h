@@ -146,8 +146,8 @@ public:
     static Move bestMove;
 
     static NMR iterativeDeepening(const Board& board, const State state, int md=MAX_ITER_DEPTH) {
-        reset();
-
+//        reset();
+        repTable.reset();
         Line bestLine;
         int bestEval = -INF;
 
@@ -188,6 +188,7 @@ public:
 
     static void reset() {
         trTable.reset();
+        repTable.reset();
 //        nodesSearched = 0;
     }
 
