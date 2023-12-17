@@ -5,12 +5,6 @@
 #ifndef DORY_ENGINE_H
 #define DORY_ENGINE_H
 
-#include <iostream>
-#include <stack>
-#include <vector>
-#include <memory>
-#include <thread>
-#include <unordered_map>
 #include "evaluation.h"
 #include "../utils.h"
 #include "../zobrist.h"
@@ -95,21 +89,70 @@ public:
     }
 };
 
+class RepetitionTable {
+    std::unordered_map<size_t, uint8_t> table{};
+
+public:
+    /**
+     * Call after pawn move or after capture
+     */
+    void reset() {
+        table.clear();
+    }
+
+    void insert(size_t boardHash) {
+        auto it = table.find(boardHash);
+        if (it != table.end()) {
+            it->second++;
+        } else {
+            table.emplace(boardHash, 1);
+        }
+    }
+
+    void remove(size_t boardHash) {
+        auto it = table.find(boardHash);
+        if (it != table.end()) {
+            it->second--;
+            if (it->second == 0) {
+                table.erase(it);
+            }
+        }
+    }
+
+    void print() {
+        for(auto& it: table) {
+            if(it.second) {
+                std::cout << it.first << ":  " << it.second << std::endl;
+            }
+        }
+    }
+
+    bool check(size_t boardHash) {
+        auto it = table.find(boardHash);
+        return it != table.end() && it->second == 2;
+    }
+};
+
 class EngineMC {
     static Move priorityMove;
+
+    static std::array<std::vector<std::pair<int, Move>>, 128> moves;
+    static int maxDepth, currentDepth;
 public:
     static TranspositionTable trTable;
-    static int evaluation;
+    static RepetitionTable repTable;
     static std::vector<std::pair<Line, int>> bestLines;
     static BB nodesSearched;
     static Move bestMove;
 
     static NMR iterativeDeepening(const Board& board, const State state, int md=MAX_ITER_DEPTH) {
         reset();
+
         Line bestLine;
-        int bestEval = -100000;
+        int bestEval = -INF;
+
         for(int depth = 1; depth <= md; depth++) {
-            std::cout << "Searching Depth " << depth << std::endl;
+//            std::cout << "Searching Depth " << depth << std::endl;
             auto [eval, line] = searchDepth(board, state, depth);
             if (bestLine.empty() || line.back() != bestLine.back() || eval != bestEval) {
                 bestEval = eval;
@@ -145,18 +188,22 @@ public:
 
     static void reset() {
         trTable.reset();
-        nodesSearched = 0;
+//        nodesSearched = 0;
     }
 
 private:
-    static std::array<std::vector<std::pair<int, Move>>, 128> moves;
-    static int maxDepth, currentDepth;
 
     template<bool topLevel, bool quiescene>
     static NMR negamax(const Board& board, const State state, int depth, int alpha, int beta) {
+
+        size_t boardHash = Zobrist::hash(board, state);
+        /// Check for Threefold-Repetition
+        if(repTable.check(boardHash)) {
+            return {0, {}};
+        }
+
         /// Lookup position in table
         int origAlpha = alpha;
-        size_t boardHash = Zobrist::hash(board, state);
         auto [ttEntry, resultValid] = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
         if (resultValid) {
             trTable.lookups++;
@@ -208,7 +255,7 @@ private:
             bool checkmated = MoveGenerator<EngineMC>::pd->inCheck() && moves.at(depth).empty();
             if (checkmated) {
                 nodesSearched++;
-                int eval = -(INF - static_cast<int>(depth));
+                int eval = -(INF - depth);
                 trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
                 return {eval, {}};
             }
@@ -228,20 +275,23 @@ private:
         Move localBestMove;
 
         /// Iterate through all moves
-        for(auto& move_pair: moves.at(depth)) {
-            auto [info, move] = move_pair;
+        for(auto& [info, move]: moves.at(depth)) {
+
+            repTable.insert(boardHash);
 
             auto [nextBoard, nextState] = forkBoard(board, state, move);
             auto [eval, line] = negamax<false, quiescene>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
             eval = -eval;
+
+            repTable.remove(boardHash);
 
 //            for (int i = 0; i < depth; i++)
 //                std::cout << " ";
 //            std::cout << depth << " : " << Utils::moveNameNotation(move) << "  " << eval << std::endl;
 
 //            if constexpr (topLevel) {
-//                std::cout << "EVAL: " << subjectiveEval(eval, state) << std::endl;
-//                Utils::printMove(move);
+//                Line l = std::vector<Move>{move};
+//                Utils::printLine(l, eval);
 //            }
 
             if (eval > alpha) {
@@ -266,11 +316,11 @@ private:
                 }
             }
 
-//            if constexpr (!topLevel) {
-            if (alpha >= beta) {
-                break;
+            if constexpr (!topLevel) {
+                if (alpha >= beta) {
+                    break;
+                }
             }
-//            }
         }
 
         /// Save to lookup table
@@ -297,6 +347,7 @@ int EngineMC::maxDepth{0};
 BB EngineMC::nodesSearched{0};
 std::vector<std::pair<Line, int>> EngineMC::bestLines{};
 TranspositionTable EngineMC::trTable{};
+RepetitionTable EngineMC::repTable{};
 Move EngineMC::bestMove{};
 Move EngineMC::priorityMove{};
 

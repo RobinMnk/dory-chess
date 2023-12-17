@@ -11,7 +11,6 @@
 double USE_ENGINE_BEST_MOVES_PROBABILITY = 1;
 
 
-
 //class GameTree {
 //    struct TreeNode {
 //        uint8_t wins{0}, total{0};
@@ -23,11 +22,11 @@ double USE_ENGINE_BEST_MOVES_PROBABILITY = 1;
 //
 //    std::vector<std::vector<TPT>> tree{};
 //    TPT root;
-//    Board* startBoard;
+//    Board startBoard;
 //    State startState;
 //
 //public:
-//    GameTree (const Board& board, State& state) : startBoard{new Board(board)}, startState(state) {
+//    GameTree (const Board& board, State& state) : startBoard{board}, startState(state) {
 //        root = std::make_unique<TreeNode>();
 //    }
 //
@@ -35,7 +34,7 @@ double USE_ENGINE_BEST_MOVES_PROBABILITY = 1;
 //        TPT parent = root;
 //
 //        int index = 0, level = 0;
-//        Board* currentBoard = startBoard;
+//        Board currentBoard = startBoard;
 //        State currentState = startState;
 //
 //        for(TPT node: tree.at(level)) {
@@ -57,7 +56,6 @@ class MonteCarlo {
 public:
 
     static std::string simulateGame(const Board& startBoard, State startState, int depth) {
-
         Move nextMove;
         Board currentBoard = startBoard;
         State currentState = startState;
@@ -71,32 +69,41 @@ public:
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
-            auto [eval, line] = EngineMC::searchDepth(currentBoard, currentState, depth);
+            auto [eval, line] = EngineMC::iterativeDeepening(currentBoard, currentState, depth);
 
-            if (ply > 150 || EngineMC::topLevelLegalMoves().empty()) {
-                std::cout << "END of Game!" << std::endl;
+            if (line.empty()) {
+                // Game over
+                if(eval > (INF - 50)) {
+                    // Checkmate
+                    std::cout << "Checkmate!\n";
+                    std::cout << (currentState.whiteToMove ? "Black" : "White") << " wins!\n" << std::endl;
+                    break;
+                }
+                std::cout << "Draw!" << std::endl;
+                break;
+            }
+
+            if (ply > 250) {
+                std::cout << "Game aborted" << std::endl;
                 break;
             }
 
 //            printf("%zu\n", EngineMC::bestMoves().size());
 //            printf("%zu\n", EngineMC::topLevelLegalMoves().size());
 
-//            nextMove = line.back();
+            nextMove = line.back();
 
-            if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
-                nextMove = random.randomElementOf(EngineMC::bestMoves());
-            } else {
-                std::cout << "Picking legal move at random" << std::endl;
-                nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
-            }
+//            if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
+//                nextMove = random.randomElementOf(EngineMC::bestMoves());
+//            } else {
+//                std::cout << "Picking legal move at random" << std::endl;
+//                nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
+//            }
 
 //            std::cout << "Eval:  " << eval << std::endl;
             Utils::printMove(nextMove);
 
-//            auto [nextBoard, nextState] = forkBoard(*currentBoard, currentState, nextMove);
-
-//            currentBoard = nextBoard;
-//            currentState = nextState;
+            EngineMC::repTable.insert(Zobrist::hash(currentBoard, currentState));
 
             currentBoard.makeMove(currentState, nextMove);
             currentState.update(nextMove.flags);

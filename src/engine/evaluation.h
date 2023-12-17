@@ -5,6 +5,13 @@
 #ifndef DORY_EVALUATION_H
 #define DORY_EVALUATION_H
 
+#include <iostream>
+#include <stack>
+#include <vector>
+#include <memory>
+#include <thread>
+#include <unordered_map>
+
 #include "features.h"
 #include "engine_params.h"
 #include "engine.h"
@@ -32,7 +39,7 @@ namespace evaluation {
 
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd, Move priorityMove) {
-        if(priorityMove.is(from, to, piece, flags)) {
+        if(priorityMove.is<piece, flags>(from, to)) {
             return 999999;
         }
 

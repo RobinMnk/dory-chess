@@ -55,6 +55,9 @@ struct Move {
     bool operator==(const Move& other) const = default;
 
     [[nodiscard]] bool is(BB fromBB, BB toBB, Piece_t pc, Flag_t fl) const;
+
+    template<Piece_t pc, Flag_t fl>
+    [[nodiscard]] bool is(BB fromBB, BB toBB) const;
 };
 
 
@@ -200,6 +203,11 @@ constexpr Move createMoveFromBB(BB from, BB to, Piece_t pc, Flag_t fl) {
 }
 
 bool Move::is(BB fromBB, BB toBB, Piece_t pc, Flag_t fl) const {
+    return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
+}
+
+template<Piece_t pc, Flag_t fl>
+bool Move::is(BB fromBB, BB toBB) const {
     return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
 }
 

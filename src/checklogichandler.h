@@ -8,9 +8,6 @@
 #ifndef DORY_CHECKLOGICHANDLER_H
 #define DORY_CHECKLOGICHANDLER_H
 
-struct PinData;
-
-using PDptr = std::unique_ptr<PinData>;
 
 struct PinData {
     bool isDoubleCheck{false}, blockEP{false};
@@ -20,6 +17,9 @@ struct PinData {
         return checkMask != FULL_BB;
     }
 };
+
+using PDptr = std::unique_ptr<PinData>;
+
 
 class CheckLogicHandler {
     template<bool, bool>
