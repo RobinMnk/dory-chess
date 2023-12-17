@@ -113,9 +113,9 @@ public:
         auto it = table.find(boardHash);
         if (it != table.end()) {
             it->second--;
-            if (it->second == 0) {
-                table.erase(it);
-            }
+//            if (it->second == 0) {
+//                table.erase(it);
+//            }
         }
     }
 
@@ -157,7 +157,7 @@ public:
             if (bestLine.empty() || line.back() != bestLine.back() || eval != bestEval) {
                 bestEval = eval;
                 bestLine = line;
-                Utils::printLine(line, eval);
+//                Utils::printLine(line, eval);
             }
         }
         return { bestEval, bestLine };
