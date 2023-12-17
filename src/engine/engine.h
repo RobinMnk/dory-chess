@@ -316,11 +316,11 @@ private:
                 }
             }
 
-            if constexpr (!topLevel) {
+//            if constexpr (!topLevel) {
                 if (alpha >= beta) {
                     break;
                 }
-            }
+//            }
         }
 
         /// Save to lookup table

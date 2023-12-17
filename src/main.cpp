@@ -16,14 +16,14 @@ void timeEvaluation(const Board& board, const State state, int depth) {
     EngineMC::reset();
     auto t1 = std::chrono::high_resolution_clock::now();
 //    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
-    auto [eval, line] = EngineMC::iterativeDeepening(board, state, depth);
-//    monteCarlo(board, state, depth);
+//    auto [eval, line] = EngineMC::iterativeDeepening(board, state, depth);
+    monteCarlo(board, state, depth);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
     std::cout << "\n" << std::endl;
-    Utils::printLine(line, eval);
+//    Utils::printLine(line, eval);
 
 //    std::cout << "Evaluation: " << eval << std::endl;
 
