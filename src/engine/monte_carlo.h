@@ -108,6 +108,29 @@ public:
 Utils::Random MonteCarlo::random{};
 
 
+int randomPlayout(Board& board, State state, Utils::Random rand) {
+    bool white = state.whiteToMove;
+
+    // After 300 moves of simulation a game is considered a draw
+    for(int ply{0}; ply < 600; ply++) {
+        std::vector<Move> moveList;
+        MoveListGenerator::getMoves<false>(board, state, moveList);
+
+        if(moveList.empty()) {
+            if(MoveGenerator<MoveListGenerator, false>::pd->inCheck()) {
+                // Checkmate
+                return state.whiteToMove == white ? 0 : 2;
+            }
+            return 1;
+        }
+
+        Move move = rand.randomElementOf(moveList);
+        board.makeMove(state, move);
+        state.update(move.flags);
+    }
+
+    return 1;
+}
 
 
 struct TreeNode;
@@ -170,48 +193,45 @@ public:
                 best = cd;
             }
 
-
             auto [move, next, _] = best;
-            std::cout << "Expanding " << Utils::moveNameNotation(move) << std::endl;
             board.makeMove(state, move);
             state.update(move.flags);
             node = next;
         }
 
         /// 2. EXPAND
-        currentNode = node;
-        generate<MC, false>(board, state);
+        if(node->total > 0) {
+            currentNode = node;
+            generate<MC, false>(board, state);
 
+            if(currentNode->children.empty()) {
+                // currentNode is terminal
+                return;
+            }
 
-        if(currentNode->children.empty()) {
-            // currentNode is terminal
-            return;
+            ChildrenData child = random.randomElementOf(currentNode->children);
+            board.makeMove(state, child.move);
+            state.update(child.move.flags);
+            node = child.node;
         }
 
-        ChildrenData child = random.randomElementOf(currentNode->children);
-        board.makeMove(state, child.move);
-        state.update(child.move.flags);
-
         /// 3. SIMULATE
-        int wins{0};
-        int NUM_GAMES = 10;
+        int result = randomPlayout(board, state, random);
+        //        int result = MonteCarlo::simulateGame(board, state, depth);
 
-        for(int i = 0; i < NUM_GAMES; i++)
-            wins += MonteCarlo::simulateGame(board, state, depth);
 
         /// 4. BACKPROPAGATE
-        node = child.node;
-        node->wins += wins;
-        node->total += 2 * NUM_GAMES;
+        node->wins += result;
+        node->total += 2;
 
         while(node != root) {
             node = node->parent;
-            node->wins += wins;
-            node->total += 2 * NUM_GAMES;
+            node->wins += result;
+            node->total += 2;
         }
 
 //            int ix = node->index;
-//            float score = static_cast<double>(node->wins) / node->total + c * std::sqrt(std::sqrt(node->parent->total + 2) / node->total);
+//            float score = static_cast<double>(node->result) / node->total + c * std::sqrt(std::sqrt(node->parent->total + 2) / node->total);
 //            node->children.at(ix).score = score;
 //            for(unsigned int index = ix+1; index < node->children.size(); index++)
 //                updateScore(node->children.at(index).node);

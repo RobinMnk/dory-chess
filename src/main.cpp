@@ -15,18 +15,21 @@ void monteCarlo(const Board& board, const State state, int depth) {
 void MCTS(const Board& board, const State state, int depth) {
     GameTree gt{board, state};
     ChildrenData best{};
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < 10000; i++) {
         gt.run(depth);
-        if(i > 1) {
-            ChildrenData candidate = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score > b.score;});
-            if (candidate.move != best.move) {
-                best = candidate;
-                std::cout << Utils::moveNameNotation(best.move) << ":   " << best.node->wins << " / " << best.node->total << "  (" << best.score << ")" << std::endl;
-            }
-        } else {
-            best = gt.root->children.front();
-        }
+//        ChildrenData candidate = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score > b.score;});
+//        if (candidate.move != best.move) {
+//            best = candidate;
+//            std::cout << Utils::moveNameNotation(best.move) << ":   " << best.node->wins << " / " << best.node->total << "  (" << best.score << ")" << std::endl;
+//        }
     }
+
+//    for(auto& cd: gt.root->children) {
+//        std::cout << Utils::moveNameNotation(cd.move) << ":   " << cd.node->wins << " / " << cd.node->total << "  (" << cd.score << ")" << std::endl;
+//    }
+//    std::cout << "\n" << std::endl;
+
+    best = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score < b.score;});
 
     std::cout << "\n\n" << Utils::moveNameNotation(best.move) << ":   " << best.node->wins << " / " << best.node->total << "  (" << best.score << ")" << std::endl;
 
@@ -45,7 +48,7 @@ void timeEvaluation(const Board& board, const State state, int depth) {
 //    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
 //    auto [eval, line] = EngineMC::iterativeDeepening(board, state, depth);
 //    monteCarlo(board, state, depth);
-//    MonteCarlo::runSimulations(board, state, depth, 1000);
+//    MonteCarlo::runSimulations(board, state, depth, 10);
 
     MCTS(board, state, depth);
 

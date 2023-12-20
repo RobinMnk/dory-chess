@@ -384,4 +384,25 @@ static void generate(const Board& board, State state) {
 template<typename MC, bool qc>
 PDptr MoveGenerator<MC, qc>::pd{std::make_unique<PinData>()};
 
+
+class MoveListGenerator {
+    static std::unique_ptr<std::vector<Move>> list;
+
+    template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+    static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+        list->emplace_back(from, to, piece, flags);
+    }
+
+public:
+    template<bool quiescence>
+    static void getMoves(const Board& board, State state, std::vector<Move>& l) {
+        list = std::make_unique<std::vector<Move>>(l);
+        generate<MoveListGenerator, quiescence>(board, state);
+    }
+
+    friend class MoveGenerator<MoveListGenerator, true>;
+    friend class MoveGenerator<MoveListGenerator, false>;
+};
+std::unique_ptr<std::vector<Move>> MoveListGenerator::list{};
+
 #endif //DORY_MOVEGEN_H
