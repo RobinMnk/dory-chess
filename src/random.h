@@ -6,7 +6,8 @@
 #define DORY_RANDOM_H
 
 #include <random>
-using RNG = std::uniform_int_distribution<std::mt19937::result_type>;
+using RNG_INT = std::uniform_int_distribution<std::mt19937::result_type>;
+using RNG_REAL = std::uniform_real_distribution<>;
 
 namespace Utils {
     class Random {
@@ -16,11 +17,13 @@ namespace Utils {
         Random() {
             std::random_device dev;
             rng = std::mt19937(dev());
+            rng.seed(std::time(nullptr));
+//            rng.seed(4263489725);
         }
 
-        size_t randomNumberInRange(size_t lo, size_t hi) {
-            RNG dist6(lo, hi); // distribution in range [1, 6]
-            return dist6(rng);
+        unsigned int randomNumberInRange(size_t lo, size_t hi) {
+            RNG_INT dist(lo, hi);
+            return dist(rng);
         }
 
         template<typename T>
@@ -36,11 +39,9 @@ namespace Utils {
         }
 
         bool bernoulli(double p) {
-            size_t num = randomNumberInRange(0, INT32_MAX);
-            double res = static_cast<double>(num) / static_cast<double>(INT32_MAX);
-            return res <= p;
+            RNG_REAL dist(0., 1.);
+            return dist(rng) <= p;
         }
-
     };
 }
 

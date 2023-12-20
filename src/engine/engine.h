@@ -81,7 +81,7 @@ public:
     void reset() {
         lookups = 0;
         lookup_table.clear();
-        lookup_table.reserve(145000);
+//        lookup_table.reserve(145000);
     }
 
     size_t size() {
@@ -144,6 +144,7 @@ public:
     static std::vector<std::pair<Line, int>> bestLines;
     static BB nodesSearched;
     static Move bestMove;
+    static std::vector<Move> bestMoves;
 
     static NMR iterativeDeepening(const Board& board, const State state, int md=MAX_ITER_DEPTH) {
 //        reset();
@@ -174,13 +175,13 @@ public:
         return a.first > b.first;
     }
 
-    static Line bestMoves() {
-        Line res;
-        for(auto& [line, eval]: bestLines) {
-            res.push_back(line.back());
-        }
-        return res;
-    }
+//    static Line bestMoves() {
+//        Line res;
+//        for(auto& [line, eval]: bestLines) {
+//            res.push_back(line.back());
+//        }
+//        return res;
+//    }
 
     static std::vector<std::pair<int, Move>> topLevelLegalMoves() {
         return moves[1];
@@ -305,6 +306,8 @@ private:
                     bestLines.clear();
                     bestLines.emplace_back(line, subjectiveEval(eval, state));
                     bestMove = move;
+                    bestMoves.clear();
+                    bestMoves.push_back(move);
                 }
             } else {
                 if constexpr (topLevel) {
@@ -312,6 +315,7 @@ private:
                         if (eval >= alpha - BEST_MOVE_MARGIN) {
                             line.push_back(move);
                             bestLines.emplace_back(line, subjectiveEval(eval, state));
+                            bestMoves.push_back(move);
                         }
                     }
                 }
@@ -347,6 +351,7 @@ int EngineMC::currentDepth{0};
 int EngineMC::maxDepth{0};
 BB EngineMC::nodesSearched{0};
 std::vector<std::pair<Line, int>> EngineMC::bestLines{};
+std::vector<Move> EngineMC::bestMoves{};
 TranspositionTable EngineMC::trTable{};
 RepetitionTable EngineMC::repTable{};
 Move EngineMC::bestMove{};

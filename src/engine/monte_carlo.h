@@ -8,48 +8,7 @@
 #include "engine.h"
 #include "../random.h"
 
-double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.9;
-
-
-//class GameTree {
-//    struct TreeNode {
-//        uint8_t wins{0}, total{0};
-//        float eval{};
-//        Move move;
-//    };
-//
-//    using TPT = std::shared_ptr<TreeNode>;
-//
-//    std::vector<std::vector<TPT>> tree{};
-//    TPT root;
-//    Board startBoard;
-//    State startState;
-//
-//public:
-//    GameTree (const Board& board, State& state) : startBoard{board}, startState(state) {
-//        root = std::make_unique<TreeNode>();
-//    }
-//
-//    void expand() {
-//        TPT parent = root;
-//
-//        int index = 0, level = 0;
-//        Board currentBoard = startBoard;
-//        State currentState = startState;
-//
-//        for(TPT node: tree.at(level)) {
-////            if(index == root->offset) {
-////                // Expand this node
-////
-////                continue;
-////            }
-//
-//            index++;
-//        }
-//
-//    }
-//};
-
+double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.95;
 
 class MonteCarlo {
     static Utils::Random random;
@@ -79,7 +38,7 @@ public:
 
 
         // After 200 moves of simulation a game is considered a draw
-        for(int ply{0}; ply < 400; ply++) {
+        for(int ply{0}; ply < 600; ply++) {
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
@@ -89,15 +48,15 @@ public:
                 // Game over
                 if(eval > (INF - 50)) {
                     // White wins by Checkmate
-                    std::cout << "Checkmate - White wins!  (" << (ply / 2) << " moves)" << std::endl;
-                    return white ? 1 : -1;
+//                    std::cout << "Checkmate - White wins!  (" << (ply / 2) << " moves)" << std::endl;
+                    return white ? 2 : 0;
                 } else if(eval < -(INF - 50)) {
                     // Black wins by Checkmate
-                    std::cout << "Checkmate - Black wins!  (" << (ply / 2) << " moves)" << std::endl;
-                    return white ? -1 : 1;
+//                    std::cout << "Checkmate - Black wins!  (" << (ply / 2) << " moves)" << std::endl;
+                    return white ? 0 : 2;
                 }
-                std::cout << "Draw - Threefold repetition!  (" << (ply / 2) << " moves)" << std::endl;
-                return 0;
+//                std::cout << "Draw - Threefold repetition!  (" << (ply / 2) << " moves)" << std::endl;
+                return 1;
             }
 
 
@@ -107,7 +66,7 @@ public:
 //            nextMove = line.back();
 
             if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
-                nextMove = random.randomElementOf(EngineMC::bestMoves());
+                nextMove = random.randomElementOf(EngineMC::bestMoves);
             } else {
 //                std::cout << "Picking legal move at random" << std::endl;
                 nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
@@ -121,8 +80,8 @@ public:
                 action_counter = 0;
                 EngineMC::repTable.reset();
             } else if(action_counter++ >= 100) {
-                std::cout << "Draw - 50 move rule!  (" << (ply / 2) << " moves)" << std::endl;
-                return 0;
+//                std::cout << "Draw - 50 move rule!  (" << (ply / 2) << " moves)" << std::endl;
+                return 1;
             }
 
 
@@ -137,8 +96,8 @@ public:
 //            fen << Utils::moveNameNotation(nextMove) << " ";
         }
 
-        std::cout << "Game aborted" << std::endl;
-        return 0;
+//        std::cout << "Game aborted" << std::endl;
+        return 1;
 
 //        fen << "\n";
 //        return fen.str();
@@ -148,5 +107,142 @@ public:
 
 Utils::Random MonteCarlo::random{};
 
+
+
+
+struct TreeNode;
+using TPT = std::shared_ptr<TreeNode>;
+
+struct ChildrenData {
+    Move move;
+    TPT node;
+    float score;
+};
+
+struct TreeNode {
+    int wins{0};
+    int total{0};
+    TPT parent;
+    int index;
+    std::vector<ChildrenData> children;
+
+    TreeNode(TPT& pt, int ix) : parent(pt), index(ix) {}
+
+    ~TreeNode() {
+        for(auto& [_, x, _2]: children) {
+            x.reset();
+        }
+    }
+};
+
+class GameTree {
+    Board startBoard;
+    State startState;
+    Utils::Random random;
+
+    const double c = 1.414;
+
+public:
+    TPT root;
+
+    GameTree (const Board& board, const State& state) : startBoard{board}, startState(state) {
+        root = std::make_unique<TreeNode>(root, 0);
+    }
+    ~GameTree() {
+        root.reset();
+    }
+
+    void run(int depth) {
+        /// 1. SELECT
+        TPT node = root;
+        Board board = startBoard;
+        State state = startState;
+
+        while(!node->children.empty()) {
+            ChildrenData best = node->children.front();
+            for(auto& cd: node->children) {
+                if (cd.node->total > 0) {
+                    cd.score = static_cast<double>(cd.node->wins) / cd.node->total + c * std::sqrt(std::sqrt(node->total) / cd.node->total);
+                    if(cd.score <= best.score) {
+                        continue;
+                    }
+                } else cd.score = INFINITY;
+                best = cd;
+            }
+
+
+            auto [move, next, _] = best;
+            std::cout << "Expanding " << Utils::moveNameNotation(move) << std::endl;
+            board.makeMove(state, move);
+            state.update(move.flags);
+            node = next;
+        }
+
+        /// 2. EXPAND
+        currentNode = node;
+        generate<MC, false>(board, state);
+
+
+        if(currentNode->children.empty()) {
+            // currentNode is terminal
+            return;
+        }
+
+        ChildrenData child = random.randomElementOf(currentNode->children);
+        board.makeMove(state, child.move);
+        state.update(child.move.flags);
+
+        /// 3. SIMULATE
+        int wins{0};
+        int NUM_GAMES = 10;
+
+        for(int i = 0; i < NUM_GAMES; i++)
+            wins += MonteCarlo::simulateGame(board, state, depth);
+
+        /// 4. BACKPROPAGATE
+        node = child.node;
+        node->wins += wins;
+        node->total += 2 * NUM_GAMES;
+
+        while(node != root) {
+            node = node->parent;
+            node->wins += wins;
+            node->total += 2 * NUM_GAMES;
+        }
+
+//            int ix = node->index;
+//            float score = static_cast<double>(node->wins) / node->total + c * std::sqrt(std::sqrt(node->parent->total + 2) / node->total);
+//            node->children.at(ix).score = score;
+//            for(unsigned int index = ix+1; index < node->children.size(); index++)
+//                updateScore(node->children.at(index).node);
+//            while(ix > 0 && node->children.at(ix-1).score < score) {
+//                // ensure children list sorted desc by score
+//                updateScore(node->children.at(ix-1).node);
+//                std::swap(node->children.at(ix-1), node->children.at(ix));
+//                node->children.at(ix-1).node->index = ix-1;
+//                node->children.at(ix).node->index = ix;
+//                ix--;
+//            }
+//        }
+
+    }
+
+    static TPT currentNode;
+    class MC {
+        template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+            ChildrenData cd{
+                createMoveFromBB(from, to, piece, flags),
+                std::make_shared<TreeNode>(currentNode, currentNode->children.size()),
+                0
+            };
+            currentNode->children.emplace_back(cd);
+        }
+        friend class MoveGenerator<MC, false>;
+    };
+};
+
+
+TPT GameTree::currentNode{nullptr};
 
 #endif //DORY_MONTE_CARLO_H

@@ -12,13 +12,44 @@ void monteCarlo(const Board& board, const State state, int depth) {
     std::cout << "FEN: \n" << fen << std::endl;
 }
 
+void MCTS(const Board& board, const State state, int depth) {
+    GameTree gt{board, state};
+    ChildrenData best{};
+    for(int i = 0; i < 1; i++) {
+        gt.run(depth);
+        if(i > 1) {
+            ChildrenData candidate = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score > b.score;});
+            if (candidate.move != best.move) {
+                best = candidate;
+                std::cout << Utils::moveNameNotation(best.move) << ":   " << best.node->wins << " / " << best.node->total << "  (" << best.score << ")" << std::endl;
+            }
+        } else {
+            best = gt.root->children.front();
+        }
+    }
+
+    std::cout << "\n\n" << Utils::moveNameNotation(best.move) << ":   " << best.node->wins << " / " << best.node->total << "  (" << best.score << ")" << std::endl;
+
+//    std::sort(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score > b.score;});
+//
+//    for(auto& cd: gt.root->children) {
+//        std::cout << Utils::moveNameNotation(cd.move) << ":   " << cd.node->wins << " / " << cd.node->total << "  (" << cd.score << ")" << std::endl;
+//    }
+
+}
+
 void timeEvaluation(const Board& board, const State state, int depth) {
     EngineMC::reset();
     auto t1 = std::chrono::high_resolution_clock::now();
+    /// -----------------------------------------------------------
 //    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
 //    auto [eval, line] = EngineMC::iterativeDeepening(board, state, depth);
 //    monteCarlo(board, state, depth);
-    MonteCarlo::runSimulations(board, state, depth, 300);
+//    MonteCarlo::runSimulations(board, state, depth, 1000);
+
+    MCTS(board, state, depth);
+
+    /// -----------------------------------------------------------
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
