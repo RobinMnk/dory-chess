@@ -9,6 +9,7 @@
 #include "../random.h"
 
 double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.95;
+double USE_RANDOM_MOVE_IN_ROLLOUT = 0.5;
 
 class MonteCarlo {
     static Utils::Random random;
@@ -124,7 +125,23 @@ int randomPlayout(Board& board, State state, Utils::Random rand) {
             return 1;
         }
 
-        Move move = rand.randomElementOf(moveList);
+        Move move;
+        if (rand.bernoulli(USE_RANDOM_MOVE_IN_ROLLOUT)) {
+            move = rand.randomElementOf(moveList);
+        } else {
+            int bestEval;
+            move = moveList.back();
+            moveList.pop_back();
+            for(Move m: moveList) {
+                auto [nextBoard, nextState] = forkBoard(board, state, m);
+                int eval = subjectiveEval(evaluation::position_evaluate(nextBoard), nextState);
+                if(eval > bestEval) {
+                    bestEval = eval;
+                    move = m;
+                }
+            }
+        }
+
         board.makeMove(state, move);
         state.update(move.flags);
     }

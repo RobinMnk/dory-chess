@@ -15,7 +15,7 @@ void monteCarlo(const Board& board, const State state, int depth) {
 void MCTS(const Board& board, const State state, int depth) {
     GameTree gt{board, state};
     ChildrenData best{};
-    for(int i = 0; i < 10000; i++) {
+    for(int i = 0; i < 12000; i++) {
         gt.run(depth);
 //        ChildrenData candidate = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score > b.score;});
 //        if (candidate.move != best.move) {
