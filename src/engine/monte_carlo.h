@@ -125,23 +125,24 @@ int randomPlayout(Board& board, State state, Utils::Random rand) {
             return 1;
         }
 
-        Move move;
-        if (rand.bernoulli(USE_RANDOM_MOVE_IN_ROLLOUT)) {
-            move = rand.randomElementOf(moveList);
-        } else {
-            int bestEval;
-            move = moveList.back();
-            moveList.pop_back();
-            for(Move m: moveList) {
-                auto [nextBoard, nextState] = forkBoard(board, state, m);
-                int eval = subjectiveEval(evaluation::position_evaluate(nextBoard), nextState);
-                if(eval > bestEval) {
-                    bestEval = eval;
-                    move = m;
-                }
-            }
-        }
+//        Move move;
+//        if (rand.bernoulli(USE_RANDOM_MOVE_IN_ROLLOUT)) {
+//            move = rand.randomElementOf(moveList);
+//        } else {
+//            int bestEval;
+//            move = moveList.back();
+//            moveList.pop_back();
+//            for(Move m: moveList) {
+//                auto [nextBoard, nextState] = forkBoard(board, state, m);
+//                int eval = subjectiveEval(evaluation::position_evaluate(nextBoard, nextState), nextState);
+//                if(eval > bestEval) {
+//                    bestEval = eval;
+//                    move = m;
+//                }
+//            }
+//        }
 
+        Move move = rand.randomElementOf(moveList);
         board.makeMove(state, move);
         state.update(move.flags);
     }
@@ -192,7 +193,7 @@ public:
         root.reset();
     }
 
-    void run(int depth) {
+    void run() {
         /// 1. SELECT
         TPT node = root;
         Board board = startBoard;

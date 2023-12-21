@@ -19,12 +19,12 @@ using square = uint64_t;
 
 using Piece_t = uint8_t;
 namespace Piece {
-    const Piece_t King = 7;
-    const Piece_t Queen = 2;
-    const Piece_t Rook = 3;
-    const Piece_t Bishop = 4;
-    const Piece_t Knight = 5;
-    const Piece_t Pawn = 6;
+    const Piece_t Queen = 0;
+    const Piece_t Rook = 1;
+    const Piece_t Bishop = 2;
+    const Piece_t Knight = 3;
+    const Piece_t Pawn = 4;
+    const Piece_t King = 5;
 }
 
 using Flag_t = uint8_t;

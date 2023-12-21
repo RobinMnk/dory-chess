@@ -8,12 +8,20 @@
 namespace engine_params {
 
     struct EvaluationParams {
-        int MATERIAL_WEIGHT_PAWN = 100;
-        int MATERIAL_WEIGHT_KNIGHT = 300;
-        int MATERIAL_WEIGHT_BISHOP = 325;
-        int MATERIAL_WEIGHT_ROOK = 500;
-        int MATERIAL_WEIGHT_QUEEN = 900;
-        int MATERIAL_QUANTIFIER = 1;
+        const int  MATERIAL_WEIGHT_PAWN = 100;
+        const int  MATERIAL_WEIGHT_KNIGHT = 300;
+        const int  MATERIAL_WEIGHT_BISHOP = 325;
+        const int  MATERIAL_WEIGHT_ROOK = 500;
+        const int  MATERIAL_WEIGHT_QUEEN = 900;
+        const int  MATERIAL_QUANTIFIER = 1;
+
+        const int  MOBILITY_WEIGHT_PAWN = 1;
+        const int  MOBILITY_WEIGHT_KNIGHT = 3;
+        const int  MOBILITY_WEIGHT_BISHOP = 4;
+        const int  MOBILITY_WEIGHT_ROOK = 4;
+        const int  MOBILITY_WEIGHT_QUEEN = 7;
+        const int  MOBILITY_WEIGHT_KING = -10;
+        const int  MOBILITY_QUANTIFIER = 1;
     };
 
     template<Piece_t piece>

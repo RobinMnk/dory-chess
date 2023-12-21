@@ -207,10 +207,19 @@ namespace Utils {
         return bss.str();
     }
 
+    std::string moveNameShortNotation(Move m) {
+        std::stringstream bss{};
+        if (m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
+        else if (m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
+        else bss << pieceString(m.piece) << squarename(m.to());
+        bss << specialMove(m.flags);
+        return bss.str();
+    }
+
     void printLine(std::vector<Move>& line, int eval) {
         std::cout << static_cast<float>(eval) / 100 << ":  ";
         for (auto& it : std::ranges::reverse_view(line)) {
-            std::cout << Utils::moveNameNotation(it) << " ";
+            std::cout << Utils::moveNameShortNotation(it) << " ";
         }
         std::cout << std::endl;
     }

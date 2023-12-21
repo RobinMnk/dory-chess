@@ -214,7 +214,7 @@ private:
 
         /// Recursion Base Case: Max Depth reached -> return heuristic position eval
         if constexpr (quiescene) {
-            int stand_pat = subjectiveEval(evaluation::position_evaluate(board), state);
+            int stand_pat = evaluation::position_evaluate(board, state);
 
             if (stand_pat >= beta) {
                 nodesSearched++;
@@ -304,7 +304,7 @@ private:
 
                 if constexpr (topLevel) {
                     bestLines.clear();
-                    bestLines.emplace_back(line, subjectiveEval(eval, state));
+                    bestLines.emplace_back(line, eval);
                     bestMove = move;
                     bestMoves.clear();
                     bestMoves.push_back(move);
@@ -314,7 +314,7 @@ private:
                     if (bestLines.size() < NUM_LINES) {
                         if (eval >= alpha - BEST_MOVE_MARGIN) {
                             line.push_back(move);
-                            bestLines.emplace_back(line, subjectiveEval(eval, state));
+                            bestLines.emplace_back(line, eval);
                             bestMoves.push_back(move);
                         }
                     }

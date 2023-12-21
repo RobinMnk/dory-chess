@@ -12,11 +12,11 @@ void monteCarlo(const Board& board, const State state, int depth) {
     std::cout << "FEN: \n" << fen << std::endl;
 }
 
-void MCTS(const Board& board, const State state, int depth) {
+void MCTS(const Board& board, const State state, [[maybe_unused]] int depth) {
     GameTree gt{board, state};
     ChildrenData best{};
     for(int i = 0; i < 12000; i++) {
-        gt.run(depth);
+        gt.run();
 //        ChildrenData candidate = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score > b.score;});
 //        if (candidate.move != best.move) {
 //            best = candidate;
@@ -46,19 +46,29 @@ void timeEvaluation(const Board& board, const State state, int depth) {
     auto t1 = std::chrono::high_resolution_clock::now();
     /// -----------------------------------------------------------
 //    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
-//    auto [eval, line] = EngineMC::iterativeDeepening(board, state, depth);
+    auto [eval, line] = EngineMC::iterativeDeepening(board, state, depth);
 //    monteCarlo(board, state, depth);
 //    MonteCarlo::runSimulations(board, state, depth, 10);
 
-    MCTS(board, state, depth);
+//    MCTS(board, state, depth);
 
+
+//    MoveListGenerator::countLegalMoves(board, state);
+//    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Pawn)) << " Pawn Moves" << std::endl;
+//    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Knight)) << " Knight Moves" << std::endl;
+//    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Bishop)) << " Bishop Moves" << std::endl;
+//    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Rook)) << " Rook Moves" << std::endl;
+//    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Queen)) << " Queen Moves" << std::endl;
+//    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::King)) << " King Moves" << std::endl;
+//    engine_params::EvaluationParams params;
+//    std::cout << features::mobility(board, state, params);
     /// -----------------------------------------------------------
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
     std::cout << "\n" << std::endl;
-//    Utils::printLine(line, eval);
+    Utils::printLine(line, eval);
 
 //    std::cout << "Evaluation: " << eval << std::endl;
 

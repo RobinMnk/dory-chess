@@ -20,12 +20,15 @@
 
 namespace evaluation {
 
-    int position_evaluate(const Board& board) {
+    int position_evaluate(const Board& board, const State state) {
         engine_params::EvaluationParams params;
 
-        int material = (features::material<true>(board, params) - features::material<false>(board, params)) * params.MATERIAL_QUANTIFIER;
+        int material = features::material<true>(board, params) - features::material<false>(board, params);
+        if(!state.whiteToMove) material = -material;
 
-        return material;
+//        int mobility = features::mobility(board, state, params);
+
+        return material; // * params.MATERIAL_QUANTIFIER + mobility * params.MOBILITY_QUANTIFIER;
     }
 
     template<State state>
@@ -101,8 +104,6 @@ namespace evaluation {
 //        if(to & pd->attacked) {
 //            heuristic_val -= pieceValue<piece>(params) / 900;
 //        }
-
-
 
         return heuristic_val;
     }
