@@ -6,6 +6,7 @@
 #include <fstream>
 #include "../src/fenreader.h"
 #include "../src/engine/engine.h"
+#include "../src/engine/monte_carlo.h"
 
 using uLong = unsigned long long;
 
@@ -36,12 +37,22 @@ typedef std::pair<std::string, std::string> TestParam;
 
 class EngineTest : public testing::TestWithParam<TestParam> {};
 
-TEST_P(EngineTest, Check) {
+TEST_P(EngineTest, NegamaxEngine) {
     auto [fen, solution] = GetParam();
     auto [board, state] = Utils::loadFEN(fen);
 
     auto [_, line] = EngineMC::iterativeDeepening(board, state, 6);
     std::string output = Utils::moveNameShortNotation(line.back());
+
+    ASSERT_EQ(output, solution);
+}
+
+TEST_P(EngineTest, MonteCarlo) {
+    auto [fen, solution] = GetParam();
+    auto [board, state] = Utils::loadFEN(fen);
+
+    Move move = MCTS(board, state, 1000000);
+    std::string output = Utils::moveNameShortNotation(move);
 
     ASSERT_EQ(output, solution);
 }

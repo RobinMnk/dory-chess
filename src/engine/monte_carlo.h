@@ -280,7 +280,16 @@ public:
     };
 };
 
-
 TPT GameTree::currentNode{nullptr};
+
+
+Move MCTS(const Board& board, const State state, int iterations=25000) {
+    GameTree gt{board, state};
+    for(int i = 0; i < iterations; i++) {
+        gt.run();
+    }
+    ChildrenData best = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score < b.score;});
+    return best.move;
+}
 
 #endif //DORY_MONTE_CARLO_H
