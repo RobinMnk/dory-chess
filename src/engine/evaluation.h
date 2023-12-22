@@ -19,16 +19,25 @@
 #include "../movegen.h"
 
 namespace evaluation {
+    static engine_params::EvaluationParams params{};
 
-    int position_evaluate(const Board& board, const State state) {
-        engine_params::EvaluationParams params;
+    /**
+     * Gives estimate for position evaluation score for the side that is to move.
+     * Positive value is good for the side to move (not necessarily good for white)
+     */
+    int evaluatePosition(const Board& board, const State state) {
 
         int material = features::material<true>(board, params) - features::material<false>(board, params);
-        if(!state.whiteToMove) material = -material;
 
-//        int mobility = features::mobility(board, state, params);
+        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 
-        return material; // * params.MATERIAL_QUANTIFIER + mobility * params.MOBILITY_QUANTIFIER;
+        int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
+
+        int evalEstimate = material * params.MATERIAL_QUANTIFIER
+                + mobility * params.MOBILITY_QUANTIFIER
+                + activity * params.ACTIVITY_QUANTIFIER;
+
+        return state.whiteToMove ? evalEstimate : -evalEstimate;
     }
 
     template<State state>
@@ -45,8 +54,6 @@ namespace evaluation {
         if(priorityMove.is<piece, flags>(from, to)) {
             return 999999;
         }
-
-        engine_params::EvaluationParams params;
 
         int heuristic_val{0};
 
@@ -86,7 +93,7 @@ namespace evaluation {
         }
 
 //        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-//        int position_eval_diff = position_evaluate(board) - position_evaluate(nextBoard);
+//        int position_eval_diff = position_evaluate(board) - evaluatePosition(nextBoard);
 //        heuristic_val += position_eval_diff;
 
         heuristic_val += pieceValue<piece>(params) / 200;

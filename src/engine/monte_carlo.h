@@ -134,7 +134,7 @@ int randomPlayout(Board& board, State state, Utils::Random rand) {
 //            moveList.pop_back();
 //            for(Move m: moveList) {
 //                auto [nextBoard, nextState] = forkBoard(board, state, m);
-//                int eval = subjectiveEval(evaluation::position_evaluate(nextBoard, nextState), nextState);
+//                int eval = subjectiveEval(evaluation::evaluatePosition(nextBoard, nextState), nextState);
 //                if(eval > bestEval) {
 //                    bestEval = eval;
 //                    move = m;

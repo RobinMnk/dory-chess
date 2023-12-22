@@ -212,9 +212,9 @@ private:
             return { ttEntry.value, {} };
         }
 
-        /// Recursion Base Case: Max Depth reached -> return heuristic position eval
         if constexpr (quiescene) {
-            int stand_pat = evaluation::position_evaluate(board, state);
+            /// Recursion Base Case: Max Depth reached -> return heuristic position eval
+            int stand_pat = evaluation::evaluatePosition(board, state);
 
             if (stand_pat >= beta) {
                 nodesSearched++;
@@ -225,9 +225,10 @@ private:
                 alpha = stand_pat;
             }
         } else {
+            /// Switch to Quiescence Search
             if (depth > maxDepth) {
 //                nodesSearched++;
-//                int eval = subjectiveEval(evaluation::position_evaluate(board), state);
+//                int eval = subjectiveEval(evaluation::evaluatePosition(board), state);
 //                trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
 //                return { eval, {} };
 

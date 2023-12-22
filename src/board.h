@@ -178,6 +178,23 @@ public:
         return ~occ();
     }
 
+    template<Piece_t piece, bool whiteToMove>
+    [[nodiscard]] BB getPieceBB() const {
+        if constexpr (piece == Piece::Pawn)
+            return pawns<whiteToMove>();
+        else if constexpr (piece == Piece::Knight)
+            return knights<whiteToMove>();
+        else if constexpr (piece == Piece::Bishop)
+            return bishops<whiteToMove>();
+        else if constexpr (piece == Piece::Rook)
+            return rooks<whiteToMove>();
+        else if constexpr (piece == Piece::Queen)
+            return queens<whiteToMove>();
+        else if constexpr (piece == Piece::King)
+            return king<whiteToMove>();
+        return 0;
+    }
+
     template<bool whiteToMove>
     [[nodiscard]] constexpr BB allPieces() const {
         if constexpr (whiteToMove) return wPawns | wKnights | wBishops | wRooks | wQueens | newMask(wKingSq);
