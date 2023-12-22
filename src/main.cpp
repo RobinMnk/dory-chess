@@ -12,7 +12,7 @@ void monteCarlo(const Board& board, const State state, int depth) {
     std::cout << "FEN: \n" << fen << std::endl;
 }
 
-void MCTS(const Board& board, const State state, [[maybe_unused]] int depth) {
+void monteCarloTreeSearch(const Board& board, const State state, [[maybe_unused]] int depth) {
     GameTree gt{board, state};
     ChildrenData best{};
     for(int i = 0; i < 12000; i++) {
@@ -50,7 +50,7 @@ void timeEvaluation(const Board& board, const State state, int depth) {
 //    monteCarlo(board, state, depth);
 //    MonteCarlo::runSimulations(board, state, depth, 10);
 
-//    MCTS(board, state, depth);
+//    monteCarloTreeSearch(board, state, depth);
 
 
 //    MoveListGenerator::countLegalMoves(board, state);

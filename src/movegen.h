@@ -351,7 +351,7 @@ void MoveGenerator<MoveCollector, quiescence, countOnly>::castles(const Board& b
         ) generateSuccessorBoard<state, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);
 }
 
-template<typename MC, bool qc, bool co=false>
+template<typename MC, bool qc=false, bool co=false>
 static void generate(const Board& board, State state) {
     unsigned int state_code = state.code();
     switch (state_code) {

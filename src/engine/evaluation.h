@@ -29,13 +29,15 @@ namespace evaluation {
 
         int material = features::material<true>(board, params) - features::material<false>(board, params);
 
-        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
+//        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
+//
+//        int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
 
-        int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
-
-        int evalEstimate = material * params.MATERIAL_QUANTIFIER
-                + mobility * params.MOBILITY_QUANTIFIER
-                + activity * params.ACTIVITY_QUANTIFIER;
+        int evalEstimate = material; // * params.MATERIAL_QUANTIFIER
+//                + mobility * params.MOBILITY_QUANTIFIER
+//                + activity * params.ACTIVITY_QUANTIFIER;
+//
+//        evalEstimate /= 150;
 
         return state.whiteToMove ? evalEstimate : -evalEstimate;
     }
