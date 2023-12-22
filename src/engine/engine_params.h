@@ -15,7 +15,7 @@ namespace engine_params {
         const int  MATERIAL_WEIGHT_BISHOP = 325;
         const int  MATERIAL_WEIGHT_ROOK = 500;
         const int  MATERIAL_WEIGHT_QUEEN = 900;
-        const int  MATERIAL_QUANTIFIER = 16;
+        const int  MATERIAL_QUANTIFIER = 128;
 
         const int  MOBILITY_WEIGHT_PAWN = 1;
         const int  MOBILITY_WEIGHT_KNIGHT = 3;

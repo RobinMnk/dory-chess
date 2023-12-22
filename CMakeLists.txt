@@ -20,12 +20,21 @@ target_compile_options(Dory PUBLIC -O3)
 
 enable_testing()
 
-add_executable(tester testing/test.cpp)
-target_compile_options(tester PUBLIC -Wall -Wextra)
-target_compile_options(tester PUBLIC -march=native)
-target_compile_options(tester PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)
-target_compile_options(tester PUBLIC -O3)
-target_link_libraries(tester GTest::gtest_main)
+add_executable(perft testing/moveGenerationTest.cpp)
+target_compile_options(perft PUBLIC -Wall -Wextra)
+target_compile_options(perft PUBLIC -march=native)
+target_compile_options(perft PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)
+target_compile_options(perft PUBLIC -O3)
+target_link_libraries(perft GTest::gtest_main)
+
+
+add_executable(engineTest testing/engineTest.cpp)
+target_compile_options(engineTest PUBLIC -Wall -Wextra)
+target_compile_options(engineTest PUBLIC -march=native)
+target_compile_options(engineTest PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)
+target_compile_options(engineTest PUBLIC -O3)
+target_link_libraries(engineTest GTest::gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(tester)
+gtest_discover_tests(perft)
+gtest_discover_tests(engineTest)
