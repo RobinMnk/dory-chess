@@ -13,6 +13,7 @@
 unsigned int NUM_LINES = 1;
 const int BEST_MOVE_MARGIN = 10;
 const int MAX_ITER_DEPTH = 5;
+const int MAX_WINDOW_INCREASES = 5;
 
 using Line = std::vector<Move>;
 using NMR = std::pair<int, Line>;
@@ -149,30 +150,37 @@ public:
         reset();
 //        repTable.reset();
         Line bestLine;
-        int bestEval = -INF, window = 10;
+        int bestEval = -INF, window = 10, windowIncreases = 0;
         int alpha = -INF, beta = INF;
 
         for(int depth = 1; depth <= md;) {
-            std::cout << "Searching Depth " << depth << std::endl;
+            std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
             auto [eval, line] = searchDepth(board, state, depth, alpha, beta);
 
             /// Aspiration Window
             if(eval <= alpha || eval >= beta) {
-                window *= 2;
-                alpha -= window;
-                beta += window;
+                if (windowIncreases++ > MAX_WINDOW_INCREASES) {
+                    alpha = -INF;
+                    beta = INF;
+                } else {
+                    window *= 4;
+                    alpha = bestEval - window;
+                    beta = bestEval + window;
+                }
                 continue; // Search again with same depth
             }
             window = 10;
+            windowIncreases = 0;
             alpha = eval - window;
             beta = eval + window;
 
-            depth++;
             bestEval = eval;
             bestLine = line;
 
             std::cout << "Line for depth " << depth << std::endl;
             Utils::printLine(bestLine, bestEval);
+
+            depth++;
         }
         return { bestEval, bestLine };
     }
@@ -262,6 +270,7 @@ private:
 
         Line localBestLine;
         Move localBestMove;
+        int bestEval = -INF;
 
         /// Iterate through all moves
         for(auto& [info, move]: moves.at(depth)) {
@@ -283,8 +292,11 @@ private:
 //                Utils::printLine(l, eval);
 //            }
 
-            if (eval > alpha) {
+            if(eval > alpha)
                 alpha = eval;
+
+            if (eval > bestEval) {
+                bestEval = eval;
                 line.push_back(move);
                 localBestLine = line;
                 localBestMove = move;
@@ -314,9 +326,9 @@ private:
         }
 
         /// Save to lookup table
-        trTable.insert(boardHash, alpha, localBestMove, maxDepth - depth, origAlpha, beta);
+        trTable.insert(boardHash, bestEval, localBestMove, maxDepth - depth, origAlpha, beta);
 
-        return { alpha, localBestLine };
+        return { bestEval, localBestLine };
     }
 
     static NMR quiescenceSearch(const Board& board, State state, int depth, int alpha, int beta) {
