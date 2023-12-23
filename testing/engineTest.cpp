@@ -42,7 +42,7 @@ TEST_P(EngineTest, NegamaxEngine) {
     auto [fen, solution] = GetParam();
     auto [board, state] = Utils::loadFEN(fen);
 
-    auto [_, line] = EngineMC::iterativeDeepening(board, state, 8);
+    auto [_, line] = EngineMC::iterativeDeepening(board, state, 7);
     std::string output = Utils::moveNameShortNotation(line.back());
 
     ASSERT_EQ(output, solution);

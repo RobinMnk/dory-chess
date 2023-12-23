@@ -28,18 +28,18 @@ namespace evaluation {
     int evaluatePosition(const Board& board, const State state) {
 
         int material = features::material<true>(board, params) - features::material<false>(board, params);
-
+//
 //        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 //
-//        int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
+        int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
 
-        int evalEstimate = material; // * params.MATERIAL_QUANTIFIER
+        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 //                + mobility * params.MOBILITY_QUANTIFIER
-//                + activity * params.ACTIVITY_QUANTIFIER;
+                + activity * params.ACTIVITY_QUANTIFIER;
 //
-//        evalEstimate /= 128;
+        evalEstimate /= 128;
 
-//        return evalEstimate;
+//        int evalEstimate = activity;
 
         return state.whiteToMove ? evalEstimate : -evalEstimate;
     }
@@ -56,29 +56,24 @@ namespace evaluation {
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd, Move priorityMove) {
         if(priorityMove.is<piece, flags>(from, to)) {
-            return INT32_MAX;
+            return INF;
         }
 
         int heuristic_val{0};
 
         // is Capture
-        if ((to & board.enemyPieces<state.whiteToMove>()) != 0) {
+        if ((to & board.enemyPieces<state.whiteToMove>())) {
             int valueDiff = -engine_params::pieceValue<piece>(params);
-            if (board.enemyPawns<state.whiteToMove>() & to) {
+            if (board.enemyPawns<state.whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Pawn>(params);
-            }
-            if (board.enemyKnights<state.whiteToMove>() & to) {
+            else if (board.enemyKnights<state.whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Knight>(params);
-            }
-            if (board.enemyBishops<state.whiteToMove>() & to) {
+            else if (board.enemyBishops<state.whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Bishop>(params);
-            }
-            if (board.enemyRooks<state.whiteToMove>() & to) {
+            else if (board.enemyRooks<state.whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Rook>(params);
-            }
-            if (board.enemyQueens<state.whiteToMove>() & to) {
+            else if (board.enemyQueens<state.whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Queen>(params);
-            }
 
             heuristic_val += 1000 + valueDiff;
         }
@@ -96,10 +91,6 @@ namespace evaluation {
             heuristic_val += 2000;
         }
 
-//        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-//        int position_eval_diff = position_evaluate(board) - evaluatePosition(nextBoard);
-//        heuristic_val += position_eval_diff;
-
         heuristic_val += pieceValue<piece>(params) / 200;
 
 //        if constexpr (piece != Piece::Pawn) {
@@ -115,6 +106,9 @@ namespace evaluation {
         if(to & pd->attacked) {
             heuristic_val -= pieceValue<piece>(params) / 1024;
         }
+
+        int activity_diff = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to)) - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to));
+        heuristic_val += activity_diff * 50;
 
         return heuristic_val;
     }

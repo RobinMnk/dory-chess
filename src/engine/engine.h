@@ -154,7 +154,7 @@ public:
         int alpha = -INF, beta = INF;
 
         for(int depth = 1; depth <= md;) {
-            std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+//            std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
             auto [eval, line] = searchDepth(board, state, depth, alpha, beta);
 
             /// Aspiration Window
@@ -177,7 +177,7 @@ public:
             bestEval = eval;
             bestLine = line;
 
-            std::cout << "Line for depth " << depth << std::endl;
+//            std::cout << "Line for depth " << depth << std::endl;
             Utils::printLine(bestLine, bestEval);
 
             depth++;
