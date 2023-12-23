@@ -10,7 +10,6 @@
 #include "../zobrist.h"
 #include "../movegen.h"
 
-const int INF = 999999;
 unsigned int NUM_LINES = 1;
 const int BEST_MOVE_MARGIN = 10;
 const int MAX_ITER_DEPTH = 5;
@@ -154,7 +153,7 @@ public:
         int alpha = -INF, beta = INF;
 
         for(int depth = 1; depth <= md;) {
-//            std::cout << "Searching Depth " << depth << std::endl;
+            std::cout << "Searching Depth " << depth << std::endl;
             auto [eval, line] = searchDepth(board, state, depth, alpha, beta);
 
             /// Aspiration Window
@@ -171,6 +170,9 @@ public:
             depth++;
             bestEval = eval;
             bestLine = line;
+
+            std::cout << "Line for depth " << depth << std::endl;
+            Utils::printLine(bestLine, bestEval);
         }
         return { bestEval, bestLine };
     }
@@ -217,15 +219,16 @@ private:
 
         /// Switch to Quiescence Search
         if (depth > maxDepth) {
-//                nodesSearched++;
-//                int eval = evaluation::evaluatePosition(board, state);
-//                trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
-//                return { eval, {} };
+//            nodesSearched++;
+//            int eval = evaluation::evaluatePosition(board, state);
+//            trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
+//            return { eval, {} };
 
 //                return negamax<false, true>(board, state, depth, alpha, beta);
 
             return quiescenceSearch(board, state, depth, alpha, beta);
         }
+
 
         if constexpr (topLevel) {
             priorityMove = bestMove;
@@ -280,19 +283,19 @@ private:
 //                Utils::printLine(l, eval);
 //            }
 
-            if (eval >= alpha) {
+            if (eval > alpha) {
                 alpha = eval;
                 line.push_back(move);
                 localBestLine = line;
                 localBestMove = move;
 
-//                if constexpr (topLevel) {
+                if constexpr (topLevel) {
 //                    bestLines.clear();
 //                    bestLines.emplace_back(line, eval);
                     bestMove = move;
 //                    bestMoves.clear();
 //                    bestMoves.push_back(move);
-//                }
+                }
 //            } else {
 //                if constexpr (topLevel) {
 //                    if (bestLines.size() < NUM_LINES) {
@@ -358,10 +361,6 @@ private:
                 localBestLine = line;
             }
         }
-
-//        if(localBestLine.empty()) {
-//            std::cout << "ERRORR" << std::endl;
-//        }
 
         return {alpha, localBestLine };
     }

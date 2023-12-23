@@ -217,6 +217,22 @@ namespace Utils {
     }
 
     void printLine(std::vector<Move>& line, int eval) {
+        if (eval == INF-1) {
+            std::cout << "Checkmate - White wins!" << std::endl;
+            return;
+        }
+        if (eval == -INF+1) {
+            std::cout << "Checkmate - Black wins!" << std::endl;
+            return;
+        }
+        if(eval > INF - 50) {
+            std::cout << "M" << (INF - eval - 1) << std::endl;
+            return;
+        }
+        if(eval < -INF + 50) {
+            std::cout << "-M" << (INF + eval - 1) << std::endl;
+            return;
+        }
         std::cout << static_cast<float>(eval) / 100 << ":  ";
         for (auto& it : std::ranges::reverse_view(line)) {
             std::cout << Utils::moveNameShortNotation(it) << " ";

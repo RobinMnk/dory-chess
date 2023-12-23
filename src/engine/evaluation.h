@@ -37,7 +37,9 @@ namespace evaluation {
 //                + mobility * params.MOBILITY_QUANTIFIER
 //                + activity * params.ACTIVITY_QUANTIFIER;
 //
-//        evalEstimate /= 150;
+//        evalEstimate /= 128;
+
+//        return evalEstimate;
 
         return state.whiteToMove ? evalEstimate : -evalEstimate;
     }
@@ -54,7 +56,7 @@ namespace evaluation {
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd, Move priorityMove) {
         if(priorityMove.is<piece, flags>(from, to)) {
-            return 999999;
+            return INT32_MAX;
         }
 
         int heuristic_val{0};
@@ -108,11 +110,11 @@ namespace evaluation {
             }
 //        }
 
-//        heuristic_val += isForwardMove<state>(from, to) / 4;
+        heuristic_val += isForwardMove<state>(from, to) / 4;
 
-//        if(to & pd->attacked) {
-//            heuristic_val -= pieceValue<piece>(params) / 900;
-//        }
+        if(to & pd->attacked) {
+            heuristic_val -= pieceValue<piece>(params) / 1024;
+        }
 
         return heuristic_val;
     }

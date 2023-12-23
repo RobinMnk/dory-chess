@@ -223,11 +223,11 @@ public:
     }
 
     template<bool whiteToMove>
-    bool isCapture(Move& move) {
+    bool isCapture(Move& move) const {
         return move.to() & enemyPieces<whiteToMove>();
     }
 
-    bool isCapture(State state, Move& move) {
+    bool isCapture(State state, Move& move) const {
         return state.whiteToMove ? isCapture<true>(move) : isCapture<false>(move);
     }
 

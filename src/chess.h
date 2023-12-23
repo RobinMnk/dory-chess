@@ -15,6 +15,8 @@
 using BB = uint64_t;
 using square = uint64_t;
 
+const int INF = 2140000000;
+
 // ---------- PIECES ----------
 
 using Piece_t = uint8_t;
