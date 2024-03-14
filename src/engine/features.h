@@ -19,8 +19,8 @@ namespace features {
         BB locations = board.getPieceBB<piece, whiteToMove>();
         Bitloop(locations) {
             mgScore += params.middleGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
-            egScore += params.endGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
-            gamePhase += params.gamePhaseIncrement<piece>();
+//            egScore += params.endGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
+//            gamePhase += params.gamePhaseIncrement<piece>();
         }
     }
 
@@ -35,10 +35,11 @@ namespace features {
         addScoresForPiece<Piece::Queen, whiteToMove>(board, params, mgScore, egScore, gamePhase);
         addScoresForPiece<Piece::King, whiteToMove>(board, params, mgScore, egScore, gamePhase);
 
-        int mgPhase = gamePhase;
-        if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
-        int egPhase = 24 - mgPhase;
-        return (mgScore * mgPhase + egScore * egPhase) / 24;
+        return mgScore / bitCount(board.myPieces<whiteToMove>());
+//        int mgPhase = gamePhase;
+//        if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
+//        int egPhase = 24 - mgPhase;
+//        return ((mgScore * mgPhase + egScore * egPhase) / 24) / bitCount(board.myPieces<whiteToMove>());
     }
 
 

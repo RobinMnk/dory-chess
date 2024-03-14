@@ -37,7 +37,7 @@ namespace evaluation {
 //                + mobility * params.MOBILITY_QUANTIFIER
                 + activity * params.ACTIVITY_QUANTIFIER;
 //
-        evalEstimate /= 128;
+        evalEstimate /= 2;
 
 //        int evalEstimate = activity;
 
@@ -108,7 +108,7 @@ namespace evaluation {
         }
 
         int activity_diff = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to)) - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to));
-        heuristic_val += activity_diff * 50;
+        heuristic_val += activity_diff * 200;
 
         return heuristic_val;
     }

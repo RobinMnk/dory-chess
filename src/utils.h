@@ -226,14 +226,12 @@ namespace Utils {
             return;
         }
         if(eval > INF - 50) {
-            std::cout << "M" << (INF - eval - 1) << std::endl;
-            return;
-        }
-        if(eval < -INF + 50) {
-            std::cout << "-M" << (INF + eval - 1) << std::endl;
-            return;
-        }
-        std::cout << static_cast<float>(eval) / 100 << ":  ";
+            std::cout << "M" << (INF - eval) / 2 ;
+        } else if(eval < -INF + 50) {
+            std::cout << "-M" << (INF + eval) / 2;
+        } else
+            std::cout << static_cast<float>(eval) / 100;
+        std::cout << ":  ";
         for (auto& it : std::ranges::reverse_view(line)) {
             std::cout << Utils::moveNameShortNotation(it) << " ";
         }

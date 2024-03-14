@@ -154,7 +154,30 @@ int main() {
 
     auto [board, state] = Utils::loadFEN(fen);
     timeEvaluation(board, state, depth);
+
+
+//    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
+//    Utils::printLine(line, eval);
+
+
+//    auto [eval, line] = EngineMC::quiescenceSearch(board, state, 0, -INF, INF);
+//    Utils::printLine(line, eval);
+
 //    monteCarlo(board, state, 2);
+//    engine_params::EvaluationParams params;
+//
+//    Utils::print_board(board);
+//    constexpr bool whiteToMove = true;
+//
+//    std::cout << bitCount(board.pawns<whiteToMove>()) << " Pawns. " << bitCount(board.knights<whiteToMove>()) << " Knights. " <<
+//        bitCount(board.bishops<whiteToMove>())  << " Bishops. " << bitCount(board.rooks<whiteToMove>())  << " Rooks. " <<
+//        bitCount(board.queens<whiteToMove>())  << " Queens" << std::endl;
+//
+//                                               int res = evaluation::evaluatePosition(board, state);
+//    std::cout << res << std::endl;
+//    std::cout << features::material<true>(board, params) << std::endl;
+//    std::cout << features::material<false>(board, params) << std::endl;
+
 
     std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
     std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;
