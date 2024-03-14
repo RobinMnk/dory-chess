@@ -35,7 +35,7 @@ namespace features {
         addScoresForPiece<Piece::Queen, whiteToMove>(board, params, mgScore, egScore, gamePhase);
         addScoresForPiece<Piece::King, whiteToMove>(board, params, mgScore, egScore, gamePhase);
 
-        return mgScore / bitCount(board.myPieces<whiteToMove>());
+        return mgScore;
 //        int mgPhase = gamePhase;
 //        if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
 //        int egPhase = 24 - mgPhase;

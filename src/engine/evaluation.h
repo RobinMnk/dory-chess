@@ -33,11 +33,11 @@ namespace evaluation {
 //
         int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
 
-        int evalEstimate = material * params.MATERIAL_QUANTIFIER
+        int evalEstimate = material * params.MATERIAL_QUANTIFIER;
 //                + mobility * params.MOBILITY_QUANTIFIER
                 + activity * params.ACTIVITY_QUANTIFIER;
 //
-        evalEstimate /= 2;
+        evalEstimate /= 64;
 
 //        int evalEstimate = activity;
 
@@ -61,7 +61,7 @@ namespace evaluation {
 
         int heuristic_val{0};
 
-        // is Capture
+        /// Captures
         if ((to & board.enemyPieces<state.whiteToMove>())) {
             int valueDiff = -engine_params::pieceValue<piece>(params);
             if (board.enemyPawns<state.whiteToMove>() & to)
@@ -78,6 +78,7 @@ namespace evaluation {
             heuristic_val += 1000 + valueDiff;
         }
 
+        /// Promotions
         if constexpr (flags == MoveFlag::PromoteBishop) {
             heuristic_val += 1300;
         }
@@ -103,12 +104,16 @@ namespace evaluation {
 
         heuristic_val += isForwardMove<state>(from, to) / 4;
 
+        // Do not move to an attacked square
         if(to & pd->attacked) {
             heuristic_val -= pieceValue<piece>(params) / 1024;
         }
 
-        int activity_diff = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to)) - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to));
-        heuristic_val += activity_diff * 200;
+        // Activity difference
+        int activity_diff = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(from))
+                - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to));
+
+        heuristic_val += activity_diff;
 
         return heuristic_val;
     }
