@@ -1,11 +1,11 @@
 //
-// Created by robin on 29.07.2022.
+// Created by Robin on 29.07.2022.
 //
 
 #include <gtest/gtest.h>
 
-#include "../src/fenreader.h"
-#include "../src/movecollectors.h"
+#include "../src/utils/fenreader.h"
+#include "../src/core/movecollectors.h"
 
 using uLong = unsigned long long;
 

@@ -1,5 +1,5 @@
 //
-// Created by robin on 24.08.2023.
+// Created by Robin on 24.08.2023.
 //
 
 #ifndef DORY_EVALUATION_H

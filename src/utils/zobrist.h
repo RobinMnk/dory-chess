@@ -1,5 +1,5 @@
 //
-// Created by robin on 29.08.2023.
+// Created by Robin on 29.08.2023.
 //
 
 #ifndef DORY_ZOBRIST_H

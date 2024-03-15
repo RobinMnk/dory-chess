@@ -1,10 +1,8 @@
 #include <iostream>
 
-#include "board.h"
 #include "engine/engine.h"
 #include "engine/monte_carlo.h"
-#include "movecollectors.h"
-#include "fenreader.h"
+#include "utils/fenreader.h"
 
 
 void monteCarlo(const Board& board, const State state, int depth) {

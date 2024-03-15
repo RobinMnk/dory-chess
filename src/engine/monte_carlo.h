@@ -1,5 +1,5 @@
 //
-// Created by robin on 28.08.2023.
+// Created by Robin on 28.08.2023.
 //
 
 #ifndef DORY_MONTE_CARLO_H
