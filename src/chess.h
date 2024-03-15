@@ -46,6 +46,7 @@ namespace MoveFlag {
 }
 
 struct Move {
+    // Optimization potential: piece and flags can be stored in just one byte (3 bits piece, 4 bits flags)
     uint8_t fromIndex{0}, toIndex{0}, piece{0}, flags{0};
 
     constexpr Move(uint8_t fromIx, uint8_t toIx, Piece_t pc, Flag_t fl) : fromIndex{fromIx}, toIndex{toIx}, piece{pc}, flags{fl} {}

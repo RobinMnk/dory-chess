@@ -33,11 +33,11 @@ namespace evaluation {
 //
         int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
 
-        int evalEstimate = material * params.MATERIAL_QUANTIFIER;
+        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 //                + mobility * params.MOBILITY_QUANTIFIER
                 + activity * params.ACTIVITY_QUANTIFIER;
 //
-        evalEstimate /= 64;
+//        evalEstimate /= 2; // seems important, not sure why -> because of the aspiration window!
 
 //        int evalEstimate = activity;
 
@@ -53,6 +53,8 @@ namespace evaluation {
         }
     }
 
+    const int Large = 1000000;
+
     template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd, Move priorityMove) {
         if(priorityMove.is<piece, flags>(from, to)) {
@@ -64,6 +66,7 @@ namespace evaluation {
         /// Captures
         if ((to & board.enemyPieces<state.whiteToMove>())) {
             int valueDiff = -engine_params::pieceValue<piece>(params);
+
             if (board.enemyPawns<state.whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Pawn>(params);
             else if (board.enemyKnights<state.whiteToMove>() & to)
@@ -75,41 +78,44 @@ namespace evaluation {
             else if (board.enemyQueens<state.whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Queen>(params);
 
-            heuristic_val += 1000 + valueDiff;
+            heuristic_val += 2 * Large + valueDiff;
+
+            if((pd->attacked & to) && valueDiff >= 0) {
+                // Opponent can recapture
+                heuristic_val += 8 * Large;
+            }
         }
 
         /// Promotions
         if constexpr (flags == MoveFlag::PromoteBishop) {
-            heuristic_val += 1300;
+            heuristic_val += 6 * Large + 3200;
         }
         if constexpr (flags == MoveFlag::PromoteKnight) {
-            heuristic_val += 1300;
+            heuristic_val += 6 * Large + 3000;
         }
         if constexpr (flags == MoveFlag::PromoteRook) {
-            heuristic_val += 1500;
+            heuristic_val += 6 * Large + 5000;
         }
         if constexpr (flags == MoveFlag::PromoteQueen) {
-            heuristic_val += 2000;
+            heuristic_val += 7 * Large;
         }
 
         heuristic_val += pieceValue<piece>(params) / 200;
 
-//        if constexpr (piece != Piece::Pawn) {
-            if (to & pd->pawnAtk) {
-                heuristic_val -= pieceValue<piece>(params) * 2;
-            } else if (to & pd->attacked) {
-                heuristic_val -= pieceValue<piece>(params);
-            }
-//        }
+        /// Do not move to an attacked square
+        if (to & pd->pawnAtk) {
+            heuristic_val -= 50; // pieceValue<piece>(params) * 2;
+        } else if (to & pd->attacked) {
+            heuristic_val -= 25; // pieceValue<piece>(params);
+        }
 
         heuristic_val += isForwardMove<state>(from, to) / 4;
 
-        // Do not move to an attacked square
-        if(to & pd->attacked) {
-            heuristic_val -= pieceValue<piece>(params) / 1024;
-        }
+//        if(to & pd->attacked) {
+//            heuristic_val -= pieceValue<piece>(params) / 1024;
+//        }
 
-        // Activity difference
+        /// Activity difference
         int activity_diff = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(from))
                 - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to));
 

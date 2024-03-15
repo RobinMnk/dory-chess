@@ -363,7 +363,7 @@ public:
         }
         if constexpr (piece == Piece::King) {
             if constexpr (whiteMoved) { bPawns &= ~to; bKnights &= ~to; bBishops &= ~to; bRooks &= ~to; bQueens &= ~to, wKingSq = static_cast<uint8_t>(singleBitOf(to)); }
-            else {wPawns &= ~to; wKnights &= ~to; wBishops &= ~to; wRooks &= ~to; wQueens &= ~to; bKingSq = static_cast<uint8_t>(singleBitOf(to)); }
+            else { wPawns &= ~to; wKnights &= ~to; wBishops &= ~to; wRooks &= ~to; wQueens &= ~to; bKingSq = static_cast<uint8_t>(singleBitOf(to)); }
             return;
         }
         throw std::exception();

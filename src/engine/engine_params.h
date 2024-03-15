@@ -15,7 +15,7 @@ namespace engine_params {
         const int  MATERIAL_WEIGHT_BISHOP = 325;
         const int  MATERIAL_WEIGHT_ROOK = 500;
         const int  MATERIAL_WEIGHT_QUEEN = 900;
-        const int  MATERIAL_QUANTIFIER = 64;
+        const int  MATERIAL_QUANTIFIER = 1;
 
         const int  MOBILITY_WEIGHT_PAWN = 1;
         const int  MOBILITY_WEIGHT_KNIGHT = 3;
@@ -169,7 +169,7 @@ namespace engine_params {
                 -20,-10,-10, -5, -5,-10,-10,-20
         };
 
-        int mg_king_table[64] = {
+        int mg_king_table2[64] = {
                 -80, -70, -70, -70, -70, -70, -70, -80,
                 -60, -60, -60, -60, -60, -60, -60, -60,
                 -40, -50, -50, -60, -60, -50, -50, -40,
@@ -178,6 +178,16 @@ namespace engine_params {
                 -10, -20, -20, -20, -20, -20, -20, -10,
                 20,  20,  -5,  -5,  -5,  -5,  20,  20,
                 20,  30,  10,   0,   0,  10,  30,  20
+        };
+        int mg_king_table[64] = {
+                -20, -10, -10, -10, -10, -10, -10, -20,
+                -5,   0,   5,   5,   5,   5,   0,  -5,
+                -10, -5,   20,  30,  30,  20,  -5, -10,
+                -15, -10,  35,  45,  45,  35, -10, -15,
+                -20, -15,  30,  40,  40,  30, -15, -20,
+                -25, -20,  20,  25,  25,  20, -20, -25,
+                -30, -25,   0,   0,   0,   0, -25, -30,
+                -50, -30, -30, -30, -30, -30, -30, -50
         };
 
         int eg_king_table[64] = {

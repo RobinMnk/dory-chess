@@ -13,7 +13,7 @@
 unsigned int NUM_LINES = 1;
 const int BEST_MOVE_MARGIN = 10;
 const int MAX_ITER_DEPTH = 5;
-const int MAX_WINDOW_INCREASES = 5;
+const int MAX_WINDOW_INCREASES = 3;
 
 using Line = std::vector<Move>;
 using NMR = std::pair<int, Line>;
@@ -150,7 +150,7 @@ public:
         reset();
 //        repTable.reset();
         Line bestLine;
-        int bestEval = -INF, window = 10, windowIncreases = 0;
+        int bestEval = -INF, window = 20, windowIncreases = 0;
         int alpha = -INF, beta = INF;
 
         for(int depth = 1; depth <= md;) {
@@ -169,7 +169,7 @@ public:
                 }
                 continue; // Search again with same depth
             }
-            window = 10;
+            window = 20;
             windowIncreases = 0;
             alpha = eval - window;
             beta = eval + window;
@@ -178,6 +178,7 @@ public:
             bestLine = line;
 
 //            std::cout << "Line for depth " << depth << std::endl;
+            std::cout << "Depth " << depth << " -> ";
             Utils::printLine(bestLine, bestEval);
 
             depth++;
@@ -238,16 +239,17 @@ private:
         }
 
 
+        // Setup variables before generating legal moves
         if constexpr (topLevel) {
             priorityMove = bestMove;
         } else {
             // ttEntry.move may be NULLMOVE, but that does not hurt us
             priorityMove = ttEntry.move;
         }
-
         moves.at(depth).clear();
         currentDepth = depth;
 
+        /// Generate legal moves
         generate<EngineMC>(board, state);
 
         // No legal moves available
