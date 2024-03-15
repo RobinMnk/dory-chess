@@ -5,9 +5,8 @@
 #ifndef DORY_FEATURES_H
 #define DORY_FEATURES_H
 
-#include "../board.h"
 #include "engine_params.h"
-#include "../movegen.h"
+#include "../core/movegen.h"
 
 using Params = engine_params::EvaluationParams;
 

@@ -6,6 +6,8 @@
 #define DORY_RANDOM_H
 
 #include <random>
+#include <ctime>
+
 using RNG_INT = std::uniform_int_distribution<std::mt19937::result_type>;
 using RNG_REAL = std::uniform_real_distribution<>;
 

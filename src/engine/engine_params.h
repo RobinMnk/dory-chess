@@ -5,7 +5,7 @@
 #ifndef DORY_ENGINE_PARAMS_H
 #define DORY_ENGINE_PARAMS_H
 
-#include "../chess.h"
+#include "../core/chess.h"
 
 namespace engine_params {
 

@@ -6,7 +6,7 @@
 #define DORY_MONTE_CARLO_H
 
 #include "engine.h"
-#include "../random.h"
+#include "../utils/random.h"
 
 double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.95;
 double USE_RANDOM_MOVE_IN_ROLLOUT = 0.5;

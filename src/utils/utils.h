@@ -7,7 +7,7 @@
 #include <sstream>
 #include <chrono>
 #include <ranges>
-#include "board.h"
+#include "../core/board.h"
 
 #ifndef DORY_UTILS_H
 #define DORY_UTILS_H

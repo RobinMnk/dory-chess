@@ -6,7 +6,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "board.h"
+#include "../core/board.h"
 #include "utils.h"
 
 #ifndef DORY_FENREADER_H

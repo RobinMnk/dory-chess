@@ -3,7 +3,7 @@
 //
 
 #include <array>
-#include "chess.h"
+#include "../core/chess.h"
 
 #ifndef DORY_PIECESTEPS_H
 #define DORY_PIECESTEPS_H

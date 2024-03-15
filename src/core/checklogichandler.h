@@ -3,7 +3,7 @@
 //
 
 #include "board.h"
-#include "piecesteps.h"
+#include "../utils/piecesteps.h"
 
 #ifndef DORY_CHECKLOGICHANDLER_H
 #define DORY_CHECKLOGICHANDLER_H

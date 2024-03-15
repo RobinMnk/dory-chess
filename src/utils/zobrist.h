@@ -6,7 +6,7 @@
 #define DORY_ZOBRIST_H
 
 #include <array>
-#include "board.h"
+#include "../core/board.h"
 #include "random.h"
 
 namespace Zobrist {

@@ -15,8 +15,7 @@
 #include "features.h"
 #include "engine_params.h"
 #include "engine.h"
-#include "../movecollectors.h"
-#include "../movegen.h"
+#include "../core/movecollectors.h"
 
 namespace evaluation {
     static engine_params::EvaluationParams params{};
