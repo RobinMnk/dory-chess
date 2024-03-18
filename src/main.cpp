@@ -109,7 +109,7 @@ void enumerateMoves(const Board& board) {
 }
 
 
-struct Runner {
+struct PerftRunner2 {
     template<State state, int depth>
     static void main(const Board& board) {
 //        auto [ev, ln] = timeEvaluation(board, state, 1);

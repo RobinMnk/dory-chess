@@ -97,7 +97,7 @@ namespace PieceSteps {
         return mask;
     }
 
-    std::array<BB, 140000> sliderAttackBB;
+    std::array<BB, 107648> sliderAttackBB;
 
     template<bool>
     std::array<BB, 64> arrMask;
@@ -146,8 +146,6 @@ namespace PieceSteps {
             arrBishopBase.at(sq) = offset;
             handle_pext<true>(sq, offset);
         }
-        std::cout << offset << std::endl;
-        
     }
 
     void load() {
