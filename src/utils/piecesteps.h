@@ -84,20 +84,8 @@ namespace PieceSteps {
         KING_MOVES[index] = board;
     }
 
-    void load() {
-        if(!loaded) {
-            for(int i = 0; i < 64; i++) {
-                calculate_lines<true>(i);
-                calculate_lines<false>(i);
-                addKnightMoves(i);
-                addKingMoves(i);
-            }
-            loaded = true;
-        }
-    }
-
     template<bool diag>
-    BB slideMask(BB occ, int index) {
+    BB slideMaskSlow(BB occ, int index) {
         BB mask = 0ull;
         for(auto line: STEPS<diag>.at(index)) {
             for(uint8_t sq: line) {
@@ -108,6 +96,73 @@ namespace PieceSteps {
         }
         return mask;
     }
+
+    std::array<BB, 140000> sliderAttackBB;
+
+    template<bool>
+    std::array<BB, 64> arrMask;
+
+    std::array<int, 64> arrRookBase, arrBishopBase;
+    BB inside = ~(fileA | fileH | rank1 | rank8);
+
+    template<bool diag>
+    BB slideMask(BB occ, int sq) {
+        if constexpr (diag) {
+            return sliderAttackBB.at(arrBishopBase[sq] + _pext_u64(occ, arrMask<diag>[sq]));
+        } else {
+            return sliderAttackBB.at(arrRookBase[sq] + _pext_u64(occ, arrMask<diag>[sq]));
+        }
+    }
+
+    template<bool diag>
+    void handle_pext(int sq, int& offset) {
+        BB fullMask = slideMaskSlow<diag>(0, sq);
+        if(!hasBitAt(fileA, sq)) fullMask &= ~fileA;
+        if(!hasBitAt(fileH, sq)) fullMask &= ~fileH;
+        if(!hasBitAt(rank1, sq)) fullMask &= ~rank1;
+        if(!hasBitAt(rank8, sq)) fullMask &= ~rank8;
+
+        arrMask<diag>.at(sq) = fullMask;
+        int numOccupancies = 1 << bitCount(fullMask);
+        for (int cand = 0; cand < numOccupancies; ++cand) {
+            BB occ = 0, mask = fullMask, extractor = 1;
+            Bitloop(mask) {
+                if(cand & extractor) {
+                    occ |= isolateLowestBit(mask);
+                }
+                extractor <<= 1;
+            }
+
+            sliderAttackBB.at(offset + cand) = slideMaskSlow<diag>(occ, sq);
+        }
+        offset += numOccupancies;
+    }
+
+    void init_pext() {
+        int offset = 0;
+        for (int sq = 0; sq < 64; ++sq) {
+            arrRookBase.at(sq) = offset;
+            handle_pext<false>(sq, offset);
+            arrBishopBase.at(sq) = offset;
+            handle_pext<true>(sq, offset);
+        }
+        std::cout << offset << std::endl;
+        
+    }
+
+    void load() {
+        if(!loaded) {
+            for(int i = 0; i < 64; i++) {
+                calculate_lines<true>(i);
+                calculate_lines<false>(i);
+                addKnightMoves(i);
+                addKingMoves(i);
+            }
+            init_pext();
+            loaded = true;
+        }
+    }
+
 }
 
 #endif //DORY_PIECESTEPS_H

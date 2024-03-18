@@ -17,7 +17,8 @@ template<typename MC, bool quiescence=false, bool countOnly=false>
 class MoveGenerator {
 public:
     static PDptr pd;
-    static std::array<uint8_t, 6> numberOfMovesByPiece;
+    static std::array<unsigned int, 6> numberOfMovesByPiece;
+    static unsigned long numberOfMoves;
 
     template<State>
     static void generate(const Board& board);
@@ -65,7 +66,8 @@ void MoveGenerator<MoveCollector, quiescence, countOnly>::generate(const Board& 
     CheckLogicHandler::reload<state.whiteToMove>(board, pd);
 
     if constexpr (countOnly) {
-        numberOfMovesByPiece.fill(0);
+//        numberOfMovesByPiece.fill(0);
+        numberOfMoves = 0;
     }
 
     if(!pd->isDoubleCheck) {
@@ -86,37 +88,18 @@ template<typename MoveCollector, bool quiescence, bool countOnly>
 template<State state, Piece_t piece, Flag_t flags>
 requires ValidMoveCollector<MoveCollector, state, piece, flags>
 void MoveGenerator<MoveCollector, quiescence, countOnly>::generateSuccessorBoard(const Board& board, BB from, BB to) {
-//    if constexpr (capturesOnly) {
-//        if ((to & board.enemyPieces<state.whiteToMove>()) == 0)
-//            return;
-//
-//        MoveCollector::template registerMove<state, piece, flags>(board, from, to);
-//
-////        constexpr State nextState = getNextState<state, flags>();
-////        Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-////        generate<nextState>(nextBoard);
-//    } else {
-
-    if constexpr (countOnly) {
-        numberOfMovesByPiece.at(piece)++;
-        return;
-    }
-
     if constexpr (quiescence) {
         if ((to & board.enemyPieces<state.whiteToMove>()) == 0)
             return;
     }
 
+    if constexpr (countOnly) {
+//        numberOfMovesByPiece.at(piece)++;
+        numberOfMoves++;
+        return;
+    }
+
     MoveCollector::template registerMove<state, piece, flags>(board, from, to);
-
-//    constexpr State nextState = getNextState<state, flags>();
-//    Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-//    MoveCollector::template next<nextState>(nextBoard);
-//    }
-
-//    constexpr State nextState = getNextState<state, flags>();
-//    Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-//    MoveCollector::template next<nextState>(nextBoard);
 }
 
 // - - - - - - Helper Functions - - - - - -
@@ -395,7 +378,9 @@ template<typename MC, bool qc, bool co>
 PDptr MoveGenerator<MC, qc, co>::pd{std::make_unique<PinData>()};
 
 template<typename MC, bool qc, bool co>
-std::array<uint8_t, 6> MoveGenerator<MC, qc, co>::numberOfMovesByPiece{};
+std::array<unsigned int, 6> MoveGenerator<MC, qc, co>::numberOfMovesByPiece{};
+template<typename MC, bool qc, bool co>
+unsigned long MoveGenerator<MC, qc, co>::numberOfMoves{0};
 
 
 class MoveListGenerator {

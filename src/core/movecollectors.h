@@ -30,6 +30,14 @@ namespace MoveCollectors {
 
         template<State state>
         static void generateGameTree(const Board& board) {
+//            if constexpr (depth == 1) {
+//                MoveGenerator<LimitedDFS<depth>, false, true>::template generate<state>(board);
+//                totalNodes += MoveGenerator<LimitedDFS<depth>, false, true>::numberOfMoves;
+////                for (int num_moves: MoveGenerator<LimitedDFS<depth>, false, true>::numberOfMovesByPiece) {
+////                    totalNodes += num_moves;
+////                }
+//            }
+//            else
             if constexpr (depth > 0) {
                 MoveGenerator<LimitedDFS<depth>>::template generate<state>(board);
             }
@@ -48,6 +56,7 @@ namespace MoveCollectors {
         }
 
         friend class MoveGenerator<LimitedDFS<depth>>;
+        friend class MoveGenerator<LimitedDFS<depth>, false, true>;
     };
 
     template<int depth>
@@ -101,6 +110,13 @@ namespace MoveCollectors {
 
         template<State state>
         static void generateGameTree(const Board& board) {
+//            if constexpr (depth == 1) {
+//                MoveGenerator<PerftCollector<depth>, false, true>::template generate<state>(board);
+//                for (auto num_moves: MoveGenerator<PerftCollector<depth>, false, true>::numberOfMovesByPiece) {
+//                    nodes.at(depth) += num_moves;
+//                }
+//            }
+//            else
             if constexpr (depth > 0) {
                 MoveGenerator<PerftCollector<depth>>::template generate<state>(board);
             }
@@ -116,6 +132,7 @@ namespace MoveCollectors {
         }
 
         friend class MoveGenerator<PerftCollector<depth>>;
+        friend class MoveGenerator<PerftCollector<depth>, false, true>;
     };
 
     /**
