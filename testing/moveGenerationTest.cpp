@@ -52,7 +52,7 @@ namespace PerftTesting {
 
     template<int depth>
     void runNodeCountTest(std::string_view fen, std::vector<uLong> ground_truth) {
-//    PieceSteps::load();
+        PieceSteps::load();
         MoveCollectors::nodes.clear();
         MoveCollectors::nodes.resize(depth + 1);
         Utils::loadFEN<PerftRunner, depth>(fen);
@@ -120,7 +120,7 @@ namespace PerftTesting {
 
     template<int depth>
     void checkSingleDepth(std::string_view fen, uLong expected) {
-//    PieceSteps::load();
+        PieceSteps::load();
         MoveCollectors::LimitedDFS<1>::totalNodes = 0;
         Utils::loadFEN<NodeCountingRunner, depth>(fen);
         uLong output = MoveCollectors::LimitedDFS<1>::totalNodes;
