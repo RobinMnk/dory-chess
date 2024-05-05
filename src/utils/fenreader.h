@@ -184,14 +184,14 @@ namespace Utils {
             case 5: loadFEN<Main, 5>(full_fen); break;
             case 6: loadFEN<Main, 6>(full_fen); break;
             case 7: loadFEN<Main, 7>(full_fen); break;
-            case 8: loadFEN<Main, 8>(full_fen); break;
-            case 9: loadFEN<Main, 9>(full_fen); break;
-            case 10: loadFEN<Main,10>(full_fen); break;
-            case 11: loadFEN<Main, 11>(full_fen); break;
-            case 12: loadFEN<Main, 12>(full_fen); break;
-            case 13: loadFEN<Main, 13>(full_fen); break;
-            case 14: loadFEN<Main, 14>(full_fen); break;
-            case 15: loadFEN<Main, 15>(full_fen); break;
+//            case 8: loadFEN<Main, 8>(full_fen); break;
+//            case 9: loadFEN<Main, 9>(full_fen); break;
+//            case 10: loadFEN<Main,10>(full_fen); break;
+//            case 11: loadFEN<Main, 11>(full_fen); break;
+//            case 12: loadFEN<Main, 12>(full_fen); break;
+//            case 13: loadFEN<Main, 13>(full_fen); break;
+//            case 14: loadFEN<Main, 14>(full_fen); break;
+//            case 15: loadFEN<Main, 15>(full_fen); break;
             default: std::cerr << "Depth not implemented!" << std::endl;
         }
     }
