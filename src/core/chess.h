@@ -105,15 +105,15 @@ static constexpr BB epRank() {
 
 // ---------- BIT OPERATIONS ----------
 
-static constexpr BB newMask(int index) {
+static inline constexpr BB newMask(int index) {
     return 1ull << index;
 }
 
-static constexpr void setBit(BB& board, int index) {
+static inline constexpr void setBit(BB& board, int index) {
     board |= newMask(index);
 }
 
-static constexpr BB withBit(BB board, int index) {
+static inline constexpr BB withBit(BB board, int index) {
     return board | newMask(index);
 }
 
@@ -121,27 +121,27 @@ static constexpr void deleteBitAt(BB& board, int index) {
     board &= ~(1ull << index);
 }
 
-static constexpr bool hasBitAt(BB board, int index) {
+static inline constexpr bool hasBitAt(BB board, int index) {
     return (board & (1ull << index)) != 0;
 }
 
-static constexpr int bitCount(BB number) {
+static inline constexpr int bitCount(BB number) {
     return std::popcount(number);
 }
 
-static constexpr int firstBitOf(BB number) {
+static inline constexpr int firstBitOf(BB number) {
     return __builtin_ctzll(number);
 }
 
-static constexpr int lastBitOf(BB number) {
+static inline constexpr int lastBitOf(BB number) {
     return 63 - __builtin_clzll(number);
 }
 
-static constexpr int singleBitOf(BB number) {
+static inline constexpr int singleBitOf(BB number) {
     return firstBitOf(number);
 }
 
-static BB isolateLowestBit(BB number) {
+static inline BB isolateLowestBit(BB number) {
     // calculates number & -number;
     return _blsi_u64(number);
 }

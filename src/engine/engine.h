@@ -13,7 +13,7 @@
 
 unsigned int NUM_LINES = 1;
 const int BEST_MOVE_MARGIN = 10;
-const int MAX_ITER_DEPTH = 5;
+const int MAX_ITER_DEPTH = 6;
 const int MAX_WINDOW_INCREASES = 3;
 
 using Line = std::vector<Move>;
@@ -28,7 +28,7 @@ class EngineMC {
     static Move priorityMove;
 
     static std::array<std::vector<std::pair<int, Move>>, 128> moves;
-    static int maxDepth, currentDepth;
+    static int currentDepth;
 public:
     static TranspositionTable trTable;
     static RepetitionTable repTable;
@@ -37,16 +37,16 @@ public:
     static Move bestMove;
     static std::vector<Move> bestMoves;
 
-    static NMR iterativeDeepening(const Board& board, const State state, int md=MAX_ITER_DEPTH) {
+    static NMR iterativeDeepening(const Board& board, const State state, int maxDepth=MAX_ITER_DEPTH) {
         reset();
 //        repTable.reset();
         Line bestLine;
         int bestEval = -INF, window = 20, windowIncreases = 0;
         int alpha = -INF, beta = INF;
 
-        for(int depth = 1; depth <= md;) {
+        for(int depth = 1; depth <= maxDepth;) {
 //            std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
-            auto [eval, line] = searchDepth(board, state, depth, alpha, beta);
+            auto [eval, line] = searchDepth(board, state, depth, alpha, beta, maxDepth);
 
             /// Aspiration Window
             if(eval <= alpha || eval >= beta) {
@@ -77,10 +77,10 @@ public:
         return { bestEval, bestLine };
     }
 
-    static NMR searchDepth(const Board& board, const State state, int depth, int alpha=-INF, int beta=INF) {
+    static NMR searchDepth(const Board& board, const State state, int depth, int alpha=-INF, int beta=INF, int maxDepth=MAX_ITER_DEPTH) {
         maxDepth = depth;
         bestLines.clear();
-        auto [ev, line] = negamax<true>(board, state, 1, alpha, beta);
+        auto [ev, line] = negamax<true>(board, state, 1, alpha, beta, maxDepth);
         return {subjectiveEval(ev, state), line};
     }
 
@@ -101,7 +101,7 @@ public:
 private:
 
     template<bool topLevel>
-    static NMR negamax(const Board& board, const State state, int depth, int alpha, int beta) {
+    static NMR negamax(const Board& board, const State state, int depth, int alpha, int beta, int maxDepth) {
 
         size_t boardHash = Zobrist::hash(board, state);
         /// Check for Threefold-Repetition
@@ -165,14 +165,37 @@ private:
         Move localBestMove;
         int bestEval = -INF;
 
+        int isPV = 4;
+        int eval;
+        Line line;
+
+//        if(depth + 1 == maxDepth && MoveGenerator<EngineMC>::pd->inCheck())
+//            maxDepth++;
+
         /// Iterate through all moves
         for(auto& [info, move]: moves.at(depth)) {
 
             repTable.insert(boardHash);
 
             auto [nextBoard, nextState] = forkBoard(board, state, move);
-            auto [eval, line] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha);
-            eval = -eval;
+
+            /// Pricipal Variation Search
+            if(isPV) {
+                auto [ev, ln] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha, maxDepth);
+                eval = -ev;
+                line = ln;
+                isPV--;
+            } else {
+                auto [ev, ln] = negamax<false>(nextBoard, nextState, depth + 1,  -alpha - 1,  -alpha, maxDepth);
+                if(ev < -alpha && ev > -beta) {
+                    auto [ev2, ln2] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha, maxDepth);
+                    eval = -ev2;
+                    line = ln2;
+                } else {
+                    eval = -ev;
+                    line = ln;
+                }
+            }
 
             repTable.remove(boardHash);
 
@@ -180,10 +203,10 @@ private:
 //                std::cout << " ";
 //            std::cout << depth << " : " << Utils::moveNameNotation(move) << "  " << eval << std::endl;
 
-//            if constexpr (topLevel) {
-//                Line l = std::vector<Move>{move};
-//                Utils::printLine(l, eval);
-//            }
+            if constexpr (topLevel) {
+                Line l = std::vector<Move>{move};
+                Utils::printLine(l, info);
+            }
 
             if(eval > alpha)
                 alpha = eval;
@@ -284,7 +307,7 @@ private:
 
 std::array<std::vector<std::pair<int, Move>>, 128> EngineMC::moves{};
 int EngineMC::currentDepth{0};
-int EngineMC::maxDepth{0};
+//int EngineMC::maxDepth{0};
 BB EngineMC::nodesSearched{0};
 std::vector<std::pair<Line, int>> EngineMC::bestLines{};
 std::vector<Move> EngineMC::bestMoves{};
