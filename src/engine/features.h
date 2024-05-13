@@ -12,19 +12,24 @@ using Params = engine_params::EvaluationParams;
 
 namespace features {
 
-
     template<Piece_t piece, bool whiteToMove>
-    void addScoresForPiece(const Board& board, Params params, int& mgScore, int& egScore, int& gamePhase) {
+    void addScoresForPiece(const Board& board, Params& params, int& mgScore, int& egScore, int& gamePhase) {
         BB locations = board.getPieceBB<piece, whiteToMove>();
         Bitloop(locations) {
             mgScore += params.middleGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
-//            egScore += params.endGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
-//            gamePhase += params.gamePhaseIncrement<piece>();
+            egScore += params.endGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
+            gamePhase += params.gamePhaseIncrement<piece>();
         }
+//        BB locationsEnemy = board.getPieceBB<piece, !whiteToMove>();
+//        Bitloop(locationsEnemy) {
+//            mgScore -= params.middleGamePieceTable<piece, !whiteToMove>(firstBitOf(locationsEnemy));
+//            egScore -= params.endGamePieceTable<piece, !whiteToMove>(firstBitOf(locationsEnemy));
+//            gamePhase += params.gamePhaseIncrement<piece>();
+//        }
     }
 
     template<bool whiteToMove>
-    int activity(const Board& board, Params params) {
+    int activity(const Board& board, Params& params) {
         int mgScore{0}, egScore{0}, gamePhase{0};
 
         addScoresForPiece<Piece::Pawn, whiteToMove>(board, params, mgScore, egScore, gamePhase);
@@ -34,16 +39,15 @@ namespace features {
         addScoresForPiece<Piece::Queen, whiteToMove>(board, params, mgScore, egScore, gamePhase);
         addScoresForPiece<Piece::King, whiteToMove>(board, params, mgScore, egScore, gamePhase);
 
-        return mgScore;
-//        int mgPhase = gamePhase;
-//        if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
-//        int egPhase = 24 - mgPhase;
-//        return ((mgScore * mgPhase + egScore * egPhase) / 24) / bitCount(board.myPieces<whiteToMove>());
+        /* tapered eval */
+        if (gamePhase > 24) gamePhase = 24; /* in case of early promotion */
+        int egPhase = 24 - gamePhase;
+        return (mgScore * gamePhase + egScore * egPhase) / 24;
     }
 
 
     template<bool whiteToMove>
-    int material(const Board& board, Params params) {
+    int material(const Board& board, Params& params) {
         return bitCount(board.pawns<whiteToMove>()) * params.MATERIAL_WEIGHT_PAWN +
                 bitCount(board.knights<whiteToMove>()) * params.MATERIAL_WEIGHT_KNIGHT +
                 bitCount(board.bishops<whiteToMove>()) * params.MATERIAL_WEIGHT_BISHOP +
@@ -53,12 +57,12 @@ namespace features {
 
 
     template<bool whiteToMove>
-    int mobility(const Board& board, Params params) {
+    int mobility(const Board& board, Params& params) {
         // Ignoring castling for simplicity
         State state(whiteToMove, false, false, false, false);
         MoveListGenerator::countLegalMoves(board, state);
 
-        int mobilityScore{0};
+        unsigned int mobilityScore{0};
         mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Pawn) * params.MOBILITY_WEIGHT_PAWN;
         mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Knight) * params.MOBILITY_WEIGHT_KNIGHT;
         mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Bishop) * params.MOBILITY_WEIGHT_BISHOP;

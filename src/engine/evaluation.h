@@ -26,21 +26,23 @@ namespace evaluation {
      */
     int evaluatePosition(const Board& board, const State state) {
 
-        int material = features::material<true>(board, params) - features::material<false>(board, params);
+//        int material = features::material<true>(board, params) - features::material<false>(board, params);
 //
 //        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 //
         int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
 
-        int evalEstimate = material * params.MATERIAL_QUANTIFIER
-//                + mobility * params.MOBILITY_QUANTIFIER
-                + activity * params.ACTIVITY_QUANTIFIER;
+//        int evalEstimate = material * params.MATERIAL_QUANTIFIER
+////                + mobility * params.MOBILITY_QUANTIFIER
+//                + activity * params.ACTIVITY_QUANTIFIER;
 //
 //        evalEstimate /= 2; // seems important, not sure why -> because of the aspiration window!
 
-//        int evalEstimate = activity;
+        int evalEstimate = activity;
 
         return state.whiteToMove ? evalEstimate : -evalEstimate;
+
+//        return state.whiteToMove ? features::activity<true>(board, params) : features::activity<false>(board, params);
     }
 
     template<State state>
@@ -85,21 +87,26 @@ namespace evaluation {
             }
         }
 
+        /// Checks
+//        if (pd->inCheck()) {
+//            heuristic_val += 10 * Large + 100;
+//        }
+
         /// Promotions
         if constexpr (flags == MoveFlag::PromoteBishop) {
-            heuristic_val += 6 * Large + 3200;
+            heuristic_val += 3 * Large + 3200;
         }
         if constexpr (flags == MoveFlag::PromoteKnight) {
-            heuristic_val += 6 * Large + 3000;
+            heuristic_val += 3 * Large + 3000;
         }
         if constexpr (flags == MoveFlag::PromoteRook) {
-            heuristic_val += 6 * Large + 5000;
+            heuristic_val += 3 * Large + 5000;
         }
         if constexpr (flags == MoveFlag::PromoteQueen) {
             heuristic_val += 7 * Large;
         }
 
-        heuristic_val += pieceValue<piece>(params) / 200;
+//        heuristic_val += pieceValue<piece>(params) / 200;
 
         /// Do not move to an attacked square
         if (to & pd->pawnAtk) {
@@ -115,10 +122,12 @@ namespace evaluation {
 //        }
 
         /// Activity difference
-        int activity_diff = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(from))
-                - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to));
+        int activity_diff_mg = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to))
+                - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(from));
+        int activity_diff_eg = params.endGamePieceTable<piece, state.whiteToMove>(firstBitOf(to))
+                               - params.endGamePieceTable<piece, state.whiteToMove>(firstBitOf(from));
 
-        heuristic_val += activity_diff;
+        heuristic_val += activity_diff_mg + activity_diff_eg;
 
         return heuristic_val;
     }
