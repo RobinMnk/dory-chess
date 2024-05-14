@@ -56,21 +56,21 @@ namespace features {
     }
 
 
-    template<bool whiteToMove>
-    int mobility(const Board& board, Params& params) {
-        // Ignoring castling for simplicity
-        State state(whiteToMove, false, false, false, false);
-        MoveListGenerator::countLegalMoves(board, state);
-
-        unsigned int mobilityScore{0};
-        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Pawn) * params.MOBILITY_WEIGHT_PAWN;
-        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Knight) * params.MOBILITY_WEIGHT_KNIGHT;
-        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Bishop) * params.MOBILITY_WEIGHT_BISHOP;
-        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Rook) * params.MOBILITY_WEIGHT_ROOK;
-        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Queen) * params.MOBILITY_WEIGHT_QUEEN;
-        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::King) * params.MOBILITY_WEIGHT_KING;
-        return mobilityScore;
-    }
+//    template<bool whiteToMove>
+//    int mobility(const Board& board, Params& params) {
+//        // Ignoring castling for simplicity
+//        State state(whiteToMove, false, false, false, false);
+//        MoveListGenerator::countLegalMoves(board, state);
+//
+//        unsigned int mobilityScore{0};
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Pawn) * params.MOBILITY_WEIGHT_PAWN;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Knight) * params.MOBILITY_WEIGHT_KNIGHT;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Bishop) * params.MOBILITY_WEIGHT_BISHOP;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Rook) * params.MOBILITY_WEIGHT_ROOK;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Queen) * params.MOBILITY_WEIGHT_QUEEN;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::King) * params.MOBILITY_WEIGHT_KING;
+//        return mobilityScore;
+//    }
 }
 
 #endif //DORY_FEATURES_H

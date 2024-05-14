@@ -249,8 +249,8 @@ public:
     }
 
 
-    template<bool whiteMoved, Piece_t piece, Flag_t flags>
-    [[nodiscard]] constexpr Board getNextBoard(BB from, BB to) const {
+    template<bool whiteMoved, Piece_t piece, Flag_t flags=MoveFlag::Silent>
+    [[nodiscard]] constexpr Board fork(BB from, BB to) const {
         BB change = from | to;
         uint8_t cs = castling;
 
@@ -412,78 +412,6 @@ public:
         throw std::exception();
     }
 
-//    template<Piece_t piece, Flag_t flags = MoveFlag::Silent>
-//    void makeMove(State state, Move move) {
-//        unsigned int sc = state.code();
-//        switch (sc) {
-//            case 0:
-//                makeMove<toState(0), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 1:
-//                makeMove<toState(1), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 2:
-//                makeMove<toState(2), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 3:
-//                makeMove<toState(3), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 4:
-//                makeMove<toState(4), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 5:
-//                makeMove<toState(5), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 6:
-//                makeMove<toState(6), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 7:
-//                makeMove<toState(7), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 8:
-//                makeMove<toState(8), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 9:
-//                makeMove<toState(9), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 10:
-//                makeMove<toState(10), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 11:
-//                makeMove<toState(11), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 12:
-//                makeMove<toState(12), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 13:
-//                makeMove<toState(13), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 14:
-//                makeMove<toState(14), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 15:
-//                makeMove<toState(15), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 16:
-//                makeMove<toState(16), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 17:
-//                makeMove<toState(17), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 18:
-//                makeMove<toState(18), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 19:
-//                makeMove<toState(19), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 20:
-//                makeMove<toState(20), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 21:
-//                makeMove<toState(21), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 22:
-//                makeMove<toState(22), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 23:
-//                makeMove<toState(23), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 24:
-//                makeMove<toState(24), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 25:
-//                makeMove<toState(25), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 26:
-//                makeMove<toState(26), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 27:
-//                makeMove<toState(27), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 28:
-//                makeMove<toState(28), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 29:
-//                makeMove<toState(29), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 30:
-//                makeMove<toState(30), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            case 31:
-//                makeMove<toState(31), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)); break;
-//            default: throw std::runtime_error("This should never happen");
-//        }
-//    }
-
     template<bool whiteToMove>
     void makeMove(Move move) {
         switch (move.piece) {
@@ -527,6 +455,53 @@ public:
                         makeMove<whiteToMove, Piece::King, MoveFlag::LongCastling>(newMask(move.fromIndex), newMask(move.toIndex)); return;
                 }
                 makeMove<whiteToMove, Piece::King>(newMask(move.fromIndex), newMask(move.toIndex)); return;
+        }
+        throw std::runtime_error("INVALID PIECE MOVED");
+    }
+
+    template<bool whiteToMove>
+    [[nodiscard]] Board fork(const Move& move) const {
+        switch (move.piece) {
+            case Piece::Pawn:
+                switch (move.flags) {
+                    case MoveFlag::PawnDoublePush:
+                        return fork<whiteToMove, Piece::Pawn, MoveFlag::PawnDoublePush>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::EnPassantCapture:
+                        return fork<whiteToMove, Piece::Pawn, MoveFlag::EnPassantCapture>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::PromoteQueen:
+                        return fork<whiteToMove, Piece::Pawn, MoveFlag::PromoteQueen>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::PromoteRook:
+                        return fork<whiteToMove, Piece::Pawn, MoveFlag::PromoteRook>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::PromoteBishop:
+                        return fork<whiteToMove, Piece::Pawn, MoveFlag::PromoteBishop>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::PromoteKnight:
+                        return fork<whiteToMove, Piece::Pawn, MoveFlag::PromoteKnight>(newMask(move.fromIndex), newMask(move.toIndex));
+                }
+                return fork<whiteToMove, Piece::Pawn>(newMask(move.fromIndex), newMask(move.toIndex));
+            case Piece::Knight:
+                return fork<whiteToMove, Piece::Knight>(newMask(move.fromIndex), newMask(move.toIndex));
+            case Piece::Bishop:
+                return fork<whiteToMove, Piece::Bishop>(newMask(move.fromIndex), newMask(move.toIndex));
+            case Piece::Rook:
+                switch (move.flags) {
+                    case MoveFlag::RemoveShortCastling:
+                        return fork<whiteToMove, Piece::Rook, MoveFlag::RemoveShortCastling>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::RemoveLongCastling:
+                        return fork<whiteToMove, Piece::Rook, MoveFlag::RemoveLongCastling>(newMask(move.fromIndex), newMask(move.toIndex));
+                }
+                return fork<whiteToMove, Piece::Rook>(newMask(move.fromIndex), newMask(move.toIndex));
+            case Piece::Queen:
+                return fork<whiteToMove, Piece::Queen>(newMask(move.fromIndex), newMask(move.toIndex));
+            case Piece::King:
+                switch (move.flags) {
+                    case MoveFlag::RemoveAllCastling:
+                        return fork<whiteToMove, Piece::King, MoveFlag::RemoveAllCastling>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::ShortCastling:
+                        return fork<whiteToMove, Piece::King, MoveFlag::ShortCastling>(newMask(move.fromIndex), newMask(move.toIndex));
+                    case MoveFlag::LongCastling:
+                        return fork<whiteToMove, Piece::King, MoveFlag::LongCastling>(newMask(move.fromIndex), newMask(move.toIndex));
+                }
+                return fork<whiteToMove, Piece::King>(newMask(move.fromIndex), newMask(move.toIndex));
         }
         throw std::runtime_error("INVALID PIECE MOVED");
     }
@@ -574,119 +549,119 @@ constexpr BB castleLongRookMove() {
 
 
 //template<Piece_t piece, Flag_t flags = MoveFlag::Silent>
-//std::pair<Board, State> forkBoard(const Board& board, State state, Move move) {
+//std::pair<Board, State> fork(const Board& board, State state, Move move) {
 //    unsigned int state_code = state.code();
 //    switch (state_code) {
 //        case 0:
-//            return { board.getNextBoard<toState(0), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(0), flags>() };
+//            return { board.fork<toState(0), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(0), flags>() };
 //        case 1:
-//            return { board.getNextBoard<toState(1), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(1), flags>() };
+//            return { board.fork<toState(1), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(1), flags>() };
 //        case 2:
-//            return { board.getNextBoard<toState(2), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(2), flags>() };
+//            return { board.fork<toState(2), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(2), flags>() };
 //        case 3:
-//            return { board.getNextBoard<toState(3), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(3), flags>() };
+//            return { board.fork<toState(3), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(3), flags>() };
 //        case 4:
-//            return { board.getNextBoard<toState(4), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(4), flags>() };
+//            return { board.fork<toState(4), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(4), flags>() };
 //        case 5:
-//            return { board.getNextBoard<toState(5), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(5), flags>() };
+//            return { board.fork<toState(5), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(5), flags>() };
 //        case 6:
-//            return { board.getNextBoard<toState(6), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(6), flags>() };
+//            return { board.fork<toState(6), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(6), flags>() };
 //        case 7:
-//            return { board.getNextBoard<toState(7), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(7), flags>() };
+//            return { board.fork<toState(7), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(7), flags>() };
 //        case 8:
-//            return { board.getNextBoard<toState(8), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(8), flags>() };
+//            return { board.fork<toState(8), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(8), flags>() };
 //        case 9:
-//            return { board.getNextBoard<toState(9), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(9), flags>() };
+//            return { board.fork<toState(9), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(9), flags>() };
 //        case 10:
-//            return { board.getNextBoard<toState(10), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(10), flags>() };
+//            return { board.fork<toState(10), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(10), flags>() };
 //        case 11:
-//            return { board.getNextBoard<toState(11), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(11), flags>() };
+//            return { board.fork<toState(11), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(11), flags>() };
 //        case 12:
-//            return { board.getNextBoard<toState(12), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(12), flags>() };
+//            return { board.fork<toState(12), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(12), flags>() };
 //        case 13:
-//            return { board.getNextBoard<toState(13), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(13), flags>() };
+//            return { board.fork<toState(13), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(13), flags>() };
 //        case 14:
-//            return { board.getNextBoard<toState(14), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(14), flags>() };
+//            return { board.fork<toState(14), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(14), flags>() };
 //        case 15:
-//            return { board.getNextBoard<toState(15), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(15), flags>() };
+//            return { board.fork<toState(15), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(15), flags>() };
 //        case 16:
-//            return { board.getNextBoard<toState(16), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(16), flags>() };
+//            return { board.fork<toState(16), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(16), flags>() };
 //        case 17:
-//            return { board.getNextBoard<toState(17), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(17), flags>() };
+//            return { board.fork<toState(17), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(17), flags>() };
 //        case 18:
-//            return { board.getNextBoard<toState(18), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(18), flags>() };
+//            return { board.fork<toState(18), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(18), flags>() };
 //        case 19:
-//            return { board.getNextBoard<toState(19), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(19), flags>() };
+//            return { board.fork<toState(19), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(19), flags>() };
 //        case 20:
-//            return { board.getNextBoard<toState(20), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(20), flags>() };
+//            return { board.fork<toState(20), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(20), flags>() };
 //        case 21:
-//            return { board.getNextBoard<toState(21), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(21), flags>() };
+//            return { board.fork<toState(21), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(21), flags>() };
 //        case 22:
-//            return { board.getNextBoard<toState(22), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(22), flags>() };
+//            return { board.fork<toState(22), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(22), flags>() };
 //        case 23:
-//            return { board.getNextBoard<toState(23), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(23), flags>() };
+//            return { board.fork<toState(23), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(23), flags>() };
 //        case 24:
-//            return { board.getNextBoard<toState(24), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(24), flags>() };
+//            return { board.fork<toState(24), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(24), flags>() };
 //        case 25:
-//            return { board.getNextBoard<toState(25), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(25), flags>() };
+//            return { board.fork<toState(25), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(25), flags>() };
 //        case 26:
-//            return { board.getNextBoard<toState(26), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(26), flags>() };
+//            return { board.fork<toState(26), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(26), flags>() };
 //        case 27:
-//            return { board.getNextBoard<toState(27), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(27), flags>() };
+//            return { board.fork<toState(27), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(27), flags>() };
 //        case 28:
-//            return { board.getNextBoard<toState(28), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(28), flags>() };
+//            return { board.fork<toState(28), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(28), flags>() };
 //        case 29:
-//            return { board.getNextBoard<toState(29), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(29), flags>() };
+//            return { board.fork<toState(29), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(29), flags>() };
 //        case 30:
-//            return { board.getNextBoard<toState(30), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(30), flags>() };
+//            return { board.fork<toState(30), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(30), flags>() };
 //        case 31:
-//            return { board.getNextBoard<toState(31), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(31), flags>() };
+//            return { board.fork<toState(31), piece, flags>(newMask(move.fromIndex), newMask(move.toIndex)), getNextState<toState(31), flags>() };
 //        default: throw std::runtime_error("This should never happen");
 //    }
 //}
 
-//std::pair<Board, State> forkBoard(const Board& board, State state, Move move) {
+//std::pair<Board, State> fork(const Board& board, State state, Move move) {
 //    switch (move.piece) {
 //        case Piece::Pawn:
 //            switch (move.flags) {
 //                case MoveFlag::PawnDoublePush:
-//                    return forkBoard<Piece::Pawn, MoveFlag::PawnDoublePush>(board, state, move);
+//                    return fork<Piece::Pawn, MoveFlag::PawnDoublePush>(board, state, move);
 //                case MoveFlag::EnPassantCapture:
-//                    return forkBoard<Piece::Pawn, MoveFlag::EnPassantCapture>(board, state, move);
+//                    return fork<Piece::Pawn, MoveFlag::EnPassantCapture>(board, state, move);
 //                case MoveFlag::PromoteQueen:
-//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteQueen>(board, state, move);
+//                    return fork<Piece::Pawn, MoveFlag::PromoteQueen>(board, state, move);
 //                case MoveFlag::PromoteRook:
-//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteRook>(board, state, move);
+//                    return fork<Piece::Pawn, MoveFlag::PromoteRook>(board, state, move);
 //                case MoveFlag::PromoteBishop:
-//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteBishop>(board, state, move);
+//                    return fork<Piece::Pawn, MoveFlag::PromoteBishop>(board, state, move);
 //                case MoveFlag::PromoteKnight:
-//                    return forkBoard<Piece::Pawn, MoveFlag::PromoteKnight>(board, state, move);
+//                    return fork<Piece::Pawn, MoveFlag::PromoteKnight>(board, state, move);
 //            }
-//            return forkBoard<Piece::Pawn>(board, state, move);
+//            return fork<Piece::Pawn>(board, state, move);
 //        case Piece::Knight:
-//            return forkBoard<Piece::Knight>(board, state, move);
+//            return fork<Piece::Knight>(board, state, move);
 //        case Piece::Bishop:
-//            return forkBoard<Piece::Bishop>(board, state, move);
+//            return fork<Piece::Bishop>(board, state, move);
 //        case Piece::Rook:
 //            switch (move.flags) {
 //                case MoveFlag::RemoveShortCastling:
-//                    return forkBoard<Piece::Rook, MoveFlag::RemoveShortCastling>(board, state, move);
+//                    return fork<Piece::Rook, MoveFlag::RemoveShortCastling>(board, state, move);
 //                case MoveFlag::RemoveLongCastling:
-//                    return forkBoard<Piece::Rook, MoveFlag::RemoveLongCastling>(board, state, move);
+//                    return fork<Piece::Rook, MoveFlag::RemoveLongCastling>(board, state, move);
 //            }
-//            return forkBoard<Piece::Rook>(board, state, move);
+//            return fork<Piece::Rook>(board, state, move);
 //        case Piece::Queen:
-//            return forkBoard<Piece::Queen>(board, state, move);
+//            return fork<Piece::Queen>(board, state, move);
 //        case Piece::King:
 //            switch (move.flags) {
 //                case MoveFlag::RemoveAllCastling:
-//                    return forkBoard<Piece::King, MoveFlag::RemoveAllCastling>(board, state, move);
+//                    return fork<Piece::King, MoveFlag::RemoveAllCastling>(board, state, move);
 //                case MoveFlag::ShortCastling:
-//                    return forkBoard<Piece::King, MoveFlag::ShortCastling>(board, state, move);
+//                    return fork<Piece::King, MoveFlag::ShortCastling>(board, state, move);
 //                case MoveFlag::LongCastling:
-//                    return forkBoard<Piece::King, MoveFlag::LongCastling>(board, state, move);
+//                    return fork<Piece::King, MoveFlag::LongCastling>(board, state, move);
 //            }
-//            return forkBoard<Piece::King>(board, state, move);
+//            return fork<Piece::King>(board, state, move);
 //    }
 //    throw std::runtime_error("INVALID PIECE MOVED");
 //}

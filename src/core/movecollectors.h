@@ -50,7 +50,7 @@ namespace MoveCollectors {
                 totalNodes++;
             }
 
-            Board nextBoard = board.getNextBoard<whiteToMove, piece, flags>(from, to);
+            Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
             LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
         }
 
@@ -125,7 +125,7 @@ namespace MoveCollectors {
         template<bool whiteToMove,  Piece_t piece, Flag_t flags = MoveFlag::Silent>
         static void registerMove(const Board& board, BB from, BB to) {
             nodes.at(depth)++;
-            Board nextBoard = board.getNextBoard<whiteToMove, piece, flags>(from, to);
+            Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
             PerftCollector<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
         }
 

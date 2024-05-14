@@ -24,7 +24,8 @@ namespace evaluation {
      * Gives estimate for position evaluation score for the side that is to move.
      * Positive value is good for the side to move (not necessarily good for white)
      */
-    int evaluatePosition(const Board& board, const State state) {
+    template<bool whiteToMove>
+    int evaluatePosition(const Board& board) {
 
 //        int material = features::material<true>(board, params) - features::material<false>(board, params);
 //
@@ -40,14 +41,14 @@ namespace evaluation {
 
         int evalEstimate = activity;
 
-        return state.whiteToMove ? evalEstimate : -evalEstimate;
+        return whiteToMove ? evalEstimate : -evalEstimate;
 
 //        return state.whiteToMove ? features::activity<true>(board, params) : features::activity<false>(board, params);
     }
 
-    template<State state>
+    template<bool whiteToMove>
     static int isForwardMove(BB from, BB to) {
-        if constexpr (state.whiteToMove) {
+        if constexpr (whiteToMove) {
             return (singleBitOf(to) - singleBitOf(from)) / 8;
         } else {
             return (singleBitOf(from) - singleBitOf(to)) / 8;
@@ -56,7 +57,7 @@ namespace evaluation {
 
     const int Large = 1000000;
 
-    template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+    template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd, Move priorityMove) {
         if(priorityMove.is<piece, flags>(from, to)) {
             return INF;
@@ -65,18 +66,18 @@ namespace evaluation {
         int heuristic_val{0};
 
         /// Captures
-        if ((to & board.enemyPieces<state.whiteToMove>())) {
+        if ((to & board.enemyPieces<whiteToMove>())) {
             int valueDiff = -engine_params::pieceValue<piece>(params);
 
-            if (board.enemyPawns<state.whiteToMove>() & to)
+            if (board.enemyPawns<whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Pawn>(params);
-            else if (board.enemyKnights<state.whiteToMove>() & to)
+            else if (board.enemyKnights<whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Knight>(params);
-            else if (board.enemyBishops<state.whiteToMove>() & to)
+            else if (board.enemyBishops<whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Bishop>(params);
-            else if (board.enemyRooks<state.whiteToMove>() & to)
+            else if (board.enemyRooks<whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Rook>(params);
-            else if (board.enemyQueens<state.whiteToMove>() & to)
+            else if (board.enemyQueens<whiteToMove>() & to)
                 valueDiff += engine_params::pieceValue<Piece::Queen>(params);
 
             heuristic_val += 2 * Large + valueDiff;
@@ -115,17 +116,17 @@ namespace evaluation {
             heuristic_val -= 25; // pieceValue<piece>(params);
         }
 
-        heuristic_val += isForwardMove<state>(from, to) / 4;
+        heuristic_val += isForwardMove<whiteToMove>(from, to) / 4;
 
 //        if(to & pd->attacked) {
 //            heuristic_val -= pieceValue<piece>(params) / 1024;
 //        }
 
         /// Activity difference
-        int activity_diff_mg = params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(to))
-                - params.middleGamePieceTable<piece, state.whiteToMove>(firstBitOf(from));
-        int activity_diff_eg = params.endGamePieceTable<piece, state.whiteToMove>(firstBitOf(to))
-                               - params.endGamePieceTable<piece, state.whiteToMove>(firstBitOf(from));
+        int activity_diff_mg = params.middleGamePieceTable<piece, whiteToMove>(firstBitOf(to))
+                - params.middleGamePieceTable<piece, whiteToMove>(firstBitOf(from));
+        int activity_diff_eg = params.endGamePieceTable<piece, whiteToMove>(firstBitOf(to))
+                               - params.endGamePieceTable<piece, whiteToMove>(firstBitOf(from));
 
         heuristic_val += activity_diff_mg + activity_diff_eg;
 

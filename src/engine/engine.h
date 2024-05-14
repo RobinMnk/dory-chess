@@ -20,8 +20,10 @@ using Line = std::vector<Move>;
 using NMR = std::pair<int, Line>;
 
 
-int subjectiveEval(int eval, State state) {
-    return state.whiteToMove ? eval : -eval;
+template<bool whiteToMove>
+int subjectiveEval(int eval) {
+    if constexpr (whiteToMove) return eval;
+    else return -eval;
 }
 
 class EngineMC {
@@ -37,7 +39,8 @@ public:
     static Move bestMove;
     static std::vector<Move> bestMoves;
 
-    static NMR iterativeDeepening(const Board& board, const State state, int maxDepth=MAX_ITER_DEPTH) {
+    template<bool whiteToMove>
+    static NMR iterativeDeepening(const Board& board, int maxDepth=MAX_ITER_DEPTH) {
         reset();
 //        repTable.reset();
         Line bestLine;
@@ -46,7 +49,7 @@ public:
 
         for(int depth = 1; depth <= maxDepth;) {
 //            std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
-            auto [eval, line] = searchDepth(board, state, depth, alpha, beta, maxDepth);
+            auto [eval, line] = searchDepth<whiteToMove>(board, depth, alpha, beta, maxDepth);
 
             /// Aspiration Window
             if(eval <= alpha || eval >= beta) {
@@ -77,11 +80,12 @@ public:
         return { bestEval, bestLine };
     }
 
-    static NMR searchDepth(const Board& board, const State state, int depth, int alpha=-INF, int beta=INF, int maxDepth=MAX_ITER_DEPTH) {
+    template<bool whiteToMove>
+    static NMR searchDepth(const Board& board, int depth, int alpha=-INF, int beta=INF, int maxDepth=MAX_ITER_DEPTH) {
         maxDepth = depth;
         bestLines.clear();
-        auto [ev, line] = negamax<true>(board, state, 1, alpha, beta, maxDepth);
-        return {subjectiveEval(ev, state), line};
+        auto [ev, line] = negamax<whiteToMove, true>(board, 1, alpha, beta, maxDepth);
+        return {subjectiveEval<whiteToMove>(ev), line};
     }
 
     static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
@@ -100,10 +104,10 @@ public:
 
 private:
 
-    template<bool topLevel>
-    static NMR negamax(const Board& board, const State state, int depth, int alpha, int beta, int maxDepth) {
+    template<bool whiteToMove, bool topLevel>
+    static NMR negamax(const Board& board, int depth, int alpha, int beta, int maxDepth) {
 
-        size_t boardHash = Zobrist::hash(board, state);
+        size_t boardHash = Zobrist::hash<whiteToMove>(board);
         /// Check for Threefold-Repetition
         if(repTable.check(boardHash)) {
             return {0, {}};
@@ -126,7 +130,7 @@ private:
 
 //                return negamax<false, true>(board, state, depth, alpha, beta);
 
-            return quiescenceSearch(board, state, depth, alpha, beta);
+            return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
         }
 
 
@@ -141,7 +145,7 @@ private:
         currentDepth = depth;
 
         /// Generate legal moves
-        generate<EngineMC>(board, state);
+        MoveGenerator<EngineMC>::template generate<whiteToMove>(board);
 
         // No legal moves available
         if(moves.at(depth).empty()) {
@@ -177,18 +181,18 @@ private:
 
             repTable.insert(boardHash);
 
-            auto [nextBoard, nextState] = forkBoard(board, state, move);
+            Board nextBoard = board.fork<whiteToMove>(move);
 
             /// Pricipal Variation Search
             if(isPV) {
-                auto [ev, ln] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha, maxDepth);
+                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, maxDepth);
                 eval = -ev;
                 line = ln;
                 isPV--;
             } else {
-                auto [ev, ln] = negamax<false>(nextBoard, nextState, depth + 1,  -alpha - 1,  -alpha, maxDepth);
+                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -alpha - 1,  -alpha, maxDepth);
                 if(ev < -alpha && ev > -beta) {
-                    auto [ev2, ln2] = negamax<false>(nextBoard, nextState, depth + 1,  -beta,  -alpha, maxDepth);
+                    auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, maxDepth);
                     eval = -ev2;
                     line = ln2;
                 } else {
@@ -247,9 +251,10 @@ private:
         return { bestEval, localBestLine };
     }
 
-    static NMR quiescenceSearch(const Board& board, State state, int depth, int alpha, int beta) {
+    template<bool whiteToMove>
+    static NMR quiescenceSearch(const Board& board, int depth, int alpha, int beta) {
         /// Recursion Base Case: Max Depth reached -> return heuristic position eval
-        int standPat = evaluation::evaluatePosition(board, state);
+        int standPat = evaluation::evaluatePosition<whiteToMove>(board);
 
         if (standPat >= beta) {
             nodesSearched++;
@@ -262,7 +267,7 @@ private:
         moves.at(depth).clear();
         currentDepth = depth;
 
-        generate<EngineMC, true>(board, state);
+        MoveGenerator<EngineMC, true>::template generate<whiteToMove>(board);
 
         if (moves.at(depth).empty()) {
             nodesSearched++;
@@ -275,8 +280,9 @@ private:
 
         /// Iterate through all moves
         for(auto& [info, move]: moves.at(depth)) {
-            auto [nextBoard, nextState] = forkBoard(board, state, move);
-            auto [eval, line] = quiescenceSearch(nextBoard, nextState, depth + 1,  -beta,  -alpha);
+
+            Board nextBoard = board.fork<whiteToMove>(move);
+            auto [eval, line] = quiescenceSearch<!whiteToMove>(nextBoard, depth + 1,  -beta,  -alpha);
             eval = -eval;
 
             if (eval >= beta) {
@@ -293,10 +299,10 @@ private:
         return {alpha, localBestLine };
     }
 
-    template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+    template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static void registerMove(const Board &board, BB from, BB to) {
         moves[currentDepth].emplace_back(
-            evaluation::move_heuristic<state, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd, priorityMove),
+            evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd, priorityMove),
             createMoveFromBB(from, to, piece, flags)
         );
     }

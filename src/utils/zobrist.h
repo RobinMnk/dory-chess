@@ -24,10 +24,10 @@ namespace Zobrist {
         black_to_move_bitstring = random.randomNumberInRange(0, FULL_BB);
     }
 
-
-    size_t hash(const Board& board, const State state) {
+    template<bool whiteToMove>
+    size_t hash(const Board& board) {
         size_t h{0};
-        if (!state.whiteToMove)
+        if (!whiteToMove)
             h ^= black_to_move_bitstring;
 
         for(int sq = 0; sq < 64; ++sq) {

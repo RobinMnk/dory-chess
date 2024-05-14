@@ -5,6 +5,7 @@
 #include <array>
 #include <chrono>
 #include <ranges>
+#include <sstream>
 #include "../core/board.h"
 
 #ifndef DORY_UTILS_H
@@ -267,7 +268,7 @@ namespace Utils {
 //        MoveSimulator<getNextState<state, flag>()> move(std::string_view from, std::string_view to) {
 //            BB fromBB = newMask(sqId(from));
 //            BB toBB = newMask(sqId(to));
-//            Board nextBoard = board.getNextBoard<state, piece, flag>(fromBB, toBB);
+//            Board nextBoard = board.fork<state, piece, flag>(fromBB, toBB);
 //            return MoveSimulator<getNextState<state, flag>()>(nextBoard);
 //        }
 //
