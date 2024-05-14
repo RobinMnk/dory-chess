@@ -39,17 +39,17 @@ namespace PerftTesting {
     TEST(NodeCounts, StartingPosition) {
         PieceSteps::load(); // make sure this is run on the first test!
         MoveCollectors::nodes.clear();
-        MoveCollectors::nodes.resize(7);
+        MoveCollectors::nodes.resize(10);
 
         std::vector<uLong> ground_truth{
-            1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860
+            1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860, 84'998'978'956
         };
 
-        MoveCollectors::PerftCollector<6>::template generateGameTree<true>(STARTBOARD);
+        MoveCollectors::PerftCollector<7>::template generateGameTree<true>(STARTBOARD);
 
-        for (int i{1}; i <= 6; i++) {
+        for (int i{1}; i <= 7; i++) {
             uLong expected = ground_truth.at(i);
-            uLong output = MoveCollectors::nodes.at(7 - i);
+            uLong output = MoveCollectors::nodes.at(8 - i);
             ASSERT_EQ(output, expected);
         }
     }

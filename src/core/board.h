@@ -119,7 +119,7 @@ constexpr BB castleLongRookMove();
 class Board {
 public:
     BB wPawns{}, bPawns{}, wKnights{}, bKnights{}, wBishops{}, bBishops{}, wRooks{}, bRooks{}, wQueens{}, bQueens{};
-    uint8_t wKingSq{}, bKingSq{}, enPassantSq{}, castling{};
+    uint8_t wKingSq{}, bKingSq{}, enPassantSq{}, castling{}; // Optimization potential: merge (castling and ep) and king squares into same byte
 
     Board() = default;
     constexpr Board(BB wP, BB bP, BB wN, BB bN, BB wB, BB bB, BB wR, BB bR, BB wQ, BB bQ, uint8_t wK, uint8_t bK, uint8_t ep, uint8_t cs) :
