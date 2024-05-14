@@ -6,9 +6,6 @@
 #include <fstream>
 #include "../src/utils/fenreader.h"
 #include "../src/engine/engine.h"
-#include "../src/engine/monte_carlo.h"
-
-using uLong = unsigned long long;
 
 const std::array<std::string, 2> puzzleFiles{
     "../resources/puzzles2000.txt",
@@ -40,10 +37,16 @@ class EngineTest : public testing::TestWithParam<TestParam> {};
 
 TEST_P(EngineTest, NegamaxEngine) {
     auto [fen, solution] = GetParam();
-    auto [board, state] = Utils::loadFEN(fen);
+    auto [board, whiteToMove] = Utils::parseFEN(fen);
 
-    auto [_, line] = EngineMC::iterativeDeepening(board, state, 6);
-    std::string output = Utils::moveNameShortNotation(line.back());
+    std::string output;
+    if(whiteToMove) {
+        auto [_, line] = EngineMC::iterativeDeepening<true>(board, 6);
+        output = Utils::moveNameShortNotation(line.back());
+    } else {
+        auto [_, line] = EngineMC::iterativeDeepening<false>(board, 6);
+        output = Utils::moveNameShortNotation(line.back());
+    }
 
     ASSERT_EQ(output, solution);
 }

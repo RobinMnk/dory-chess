@@ -15,10 +15,11 @@ class MonteCarlo {
     static Utils::Random random;
 public:
 
-    static void runSimulations(const Board& board, State state, int depth, int numSimulations) {
+    template<bool whiteToMove>
+    static void runSimulations(const Board& board, int depth, int numSimulations) {
         int wins{0}, losses{0};
         for(int i = 1; i <= numSimulations; i++) {
-            int res = simulateGame(board, state, depth);
+            int res = simulateGame<whiteToMove>(board, depth);
             if(res == 1) wins++;
             else if (res == -1) losses++;
 
@@ -26,10 +27,9 @@ public:
         std::cout << "\n" << wins << " wins, " << losses << " losses, " << numSimulations << " games" << std::endl;
     }
 
-    static int simulateGame(const Board& startBoard, State startState, int depth) {
+
+    static int simulateGame(const Board& startBoard, int depth) {
         Board currentBoard = startBoard;
-        State currentState = startState;
-        bool white = startState.whiteToMove;
 
         EngineMC::reset();
 
@@ -43,7 +43,7 @@ public:
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
-            auto [eval, line] = EngineMC::iterativeDeepening(currentBoard, currentState, depth);
+            auto [eval, line] = EngineMC::iterativeDeepening<whiteToMove>(currentBoard, depth);
 
             if (line.empty()) {
                 // Game over
