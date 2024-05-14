@@ -81,39 +81,39 @@ BB CheckLogicHandler::addPins(const Board& board, int kingSquare, bool& blockEP)
     return mask;
 }
 
-template<bool white>
+template<bool whiteToMove>
 void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
     BB attacked{0}, checkMask{0}, mask, pawnAtk{0};
     int numChecks = 0;
-    int kingSquare = board.kingSquare<white>();
+    int kingSquare = board.kingSquare<whiteToMove>();
 
-    BB pawnBB = board.enemyPawns<white>();
-    BB knightBB = board.enemyKnights<white>();
-    BB bishopBB = board.enemyBishops<white>();
-    BB rookBB = board.enemyRooks<white>();
-    BB queenBB = board.enemyQueens<white>();
+    BB pawnBB = board.enemyPawns<whiteToMove>();
+    BB knightBB = board.enemyKnights<whiteToMove>();
+    BB bishopBB = board.enemyBishops<whiteToMove>();
+    BB rookBB = board.enemyRooks<whiteToMove>();
+    BB queenBB = board.enemyQueens<whiteToMove>();
 
-    BB myKing = board.king<white>();
+    BB myKing = board.king<whiteToMove>();
 
     // IS THE KING IN CHECK
 
-    attacked |= PieceSteps::KING_MOVES[board.kingSquare<!white>()];
+    attacked |= PieceSteps::KING_MOVES[board.kingSquare<!whiteToMove>()];
 
     // Pawns
-    mask = pawnAtkLeft<!white>(pawnBB & pawnCanGoLeft<!white>());     // pawn attack to the left
+    mask = pawnAtkLeft<!whiteToMove>(pawnBB & pawnCanGoLeft<!whiteToMove>());     // pawn attack to the left
     attacked |= mask;
     pawnAtk |= mask;
     if(mask & myKing) {
         numChecks++;
-        checkMask |= pawnInvAtkLeft<!white>(myKing);
+        checkMask |= pawnInvAtkLeft<!whiteToMove>(myKing);
     }
 
-    mask = pawnAtkRight<!white>(pawnBB & pawnCanGoRight<!white>());    // pawn attack to the right
+    mask = pawnAtkRight<!whiteToMove>(pawnBB & pawnCanGoRight<!whiteToMove>());    // pawn attack to the right
     attacked |= mask;
     pawnAtk |= mask;
     if(mask & myKing) {
         numChecks++;
-        checkMask |= pawnInvAtkRight<!white>(myKing);
+        checkMask |= pawnInvAtkRight<!whiteToMove>(myKing);
     }
 
     // Knights
@@ -156,9 +156,9 @@ void CheckLogicHandler::reload(const Board& board, const PDptr& pd){
     if(numChecks == 0) checkMask = FULL_BB;
 
     bool blockEP = false;
-    pd->pinsDiag = addPins<white, true>(board, kingSquare, blockEP);
-    pd->pinsStr  = addPins<white, false>(board, kingSquare, blockEP);
-    pd->targetSquares = board.enemyOrEmpty<white>() & checkMask;
+    pd->pinsDiag = addPins<whiteToMove, true>(board, kingSquare, blockEP);
+    pd->pinsStr  = addPins<whiteToMove, false>(board, kingSquare, blockEP);
+    pd->targetSquares = board.enemyOrEmpty<whiteToMove>() & checkMask;
     pd->attacked = attacked;
     pd->checkMask = checkMask;
     pd->blockEP = blockEP;

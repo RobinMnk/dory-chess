@@ -3,8 +3,6 @@
 //
 
 #include <array>
-#include <iostream>
-#include <sstream>
 #include <chrono>
 #include <ranges>
 #include "../core/board.h"
@@ -238,45 +236,45 @@ namespace Utils {
         std::cout << std::endl;
     }
 
-    template<typename Collector, State state, int depth>
-    void time_movegen(const Board &board) {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        Collector::template generateGameTree<state, depth>(board);
-        auto t2 = std::chrono::high_resolution_clock::now();
-
-        /* Getting number of milliseconds as an integer. */
-        auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
-
-        /* Getting number of milliseconds as a double. */
-        std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-
-        /* Getting number of milliseconds as a double. */
-        std::chrono::duration<double> seconds = t2 - t1;
-        double mnps = (static_cast<double>(Collector::totalNodes) / 1000000) / seconds.count();
-
-        std::cout << "Generated " << Collector::totalNodes << " nodes in " << ms_int.count() << "ms\n";
-        std::cout << mnps << " M nps\n\n";
-    }
-
-
-    template<State state>
-    struct MoveSimulator {
-        Board board;
-
-        explicit MoveSimulator(Board &bd) : board{bd} {}
-
-        template<Piece_t piece, Flag_t flag = MoveFlag::Silent>
-        MoveSimulator<getNextState<state, flag>()> move(std::string_view from, std::string_view to) {
-            BB fromBB = newMask(sqId(from));
-            BB toBB = newMask(sqId(to));
-            Board nextBoard = board.getNextBoard<state, piece, flag>(fromBB, toBB);
-            return MoveSimulator<getNextState<state, flag>()>(nextBoard);
-        }
-
-        constexpr State getState() {
-            return state;
-        }
-    };
+//    template<typename Collector, State state, int depth>
+//    void time_movegen(const Board &board) {
+//        auto t1 = std::chrono::high_resolution_clock::now();
+//        Collector::template generateGameTree<state, depth>(board);
+//        auto t2 = std::chrono::high_resolution_clock::now();
+//
+//        /* Getting number of milliseconds as an integer. */
+//        auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
+//
+//        /* Getting number of milliseconds as a double. */
+//        std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+//
+//        /* Getting number of milliseconds as a double. */
+//        std::chrono::duration<double> seconds = t2 - t1;
+//        double mnps = (static_cast<double>(Collector::totalNodes) / 1000000) / seconds.count();
+//
+//        std::cout << "Generated " << Collector::totalNodes << " nodes in " << ms_int.count() << "ms\n";
+//        std::cout << mnps << " M nps\n\n";
+//    }
+//
+//
+//    template<State state>
+//    struct MoveSimulator {
+//        Board board;
+//
+//        explicit MoveSimulator(Board &bd) : board{bd} {}
+//
+//        template<Piece_t piece, Flag_t flag = MoveFlag::Silent>
+//        MoveSimulator<getNextState<state, flag>()> move(std::string_view from, std::string_view to) {
+//            BB fromBB = newMask(sqId(from));
+//            BB toBB = newMask(sqId(to));
+//            Board nextBoard = board.getNextBoard<state, piece, flag>(fromBB, toBB);
+//            return MoveSimulator<getNextState<state, flag>()>(nextBoard);
+//        }
+//
+//        constexpr State getState() {
+//            return state;
+//        }
+//    };
 }
 
 #endif //DORY_UTILS_H

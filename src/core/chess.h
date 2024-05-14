@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <bit>
-
 #include <immintrin.h>
 
 #ifndef DORY_CHESS_H

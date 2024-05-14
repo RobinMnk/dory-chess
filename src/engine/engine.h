@@ -203,10 +203,10 @@ private:
 //                std::cout << " ";
 //            std::cout << depth << " : " << Utils::moveNameNotation(move) << "  " << eval << std::endl;
 
-            if constexpr (topLevel) {
-                Line l = std::vector<Move>{move};
-                Utils::printLine(l, info);
-            }
+//            if constexpr (topLevel) {
+//                Line l = std::vector<Move>{move};
+//                Utils::printLine(l, info);
+//            }
 
             if(eval > alpha)
                 alpha = eval;

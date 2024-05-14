@@ -28,7 +28,7 @@ namespace MoveCollectors {
     public:
         static unsigned long long totalNodes;
 
-        template<State state>
+        template<bool whiteToMove>
         static void generateGameTree(const Board& board) {
 //            if constexpr (depth == 1) {
 //                MoveGenerator<LimitedDFS<depth>, false, true>::template generate<state>(board);
@@ -39,20 +39,19 @@ namespace MoveCollectors {
 //            }
 //            else
             if constexpr (depth > 0) {
-                MoveGenerator<LimitedDFS<depth>>::template generate<state>(board);
+                MoveGenerator<LimitedDFS<depth>>::template generate<whiteToMove>(board);
             }
         }
 
     private:
-        template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
         static void registerMove(const Board& board, BB from, BB to) {
             if constexpr (depth == 1) {
                 totalNodes++;
             }
 
-            constexpr State nextState = getNextState<state, flags>();
-            Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-            LimitedDFS<depth-1>::template generateGameTree<nextState>(nextBoard);
+            Board nextBoard = board.getNextBoard<whiteToMove, piece, flags>(from, to);
+            LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
         }
 
         friend class MoveGenerator<LimitedDFS<depth>>;
@@ -71,7 +70,7 @@ namespace MoveCollectors {
 //        static std::vector<ExtendedBoard> positions;
 //
 //        static void getLegalMoves(ExtendedBoard& eboard) {
-//            Utils::template run<SuccessorBoards, 1>(eboard.state_code, eboard.board);
+//            Utils::template run<SuccessorBoards, 1>(eboard.castling, eboard.board);
 //        }
 //
 //        template<State state, int depth>
@@ -108,7 +107,7 @@ namespace MoveCollectors {
     class PerftCollector {
     public:
 
-        template<State state>
+        template<bool whiteToMove>
         static void generateGameTree(const Board& board) {
 //            if constexpr (depth == 1) {
 //                MoveGenerator<PerftCollector<depth>, false, true>::template generate<state>(board);
@@ -118,17 +117,16 @@ namespace MoveCollectors {
 //            }
 //            else
             if constexpr (depth > 0) {
-                MoveGenerator<PerftCollector<depth>>::template generate<state>(board);
+                MoveGenerator<PerftCollector<depth>>::template generate<whiteToMove>(board);
             }
         }
 
     private:
-        template<State state,  Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        template<bool whiteToMove,  Piece_t piece, Flag_t flags = MoveFlag::Silent>
         static void registerMove(const Board& board, BB from, BB to) {
             nodes.at(depth)++;
-            constexpr State nextState = getNextState<state, flags>();
-            Board nextBoard = board.getNextBoard<state, piece, flags>(from, to);
-            PerftCollector<depth-1>::template generateGameTree<nextState>(nextBoard);
+            Board nextBoard = board.getNextBoard<whiteToMove, piece, flags>(from, to);
+            PerftCollector<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
         }
 
         friend class MoveGenerator<PerftCollector<depth>>;
@@ -147,10 +145,10 @@ namespace MoveCollectors {
         static unsigned long long curr, totalNodes;
         static int maxDepth;
 
-        template<State state, int depth>
+        template<bool whiteToMove, int depth>
         static void generateGameTree(Board& board) {
             maxDepth = depth;
-            build<state, depth>(board);
+            build<whiteToMove, depth>(board);
         }
 
         static void print() {
@@ -162,14 +160,14 @@ namespace MoveCollectors {
         }
 
     private:
-        template<State state, int depth>
+        template<bool whiteToMove, int depth>
         static void build(Board& board) {
             if constexpr (depth > 0) {
-                MoveGenerator<Divide>::template generate<state, depth>(board);
+                MoveGenerator<Divide>::template generate<whiteToMove, depth>(board);
             }
         }
 
-        template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        template<bool whiteToMove, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
         static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
             if (depth == maxDepth) {
                 Move m = createMoveFromBB(from, to, piece, flags);
@@ -184,9 +182,9 @@ namespace MoveCollectors {
             }
         }
 
-        template<State nextState, int depth>
+        template<bool whiteToMove, int depth>
         static void next(Board& nextBoard) {
-            build<nextState, depth-1>(nextBoard);
+            build<!whiteToMove, depth-1>(nextBoard);
         }
 
         static void done() {

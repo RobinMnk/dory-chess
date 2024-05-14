@@ -16,21 +16,25 @@ namespace PerftTesting {
 
     using uLong = unsigned long long;
 
-    // Gives node counts at all depths
-    struct PerftRunner {
-        template<State state, int depth>
-        static void main(const Board &board) {
-            MoveCollectors::PerftCollector<depth>::template generateGameTree<state>(board);
-        }
-    };
+//    // Gives node counts at all depths
+//    struct PerftRunner {
+//        template<State state, int depth>
+//        static void main(const Board &board) {
+//            MoveCollectors::PerftCollector<depth>::template generateGameTree<state.whiteToMove>(board);
+//        }
+//    };
+//
+//    // Gives node count only at given depth
+//    struct NodeCountingRunner {
+//        template<State state, int depth>
+//        static void main(const Board &board) {
+//            MoveCollectors::LimitedDFS<depth>::template generateGameTree<state.whiteToMove>(board);
+//        }
+//    };
 
-    // Gives node count only at given depth
-    struct NodeCountingRunner {
-        template<State state, int depth>
-        static void main(const Board &board) {
-            MoveCollectors::LimitedDFS<depth>::template generateGameTree<state>(board);
-        }
-    };
+
+
+
 
     TEST(NodeCounts, StartingPosition) {
         PieceSteps::load(); // make sure this is run on the first test!
@@ -38,10 +42,10 @@ namespace PerftTesting {
         MoveCollectors::nodes.resize(7);
 
         std::vector<uLong> ground_truth{
-                1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860
+            1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860
         };
 
-        MoveCollectors::PerftCollector<6>::template generateGameTree<STARTSTATE>(STARTBOARD);
+        MoveCollectors::PerftCollector<6>::template generateGameTree<true>(STARTBOARD);
 
         for (int i{1}; i <= 6; i++) {
             uLong expected = ground_truth.at(i);
@@ -55,7 +59,13 @@ namespace PerftTesting {
         PieceSteps::load();
         MoveCollectors::nodes.clear();
         MoveCollectors::nodes.resize(depth + 1);
-        Utils::loadFEN<PerftRunner, depth>(fen);
+
+        const auto [board, whiteToMove] = Utils::parseFEN(fen);
+        if(whiteToMove) {
+            MoveCollectors::PerftCollector<depth>::template generateGameTree<true>(board);
+        } else {
+            MoveCollectors::PerftCollector<depth>::template generateGameTree<false>(board);
+        }
 
         for (int i{1}; i <= depth; i++) {
             uLong expected = ground_truth.at(i);
@@ -122,7 +132,14 @@ namespace PerftTesting {
     void checkSingleDepth(std::string_view fen, uLong expected) {
         PieceSteps::load();
         MoveCollectors::LimitedDFS<1>::totalNodes = 0;
-        Utils::loadFEN<NodeCountingRunner, depth>(fen);
+
+        const auto [board, whiteToMove] = Utils::parseFEN(fen);
+        if(whiteToMove) {
+            MoveCollectors::LimitedDFS<depth>::template generateGameTree<true>(board);
+        } else {
+            MoveCollectors::LimitedDFS<depth>::template generateGameTree<false>(board);
+        }
+
         uLong output = MoveCollectors::LimitedDFS<1>::totalNodes;
         ASSERT_EQ(output, expected);
     }
