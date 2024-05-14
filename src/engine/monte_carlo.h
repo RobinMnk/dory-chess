@@ -19,6 +19,7 @@ public:
     static void runSimulations(const Board& board, int depth, int numSimulations) {
         int wins{0}, losses{0};
         for(int i = 1; i <= numSimulations; i++) {
+            EngineMC::reset();
             int res = simulateGame<whiteToMove>(board, depth);
             if(res == 1) wins++;
             else if (res == -1) losses++;
@@ -28,82 +29,86 @@ public:
     }
 
 
-    static int simulateGame(const Board& startBoard, int depth) {
-        Board currentBoard = startBoard;
-
-        EngineMC::reset();
-
-        int action_counter = 0;
-        Move nextMove;
-//        std::stringstream fen{};
-
-
-        // After 200 moves of simulation a game is considered a draw
-        for(int ply{0}; ply < 600; ply++) {
+    template<bool whiteToMove>
+    static int simulateGame(const Board& board, int depth, int ply=0) {
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
-            auto [eval, line] = EngineMC::iterativeDeepening<whiteToMove>(currentBoard, depth);
+        auto [eval, line] = EngineMC::iterativeDeepening<whiteToMove>(board, depth);
 
-            if (line.empty()) {
-                // Game over
-                if(eval > (INF - 50)) {
-                    // White wins by Checkmate
+        if (line.empty()) {
+            // Game over
+            if(eval > (INF - 50)) {
+                // White wins by Checkmate
 //                    std::cout << "Checkmate - White wins!  (" << (ply / 2) << " moves)" << std::endl;
-                    return white ? 2 : 0;
-                } else if(eval < -(INF - 50)) {
-                    // Black wins by Checkmate
+                return whiteToMove ? 2 : 0;
+            } else if(eval < -(INF - 50)) {
+                // Black wins by Checkmate
 //                    std::cout << "Checkmate - Black wins!  (" << (ply / 2) << " moves)" << std::endl;
-                    return white ? 0 : 2;
-                }
-//                std::cout << "Draw - Threefold repetition!  (" << (ply / 2) << " moves)" << std::endl;
-                return 1;
+                return whiteToMove ? 0 : 2;
             }
-
+//                std::cout << "Draw - Threefold repetition!  (" << (ply / 2) << " moves)" << std::endl;
+            return 1;
+        }
 
 //            printf("%zu\n", EngineMC::bestMoves().size());
 //            printf("%zu\n", EngineMC::topLevelLegalMoves().size());
 
 //            nextMove = line.back();
 
-            if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
-                nextMove = random.randomElementOf(EngineMC::bestMoves);
-            } else {
+        Move nextMove;
+        if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
+            nextMove = random.randomElementOf(EngineMC::bestMoves);
+        } else {
 //                std::cout << "Picking legal move at random" << std::endl;
-                nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
-            }
+            nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
+        }
 
 //            std::cout << "Eval:  " << eval << std::endl;
 //            Utils::printMove(nextMove);
 
-            // Count moves since last pawn move or capture
-            if(nextMove.piece == Piece::Pawn || currentBoard.isCapture(currentState, nextMove)) {
-                action_counter = 0;
-                EngineMC::repTable.reset();
-            } else if(action_counter++ >= 100) {
-//                std::cout << "Draw - 50 move rule!  (" << (ply / 2) << " moves)" << std::endl;
-                return 1;
-            }
+        // Count moves since last pawn move or capture
+//        if(nextMove.piece == Piece::Pawn || board.isCapture<whiteToMove>(nextMove)) {
+//            action_counter = 0;
+//            EngineMC::repTable.reset();
+//        } else if(action_counter++ >= 100) {
+////                std::cout << "Draw - 50 move rule!  (" << (ply / 2) << " moves)" << std::endl;
+//            return 1;
+//        }
 
+        EngineMC::repTable.insert(Zobrist::hash<whiteToMove>(board));
 
-            EngineMC::repTable.insert(Zobrist::hash(currentBoard, currentState));
+        board.makeMove<whiteToMove>(nextMove);
 
-            currentBoard.makeMove(currentState, nextMove);
-            currentState.update(nextMove.flags);
+        ply++;
+        if(ply == 200) // After 200 moves of simulation a game is considered a draw
+            return 1;
+
+        return simulatePly<!whiteToMove>(board, ply, depth);
 
 //            if (ply % 2 == 1) {
 //                fen << (1 + (ply >> 1)) << ". ";
 //            }
 //            fen << Utils::moveNameNotation(nextMove) << " ";
-        }
-
-//        std::cout << "Game aborted" << std::endl;
-        return 1;
-
-//        fen << "\n";
-//        return fen.str();
-//        throw std::runtime_error("Game simulation aborted unexpectedly");
     }
+
+//    template<bool whiteToMove>
+//    static int simulateGame(const Board& board, int depth) {
+//        EngineMC::reset();
+//
+//        int action_counter = 0;
+////        std::stringstream fen{};
+//
+//        simulatePly<whiteToMove>()
+//
+//
+////        std::cout << "Game aborted" << std::endl;
+//        return 1;
+//
+////        fen << "\n";
+////        return fen.str();
+////        throw std::runtime_error("Game simulation aborted unexpectedly");
+//    }
 };
 
 Utils::Random MonteCarlo::random{};
