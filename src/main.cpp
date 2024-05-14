@@ -84,87 +84,29 @@ void timeEvaluation(const Board& board, int depth) {
 //    return {eval, line};
 }
 
-//template<State state, int depth>
-//void enumerateMoves(const Board& board) {
-//    MoveCollectors::nodes.resize(depth + 1);
-//
-//    auto t1 = std::chrono::high_resolution_clock::now();
-//    MoveCollectors::LimitedDFS<depth>::template generateGameTree<state>(board);
-//    auto t2 = std::chrono::high_resolution_clock::now();
-//
-//    auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
-//
-//    std::chrono::duration<double> seconds = t2 - t1;
-//
-//    unsigned long long nodes = MoveCollectors::LimitedDFS<1>::totalNodes;
-//
-//    std::cout << "Generated " <<  nodes << " nodes in " << ms_int.count() << "ms";
-//
-//    double knps = (static_cast<double>(nodes) / 1000) / seconds.count();
-//    if (knps < 1000) {
-//        std::cout << "\t\t(" << knps << " k nps)\n\n";
-//    } else {
-//        std::cout << "\t\t(" << (knps / 1000) << " M nps)\n\n";
-//    }
-//}
+template<bool whiteToMove, int depth>
+void enumerateMoves(const Board& board) {
+    MoveCollectors::nodes.resize(depth + 1);
 
+    auto t1 = std::chrono::high_resolution_clock::now();
+    MoveCollectors::LimitedDFS<depth>::template generateGameTree<whiteToMove>(board);
+    auto t2 = std::chrono::high_resolution_clock::now();
 
-//struct PerftRunner2 {
-//    template<State state, int depth>
-//    static void main(const Board& board) {
-////        auto [ev, ln] = timeEvaluation(board, state, 1);
-//
-//        timeEvaluation(board, state, 4);
-//
-////        std::cout << "Lines:" << std::endl;
-//
-//        for(auto& [line, eval]: EngineMC::bestLines) {
-//            Utils::printLine(line, eval);
-//        }
-////
-////        std::cout << "Best Move(s) " << std::endl;
-//////        printLine(ln, ev);
-////        for (auto& move: EngineMC::topLevelLegalMoves()) {
-////            Utils::printMove(move.second);
-////        }
-//
-//        std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
-//        std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;
-//        std::cout << "Searched " << EngineMC::nodesSearched << " nodes";
-//
-//
-////        monteCarlo(board, state);
-//    }
-//};
-//
-//struct PerftRunner {
-//    template<State state, int depth>
-//    static void main(const Board& board) {
-//        enumerateMoves<state, depth>(board);
-////        MoveGenerator<PerftRunner, false, true>::template generate<state>(board);
-////        unsigned long nodes = 0;
-////
-////        for (auto num_moves: MoveGenerator<PerftRunner, false, true>::numberOfMovesByPiece) {
-////            std::cout << num_moves << ", " << std::endl;
-////            nodes += (unsigned long long) num_moves;
-////        }
-////        std::cout << std::endl << "Nodes: " << nodes << std::endl;
-//    }
-//
-//
-//    template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-//    static void registerMove(const Board& board, BB from, BB to) { }
-//};
+    auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
-//void mainMoveEnumeration(const std::string& fen, int depth) {
-//    PieceSteps::load();
-//
-//    if (fen == "startpos" || fen == "start") {
-//        Utils::startingPositionAtDepth<PerftRunner>(depth);
-//    } else {
-//        Utils::loadFEN<PerftRunner>(fen, depth);
-//    }
-//}
+    std::chrono::duration<double> seconds = t2 - t1;
+
+    unsigned long long nodes = MoveCollectors::LimitedDFS<1>::totalNodes;
+
+    std::cout << "Generated " <<  nodes << " nodes in " << ms_int.count() << "ms";
+
+    double knps = (static_cast<double>(nodes) / 1000) / seconds.count();
+    if (knps < 1000) {
+        std::cout << "\t\t(" << knps << " k nps)\n\n";
+    } else {
+        std::cout << "\t\t(" << (knps / 1000) << " M nps)\n\n";
+    }
+}
 
 int main() {
     std::string command, fen, depth_str, num_lines_str;

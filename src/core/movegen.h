@@ -330,46 +330,6 @@ void MoveGenerator<MoveCollector, quiescence, countOnly>::castles(const Board& b
         ) generateSuccessorBoard<whiteToMove, Piece::King, MoveFlag::LongCastling>(board, kingBB, kingBB >> 2);
 }
 
-//template<typename MC, bool qc=false, bool co=false>
-//static void generate(const Board& board, bool whiteToMove) {
-//    unsigned int whiteToMove_code = whiteToMove.code();
-//    switch (whiteToMove_code) {
-//        case 0: MoveGenerator<MC, qc, co>::template generate<toState(0)>(board); break;
-//        case 1: MoveGenerator<MC, qc, co>::template generate<toState(1)>(board); break;
-//        case 2: MoveGenerator<MC, qc, co>::template generate<toState(2)>(board); break;
-//        case 3: MoveGenerator<MC, qc, co>::template generate<toState(3)>(board); break;
-//        case 4: MoveGenerator<MC, qc, co>::template generate<toState(4)>(board); break;
-//        case 5: MoveGenerator<MC, qc, co>::template generate<toState(5)>(board); break;
-//        case 6: MoveGenerator<MC, qc, co>::template generate<toState(6)>(board); break;
-//        case 7: MoveGenerator<MC, qc, co>::template generate<toState(7)>(board); break;
-//        case 8: MoveGenerator<MC, qc, co>::template generate<toState(8)>(board); break;
-//        case 9: MoveGenerator<MC, qc, co>::template generate<toState(9)>(board); break;
-//        case 10: MoveGenerator<MC, qc, co>::template generate<toState(10)>(board); break;
-//        case 11: MoveGenerator<MC, qc, co>::template generate<toState(11)>(board); break;
-//        case 12: MoveGenerator<MC, qc, co>::template generate<toState(12)>(board); break;
-//        case 13: MoveGenerator<MC, qc, co>::template generate<toState(13)>(board); break;
-//        case 14: MoveGenerator<MC, qc, co>::template generate<toState(14)>(board); break;
-//        case 15: MoveGenerator<MC, qc, co>::template generate<toState(15)>(board); break;
-//        case 16: MoveGenerator<MC, qc, co>::template generate<toState(16)>(board); break;
-//        case 17: MoveGenerator<MC, qc, co>::template generate<toState(17)>(board); break;
-//        case 18: MoveGenerator<MC, qc, co>::template generate<toState(18)>(board); break;
-//        case 19: MoveGenerator<MC, qc, co>::template generate<toState(19)>(board); break;
-//        case 20: MoveGenerator<MC, qc, co>::template generate<toState(20)>(board); break;
-//        case 21: MoveGenerator<MC, qc, co>::template generate<toState(21)>(board); break;
-//        case 22: MoveGenerator<MC, qc, co>::template generate<toState(22)>(board); break;
-//        case 23: MoveGenerator<MC, qc, co>::template generate<toState(23)>(board); break;
-//        case 24: MoveGenerator<MC, qc, co>::template generate<toState(24)>(board); break;
-//        case 25: MoveGenerator<MC, qc, co>::template generate<toState(25)>(board); break;
-//        case 26: MoveGenerator<MC, qc, co>::template generate<toState(26)>(board); break;
-//        case 27: MoveGenerator<MC, qc, co>::template generate<toState(27)>(board); break;
-//        case 28: MoveGenerator<MC, qc, co>::template generate<toState(28)>(board); break;
-//        case 29: MoveGenerator<MC, qc, co>::template generate<toState(29)>(board); break;
-//        case 30: MoveGenerator<MC, qc, co>::template generate<toState(30)>(board); break;
-//        case 31: MoveGenerator<MC, qc, co>::template generate<toState(31)>(board); break;
-//        default: return;
-//    }
-//}
-
 template<typename MC, bool qc, bool co>
 PDptr MoveGenerator<MC, qc, co>::pd{std::make_unique<PinData>()};
 
@@ -377,32 +337,5 @@ template<typename MC, bool qc, bool co>
 std::array<unsigned int, 6> MoveGenerator<MC, qc, co>::numberOfMovesByPiece{};
 template<typename MC, bool qc, bool co>
 unsigned long MoveGenerator<MC, qc, co>::numberOfMoves{0};
-
-
-//class MoveListGenerator {
-//    static std::unique_ptr<std::vector<Move>> list;
-//
-//    template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-//    static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
-//        list->emplace_back(from, to, piece, flags);
-//    }
-//
-//public:
-//    template<bool quiescence>
-//    static void getMoves(const Board& board, bool whiteToMove, std::vector<Move>& l) {
-//        list = std::make_unique<std::vector<Move>>(l);
-//        generate<MoveListGenerator, quiescence>(board, whiteToMove);
-//    }
-//
-//    static void countLegalMoves(const Board& board, bool whiteToMove) {
-//        generate<MoveListGenerator, false, true>(board, whiteToMove);
-//    }
-//
-//    friend class MoveGenerator<MoveListGenerator, true, true>;
-//    friend class MoveGenerator<MoveListGenerator, true, false>;
-//    friend class MoveGenerator<MoveListGenerator, false, true>;
-//    friend class MoveGenerator<MoveListGenerator, false, false>;
-//};
-//std::unique_ptr<std::vector<Move>> MoveListGenerator::list{};
 
 #endif //DORY_MOVEGEN_H
