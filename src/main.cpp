@@ -115,26 +115,23 @@ int main() {
     std::getline(std::cin, depth_str);
     int depth = static_cast<int>(std::strtol(depth_str.c_str(), nullptr, 10));
 
-//    if (command == "perft") {
-//        mainMoveEnumeration(fen, depth);
-//        return 0;
-//    }
+    auto [board, whiteToMove] = Utils::parseFEN(fen);
+    PieceSteps::load();
+
+    if (command == "perft") {
+        if(whiteToMove) enumerateMoves<true, 5>(board);
+        else  enumerateMoves<false, 5>(board);
+        return 0;
+    }
 
     std::getline(std::cin, num_lines_str);
     auto num_lines = static_cast<unsigned int>(std::strtol(num_lines_str.c_str(), nullptr, 10));
 
-    PieceSteps::load();
     Zobrist::init();
     NUM_LINES = num_lines;
 
-
-    auto [board, whiteToMove] = Utils::parseFEN(fen);
-
-    if(whiteToMove) {
-        timeEvaluation<true>(board, depth);
-    } else {
-        timeEvaluation<false>(board, depth);
-    }
+    if(whiteToMove) timeEvaluation<true>(board, depth);
+    else timeEvaluation<false>(board, depth);
 
 
 

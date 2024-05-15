@@ -27,11 +27,11 @@ namespace evaluation {
     template<bool whiteToMove>
     int evaluatePosition(const Board& board) {
 
-//        int material = features::material<true>(board, params) - features::material<false>(board, params);
+//        int material = features::material<whiteToMove>(board, params) - features::material<!whiteToMove>(board, params);
 //
 //        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 //
-        int activity = features::activity<true>(board, params) - features::activity<false>(board, params);
+        int activity = features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
 
 //        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 ////                + mobility * params.MOBILITY_QUANTIFIER
@@ -41,9 +41,7 @@ namespace evaluation {
 
         int evalEstimate = activity;
 
-        return whiteToMove ? evalEstimate : -evalEstimate;
-
-//        return state.whiteToMove ? features::activity<true>(board, params) : features::activity<false>(board, params);
+        return evalEstimate;
     }
 
     template<bool whiteToMove>
@@ -58,7 +56,7 @@ namespace evaluation {
     const int Large = 1000000;
 
     template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static int move_heuristic(const Board &board, BB from, BB to, PDptr& pd, Move priorityMove) {
+    static int move_heuristic(const Board &board, BB from, BB to, const PDptr& pd, Move priorityMove) {
         if(priorityMove.is<piece, flags>(from, to)) {
             return INF;
         }

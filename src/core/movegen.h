@@ -13,7 +13,7 @@ concept ValidMoveCollector =
         MC::template registerMove<whiteToMove, piece, flags>(board, from, to);
     };
 
-template<typename MC, bool quiescence=false, bool countOnly=false>
+template<typename MC, bool=false, bool=false>
 class MoveGenerator {
 public:
     static PDptr pd;

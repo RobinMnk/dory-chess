@@ -169,7 +169,7 @@ private:
         Move localBestMove;
         int bestEval = -INF;
 
-        int isPV = 4;
+        int isPV = 2;
         int eval;
         Line line;
 
@@ -301,6 +301,7 @@ private:
 
     template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
     static void registerMove(const Board &board, BB from, BB to) {
+        // TODO reload checklogichandler and pass PinData to move_info
         moves[currentDepth].emplace_back(
             evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd, priorityMove),
             createMoveFromBB(from, to, piece, flags)
