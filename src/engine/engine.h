@@ -82,10 +82,9 @@ public:
 
     template<bool whiteToMove>
     static NMR searchDepth(const Board& board, int depth, int alpha=-INF, int beta=INF, int maxDepth=MAX_ITER_DEPTH) {
-        maxDepth = depth;
+//        maxDepth = depth;
         bestLines.clear();
-        auto [ev, line] = negamax<whiteToMove, true>(board, 1, alpha, beta, maxDepth);
-        return {subjectiveEval<whiteToMove>(ev), line};
+        return negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
     }
 
     static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
@@ -173,6 +172,9 @@ private:
         int eval;
         Line line;
 
+        int mdpt = maxDepth;
+        if(MoveGenerator<EngineMC>::pd->inCheck()) mdpt++;
+
 //        if(depth + 1 == maxDepth && MoveGenerator<EngineMC>::pd->inCheck())
 //            maxDepth++;
 
@@ -184,15 +186,15 @@ private:
             Board nextBoard = board.fork<whiteToMove>(move);
 
             /// Pricipal Variation Search
-            if(isPV) {
-                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, maxDepth);
+            if(isPV > 0) {
+                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, mdpt);
                 eval = -ev;
                 line = ln;
-                isPV--;
             } else {
-                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -alpha - 1,  -alpha, maxDepth);
+//                if(depth <= 3) mdpt--;
+                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -alpha - 1,  -alpha, mdpt);
                 if(ev < -alpha && ev > -beta) {
-                    auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, maxDepth);
+                    auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, mdpt);
                     eval = -ev2;
                     line = ln2;
                 } else {
@@ -200,6 +202,7 @@ private:
                     line = ln;
                 }
             }
+            isPV--;
 
             repTable.remove(boardHash);
 
@@ -267,7 +270,14 @@ private:
         moves.at(depth).clear();
         currentDepth = depth;
 
-        MoveGenerator<EngineMC, true>::template generate<whiteToMove>(board);
+        CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<EngineMC, true>::pd);
+
+        if(MoveGenerator<EngineMC, true>::pd->inCheck()) {
+            *MoveGenerator<EngineMC>::pd = *MoveGenerator<EngineMC, true>::pd;
+            MoveGenerator<EngineMC>::template generate<whiteToMove, false>(board);
+        } else {
+            MoveGenerator<EngineMC, true>::template generate<whiteToMove, false>(board);
+        }
 
         if (moves.at(depth).empty()) {
             nodesSearched++;
@@ -287,6 +297,7 @@ private:
 
             if (eval >= beta) {
                 line.push_back(move);
+                nodesSearched++;
                 return { beta, line };
             }
             if (eval > alpha) {
@@ -303,8 +314,8 @@ private:
     static void registerMove(const Board &board, BB from, BB to) {
         // TODO reload checklogichandler and pass PinData to move_info
         moves[currentDepth].emplace_back(
-            evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd, priorityMove),
-            createMoveFromBB(from, to, piece, flags)
+                evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd, priorityMove),
+                createMoveFromBB(from, to, piece, flags)
         );
     }
 

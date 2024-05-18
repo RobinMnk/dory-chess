@@ -27,7 +27,7 @@ namespace evaluation {
     template<bool whiteToMove>
     int evaluatePosition(const Board& board) {
 
-//        int material = features::material<whiteToMove>(board, params) - features::material<!whiteToMove>(board, params);
+        int material = features::material<whiteToMove>(board, params) - features::material<!whiteToMove>(board, params);
 //
 //        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 //
@@ -39,7 +39,7 @@ namespace evaluation {
 //
 //        evalEstimate /= 2; // seems important, not sure why -> because of the aspiration window!
 
-        int evalEstimate = activity;
+        int evalEstimate = material + activity;
 
         return evalEstimate;
     }
@@ -109,12 +109,15 @@ namespace evaluation {
 
         /// Do not move to an attacked square
         if (to & pd->pawnAtk) {
-            heuristic_val -= 50; // pieceValue<piece>(params) * 2;
+            heuristic_val -= pieceValue<piece>(params) * 4;
         } else if (to & pd->attacked) {
             heuristic_val -= 25; // pieceValue<piece>(params);
         }
 
-        heuristic_val += isForwardMove<whiteToMove>(from, to) / 4;
+        /// Move towards enemy king
+        heuristic_val += isForwardMove<whiteToMove>(from, to);
+        heuristic_val += (8 - PieceSteps::DIST[singleBitOf(from)][board.enemyKingSquare<whiteToMove>()]) * 32;
+
 
 //        if(to & pd->attacked) {
 //            heuristic_val -= pieceValue<piece>(params) / 1024;

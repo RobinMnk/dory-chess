@@ -70,6 +70,11 @@ struct Board {
         if constexpr (whiteToMove) return wKingSq;
         else return bKingSq;
     }
+    template<bool whiteToMove>
+    [[nodiscard]] constexpr int enemyKingSquare() const {
+        if constexpr (whiteToMove) return bKingSq;
+        else return wKingSq;
+    }
 
     [[nodiscard]] constexpr BB occ() const {
         return wPawns | wKnights | wBishops | wRooks | wQueens | newMask(wKingSq)

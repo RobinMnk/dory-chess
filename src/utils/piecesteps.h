@@ -21,6 +21,8 @@ namespace PieceSteps {
 
     std::array<std::array<BB, 64>, 64> FROM_TO{};
 
+    std::array<std::array<BB, 64>, 64> DIST{};
+
     template<bool>
     std::array<std::array<std::array<uint8_t, 8>, 4>, 64> STEPS{};
 
@@ -148,6 +150,14 @@ namespace PieceSteps {
         }
     }
 
+    void load_dist() {
+        for(int from = 0; from < 64; from++) {
+            for(int to = 0; to < 64; to++) {
+                DIST[from][to] = manhattan(from, to);
+            }
+        }
+    }
+
     void load() {
         if(!loaded) {
             for(int i = 0; i < 64; i++) {
@@ -157,6 +167,7 @@ namespace PieceSteps {
                 addKingMoves(i);
             }
             init_pext();
+            load_dist();
             loaded = true;
         }
     }

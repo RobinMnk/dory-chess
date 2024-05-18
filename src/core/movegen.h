@@ -20,7 +20,7 @@ public:
     static std::array<unsigned int, 6> numberOfMovesByPiece;
     static unsigned long numberOfMoves;
 
-    template<bool>
+    template<bool, bool=true>
     static void generate(const Board& board);
 
 private:
@@ -61,9 +61,10 @@ private:
 };
 
 template<typename MoveCollector, bool quiescence, bool countOnly>
-template<bool whiteToMove>
+template<bool whiteToMove, bool reloadClh>
 void MoveGenerator<MoveCollector, quiescence, countOnly>::generate(const Board& board) {
-    CheckLogicHandler::reload<whiteToMove>(board, pd);
+    if constexpr (reloadClh)
+        CheckLogicHandler::reload<whiteToMove>(board, pd);
 
     if constexpr (countOnly) {
 //        numberOfMovesByPiece.fill(0);
