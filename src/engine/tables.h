@@ -33,15 +33,15 @@ public:
         else flag = TTFlagExact;
 
         TTEntry entry{ eval, move, static_cast<int8_t>(depthDiff), flag};
-        lookup_table.emplace(boardHash, entry);
+        lookup_table.insert_or_assign(boardHash, entry);
     }
 
     std::pair<TTEntry, bool> lookup(size_t boardHash, int& alpha, int& beta, int depthDiff) {
         auto res = lookup_table.find(boardHash);
 
-        bool resultValid = false;
         if(res != lookup_table.end()) {
             TTEntry entry = res->second;
+            bool resultValid = false;
             if (entry.depthDiff >= depthDiff) {
                 if (entry.flag == TTFlagExact) {
                     resultValid = true;
@@ -70,7 +70,7 @@ public:
 //        lookup_table.reserve(145000);
     }
 
-    size_t size() {
+    size_t size() { // in kB
         return lookup_table.size() * sizeof(TTEntry) / 1024;
     }
 };
