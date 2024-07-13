@@ -18,6 +18,9 @@ target_compile_options(Dory PUBLIC -march=native)
 target_compile_options(Dory PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)
 target_compile_options(Dory PUBLIC -O3)
 
+
+add_executable(UCI src/utils/uci_controller.cpp)
+
 enable_testing()
 
 add_executable(perft testing/moveGenerationTest.cpp)

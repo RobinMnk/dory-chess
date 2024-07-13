@@ -209,10 +209,11 @@ private:
                 line = ln;
             } else {
                 int redMdpt = maxDepth;
-//                if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth) redMdpt--;
-                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -alpha - 1,  -alpha, mdpt);
+//                if constexpr (topLevel)
+//                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<EngineMC>::pd->inCheck()) redMdpt--;
+                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -alpha - 1,  -alpha, redMdpt);
                 if(ev < -alpha && ev > -beta) {
-                    auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, mdpt);
+                    auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, redMdpt);
                     eval = -ev2;
                     line = ln2;
                 } else {

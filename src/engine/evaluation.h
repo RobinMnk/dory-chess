@@ -34,7 +34,7 @@ namespace evaluation {
 //
 //        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 //
-        int activity = 0; // features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
+        int activity = features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
 
 //        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 ////                + mobility * params.MOBILITY_QUANTIFIER
