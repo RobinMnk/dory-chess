@@ -11,118 +11,120 @@
 #include "../core/movegen.h"
 #include "tables.h"
 
-unsigned int NUM_LINES = 1;
-const int BEST_MOVE_MARGIN = 10;
-const int MAX_ITER_DEPTH = 6;
-const int MAX_WINDOW_INCREASES = 3;
+namespace Dory {
 
-using Line = std::vector<Move>;
-using NMR = std::pair<int, Line>;
+    unsigned int NUM_LINES = 1;
+    const int BEST_MOVE_MARGIN = 10;
+    const int MAX_ITER_DEPTH = 6;
+    const int MAX_WINDOW_INCREASES = 3;
 
+    using Line = std::vector<Move>;
+    using NMR = std::pair<int, Line>;
 
-template<bool whiteToMove>
-int subjectiveEval(int eval) {
-    if constexpr (whiteToMove) return eval;
-    else return -eval;
-}
-
-class EngineMC {
-    static Move priorityMove;
-
-    static std::array<std::vector<std::pair<int, Move>>, 128> moves;
-    static int currentDepth;
-public:
-    static TranspositionTable trTable;
-    static RepetitionTable repTable;
-    static std::vector<std::pair<Line, int>> bestLines;
-    static BB nodesSearched;
-    static Move bestMove;
-    static std::vector<Move> bestMoves;
 
     template<bool whiteToMove>
-    static NMR iterativeDeepening(const Board& board, int maxDepth=MAX_ITER_DEPTH) {
-        reset();
+    int subjectiveEval(int eval) {
+        if constexpr (whiteToMove) return eval;
+        else return -eval;
+    }
+
+    class EngineMC {
+        static Move priorityMove;
+
+        static std::array<std::vector<std::pair<int, Move>>, 128> moves;
+        static int currentDepth;
+    public:
+        static TranspositionTable trTable;
+        static RepetitionTable repTable;
+        static std::vector<std::pair<Line, int>> bestLines;
+        static BB nodesSearched;
+        static Move bestMove;
+        static std::vector<Move> bestMoves;
+
+        template<bool whiteToMove>
+        static NMR iterativeDeepening(const Board &board, int maxDepth = MAX_ITER_DEPTH) {
+            reset();
 //        repTable.reset();
-        Line bestLine;
-        int bestEval = -INF, window = 20, windowIncreases = 0;
-        int alpha = -INF, beta = INF;
+            Line bestLine;
+            int bestEval = -INF, window = 20, windowIncreases = 0;
+            int alpha = -INF, beta = INF;
 
-        for(int depth = 1; depth <= maxDepth;) {
+            for (int depth = 1; depth <= maxDepth;) {
 //            std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
-            auto [eval, line] = searchDepth<whiteToMove>(board, depth, alpha, beta);
+                auto [eval, line] = searchDepth<whiteToMove>(board, depth, alpha, beta);
 
-            /// Aspiration Window
-            if(eval <= alpha || eval >= beta) {
-                if (windowIncreases++ > MAX_WINDOW_INCREASES) {
-                    alpha = -INF;
-                    beta = INF;
-                } else {
-                    window *= 4;
-                    alpha = bestEval - window;
-                    beta = bestEval + window;
+                /// Aspiration Window
+                if (eval <= alpha || eval >= beta) {
+                    if (windowIncreases++ > MAX_WINDOW_INCREASES) {
+                        alpha = -INF;
+                        beta = INF;
+                    } else {
+                        window *= 4;
+                        alpha = bestEval - window;
+                        beta = bestEval + window;
+                    }
+                    continue; // Search again with same depth
                 }
-                continue; // Search again with same depth
-            }
-            window = 20;
-            windowIncreases = 0;
-            alpha = eval - window;
-            beta = eval + window;
+                window = 20;
+                windowIncreases = 0;
+                alpha = eval - window;
+                beta = eval + window;
 
-            bestEval = eval;
-            bestLine = line;
+                bestEval = eval;
+                bestLine = line;
 
 //            std::cout << "Line for depth " << depth << std::endl;
-            std::cout << "Depth " << depth << " -> ";
-            Utils::printLine(bestLine, bestEval);
+                std::cout << "Depth " << depth << " -> ";
+                Utils::printLine(bestLine, bestEval);
 
-            depth++;
+                depth++;
+            }
+            return {bestEval, bestLine};
         }
-        return { bestEval, bestLine };
-    }
 
-    template<bool whiteToMove>
-    static NMR searchDepth(const Board& board, int depth, int alpha=-INF, int beta=INF) {
+        template<bool whiteToMove>
+        static NMR searchDepth(const Board &board, int depth, int alpha = -INF, int beta = INF) {
 //        maxDepth = depth;
-        bestLines.clear();
-        return negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
-    }
+            bestLines.clear();
+            return negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
+        }
 
-    static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
-        return a.first > b.first;
-    }
+        static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
+            return a.first > b.first;
+        }
 
-    static std::vector<std::pair<int, Move>> topLevelLegalMoves() {
-        return moves[1];
-    }
+        static std::vector<std::pair<int, Move>> topLevelLegalMoves() {
+            return moves[1];
+        }
 
-    static void reset() {
-        trTable.reset();
-        repTable.reset();
+        static void reset() {
+            trTable.reset();
+            repTable.reset();
 //        nodesSearched = 0;
-    }
-
-private:
-
-    template<bool whiteToMove, bool topLevel>
-    static NMR negamax(const Board& board, int depth, int alpha, int beta, int maxDepth) {
-
-        size_t boardHash = Zobrist::hash<whiteToMove>(board);
-
-        /// Check for Threefold-Repetition
-        if(repTable.check(boardHash)) {
-            return {0, {}};
         }
 
-        /// Lookup position in table
-        int origAlpha = alpha;
-        auto [ttEntry, resultValid] = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
-        if (resultValid) {
-            trTable.lookups++;
-            return { ttEntry.value, {} };
-        }
+    private:
 
-        /// Switch to Quiescence Search
-        if (depth > maxDepth) {
+        template<bool whiteToMove, bool topLevel>
+        static NMR negamax(const Board &board, int depth, int alpha, int beta, int maxDepth) {
+
+            size_t boardHash = Zobrist::hash<whiteToMove>(board);
+
+            /// Check for Threefold-Repetition
+            if (repTable.check(boardHash)) {
+                return {0, {}};
+            }
+
+            /// Lookup position in table
+            int origAlpha = alpha;
+            auto [ttEntry, resultValid] = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
+            if (resultValid) {
+                trTable.lookups++;
+                return {ttEntry.value, {}};
+            }
+
+            /// Switch to Quiescence Search
+            if (depth > maxDepth) {
 //            nodesSearched++;
 //            int eval = evaluation::evaluatePosition(board, state);
 //            trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
@@ -130,60 +132,60 @@ private:
 
 //                return negamax<false, true>(board, state, depth, alpha, beta);
 
-            return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
-        }
-
-
-        /// Generate legal moves
-
-        // Set move that is searched first
-        if constexpr (topLevel) {
-            priorityMove = bestMove;
-        } else {
-            // ttEntry.move may be NULLMOVE, but that does not hurt us
-            priorityMove = ttEntry.move;
-        }
-
-        // Setup variables before generating legal moves
-        moves.at(depth).clear();
-        currentDepth = depth;
-        MoveGenerator<EngineMC>::template generate<whiteToMove>(board);
-
-        // No legal moves available
-        if(moves.at(depth).empty()) {
-            if (MoveGenerator<EngineMC>::pd->inCheck()) {
-                // Checkmate!
-                nodesSearched++;
-                int eval = -(INF - depth);
-                trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
-                return {eval, {}};
-            } else {
-                // Stalemate!
-                nodesSearched++;
-                trTable.insert(boardHash, 0, NULLMOVE, maxDepth - depth, origAlpha, beta);
-                return {0, {}};
+                return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
             }
-        }
+
+
+            /// Generate legal moves
+
+            // Set move that is searched first
+            if constexpr (topLevel) {
+                priorityMove = bestMove;
+            } else {
+                // ttEntry.move may be NULLMOVE, but that does not hurt us
+                priorityMove = ttEntry.move;
+            }
+
+            // Setup variables before generating legal moves
+            moves.at(depth).clear();
+            currentDepth = depth;
+            MoveGenerator<EngineMC>::template generate<whiteToMove>(board);
+
+            // No legal moves available
+            if (moves.at(depth).empty()) {
+                if (MoveGenerator<EngineMC>::pd->inCheck()) {
+                    // Checkmate!
+                    nodesSearched++;
+                    int eval = -(INF - depth);
+                    trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
+                    return {eval, {}};
+                } else {
+                    // Stalemate!
+                    nodesSearched++;
+                    trTable.insert(boardHash, 0, NULLMOVE, maxDepth - depth, origAlpha, beta);
+                    return {0, {}};
+                }
+            }
 
 //        for (int i = 0; i < depth; i++)
 //            std::cout << "   ";
 //        std::cout << depth << ":  " << Utils::moveNameShortNotation(priorityMove) << std::endl;
 
-        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
+            std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
 
 
-        // Iterate all moves
-        Line localBestLine;
-        Move localBestMove;
-        int bestEval = -INF;
+            // Iterate all moves
+            Line localBestLine;
+            Move localBestMove;
+            int bestEval = -INF;
 
-        int isPV = 4;
-        int eval;
-        Line line;
+            int isPV = 4;
+            int eval;
+            Line line;
 
-        // Search Extensions
-        int mdpt = maxDepth;
-        if(MoveGenerator<EngineMC>::pd->inCheck()) mdpt++;
+            // Search Extensions
+            int mdpt = maxDepth;
+            if (MoveGenerator<EngineMC>::pd->inCheck()) mdpt++;
 
 //        if(depth + 1 == maxDepth && MoveGenerator<EngineMC>::pd->inCheck())
 //            maxDepth++;
@@ -195,35 +197,35 @@ private:
 //            std::cout << std::endl;
 //        }
 
-        /// Iterate through all moves
-        for(auto& [info, move]: moves.at(depth)) {
+            /// Iterate through all moves
+            for (auto &[info, move]: moves.at(depth)) {
 
-            repTable.insert(boardHash);
+                repTable.insert(boardHash);
 
-            Board nextBoard = board.fork<whiteToMove>(move);
+                Board nextBoard = board.fork<whiteToMove>(move);
 
-            /// Pricipal Variation Search
-            if(isPV > 0) {
-                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, mdpt);
-                eval = -ev;
-                line = ln;
-            } else {
-                int redMdpt = maxDepth;
-//                if constexpr (topLevel)
-//                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<EngineMC>::pd->inCheck()) redMdpt--;
-                auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -alpha - 1,  -alpha, redMdpt);
-                if(ev < -alpha && ev > -beta) {
-                    auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, redMdpt);
-                    eval = -ev2;
-                    line = ln2;
-                } else {
+                /// Pricipal Variation Search
+                if (isPV > 0) {
+                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
                     eval = -ev;
                     line = ln;
+                } else {
+                    int redMdpt = maxDepth;
+//                if constexpr (topLevel)
+//                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<EngineMC>::pd->inCheck()) redMdpt--;
+                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, redMdpt);
+                    if (ev < -alpha && ev > -beta) {
+                        auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, redMdpt);
+                        eval = -ev2;
+                        line = ln2;
+                    } else {
+                        eval = -ev;
+                        line = ln;
+                    }
                 }
-            }
-            isPV--;
+                isPV--;
 
-            repTable.remove(boardHash);
+                repTable.remove(boardHash);
 
 //            if(Zobrist::hash<whiteToMove>(board) == 335140086) {
 //                Line l = std::vector<Move>{move};
@@ -240,22 +242,22 @@ private:
 //                Utils::printLine(l, info);
 //            }
 
-            if(eval > alpha)
-                alpha = eval;
+                if (eval > alpha)
+                    alpha = eval;
 
-            if (eval > bestEval) {
-                bestEval = eval;
-                line.push_back(move);
-                localBestLine = line;
-                localBestMove = move;
+                if (eval > bestEval) {
+                    bestEval = eval;
+                    line.push_back(move);
+                    localBestLine = line;
+                    localBestMove = move;
 
-                if constexpr (topLevel) {
+                    if constexpr (topLevel) {
 //                    bestLines.clear();
 //                    bestLines.emplace_back(line, eval);
-                    bestMove = move;
+                        bestMove = move;
 //                    bestMoves.clear();
 //                    bestMoves.push_back(move);
-                }
+                    }
 //            } else {
 //                if constexpr (topLevel) {
 //                    if (bestLines.size() < NUM_LINES) {
@@ -266,105 +268,109 @@ private:
 //                        }
 //                    }
 //                }
+                }
+
+                if (alpha >= beta) {
+                    break;
+                }
             }
 
-            if (alpha >= beta) {
-                break;
+            if (bestEval == -INF) {
+                std::cout << "ERROR!!!" << std::endl;
             }
+
+            /// Save to lookup table
+            trTable.insert(boardHash, bestEval, localBestMove, maxDepth - depth, origAlpha, beta);
+
+            return {bestEval, localBestLine};
         }
 
-        if(bestEval == -INF) {
-            std::cout << "ERROR!!!" << std::endl;
-        }
+        template<bool whiteToMove>
+        static NMR quiescenceSearch(const Board &board, int depth, int alpha, int beta) {
+            /// Recursion Base Case: Max Depth reached -> return heuristic position eval
+            int standPat = evaluation::evaluatePosition<whiteToMove>(board);
 
-        /// Save to lookup table
-        trTable.insert(boardHash, bestEval, localBestMove, maxDepth - depth, origAlpha, beta);
+            if (standPat >= beta) {
+                nodesSearched++;
+                return {beta, {}};
+            }
+            if (alpha < standPat) {
+                alpha = standPat;
+            }
 
-        return { bestEval, localBestLine };
-    }
+            moves.at(depth).clear();
+            currentDepth = depth;
 
-    template<bool whiteToMove>
-    static NMR quiescenceSearch(const Board& board, int depth, int alpha, int beta) {
-        /// Recursion Base Case: Max Depth reached -> return heuristic position eval
-        int standPat = evaluation::evaluatePosition<whiteToMove>(board);
+            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<EngineMC, true>::pd);
 
-        if (standPat >= beta) {
-            nodesSearched++;
-            return { beta, {} };
-        }
-        if (alpha < standPat) {
-            alpha = standPat;
-        }
+            if (MoveGenerator<EngineMC, true>::pd->inCheck()) {
+                *MoveGenerator<EngineMC>::pd = *MoveGenerator<EngineMC, true>::pd;
+                MoveGenerator<EngineMC>::template generate<whiteToMove, false>(board);
+            } else {
+                MoveGenerator<EngineMC, true>::template generate<whiteToMove, false>(board);
+            }
 
-        moves.at(depth).clear();
-        currentDepth = depth;
+            if (moves.at(depth).empty()) {
+                nodesSearched++;
+                return {alpha, {}};
+            }
 
-        CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<EngineMC, true>::pd);
+            std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
 
-        if(MoveGenerator<EngineMC, true>::pd->inCheck()) {
-            *MoveGenerator<EngineMC>::pd = *MoveGenerator<EngineMC, true>::pd;
-            MoveGenerator<EngineMC>::template generate<whiteToMove, false>(board);
-        } else {
-            MoveGenerator<EngineMC, true>::template generate<whiteToMove, false>(board);
-        }
+            Line localBestLine;
 
-        if (moves.at(depth).empty()) {
-            nodesSearched++;
-            return {alpha, {}};
-        }
+            /// Iterate through all moves
+            for (auto &[info, move]: moves.at(depth)) {
 
-        std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
-
-        Line localBestLine;
-
-        /// Iterate through all moves
-        for(auto& [info, move]: moves.at(depth)) {
-
-            Board nextBoard = board.fork<whiteToMove>(move);
-            auto [eval, line] = quiescenceSearch<!whiteToMove>(nextBoard, depth + 1,  -beta,  -alpha);
-            eval = -eval;
+                Board nextBoard = board.fork<whiteToMove>(move);
+                auto [eval, line] = quiescenceSearch<!whiteToMove>(nextBoard, depth + 1, -beta, -alpha);
+                eval = -eval;
 
 //            for (int i = 0; i < depth; i++)
 //                std::cout << "   ";
 //            std::cout << depth << " : " << Utils::moveNameShortNotation(move) << "  " << eval << std::endl;
 
-            if (eval >= beta) {
-                line.push_back(move);
-                nodesSearched++;
-                return { beta, line };
+                if (eval >= beta) {
+                    line.push_back(move);
+                    nodesSearched++;
+                    return {beta, line};
+                }
+                if (eval > alpha) {
+                    alpha = eval;
+                    line.push_back(move);
+                    localBestLine = line;
+                }
             }
-            if (eval > alpha) {
-                alpha = eval;
-                line.push_back(move);
-                localBestLine = line;
-            }
+
+            return {alpha, localBestLine};
         }
 
-        return {alpha, localBestLine };
-    }
+        template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        static void registerMove(const Board &board, BB from, BB to) {
+            // TODO reload checklogichandler and pass PinData to move_info
+            moves[currentDepth].emplace_back(
+                    evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd,
+                                                                          priorityMove),
+                    createMoveFromBB(from, to, piece, flags)
+            );
+        }
 
-    template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-    static void registerMove(const Board &board, BB from, BB to) {
-        // TODO reload checklogichandler and pass PinData to move_info
-        moves[currentDepth].emplace_back(
-                evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd, priorityMove),
-                createMoveFromBB(from, to, piece, flags)
-        );
-    }
+        friend class MoveGenerator<EngineMC, true>;
 
-    friend class MoveGenerator<EngineMC, true>;
-    friend class MoveGenerator<EngineMC, false>;
-};
+        friend class MoveGenerator<EngineMC, false>;
+    };
 
-std::array<std::vector<std::pair<int, Move>>, 128> EngineMC::moves{};
-int EngineMC::currentDepth{0};
+    std::array<std::vector<std::pair<int, Move>>, 128> EngineMC::moves{};
+    int EngineMC::currentDepth{0};
 //int EngineMC::maxDepth{0};
-BB EngineMC::nodesSearched{0};
-std::vector<std::pair<Line, int>> EngineMC::bestLines{};
-std::vector<Move> EngineMC::bestMoves{};
-TranspositionTable EngineMC::trTable{};
-RepetitionTable EngineMC::repTable{};
-Move EngineMC::bestMove{};
-Move EngineMC::priorityMove{};
+    BB EngineMC::nodesSearched{0};
+    std::vector<std::pair<Line, int>> EngineMC::bestLines{};
+    std::vector<Move> EngineMC::bestMoves{};
+    TranspositionTable EngineMC::trTable{};
+    RepetitionTable EngineMC::repTable{};
+    Move EngineMC::bestMove{};
+    Move EngineMC::priorityMove{};
+
+} // namespace Dory
 
 #endif //DORY_ENGINE_H

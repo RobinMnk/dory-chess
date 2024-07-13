@@ -9,7 +9,7 @@
 #include "../core/board.h"
 #include "random.h"
 
-namespace Zobrist {
+namespace Dory::Zobrist {
 
     static std::array<std::array<BB, 12>, 64> BITSTRINGS{};
     static size_t black_to_move_bitstring;
@@ -61,7 +61,6 @@ namespace Zobrist {
         return h;
     }
 
-
-}
+} // namespace Dory::Zobrist
 
 #endif //DORY_ZOBRIST_H

@@ -6,18 +6,12 @@
 #define DORY_EVALUATION_H
 
 #include <iostream>
-#include <stack>
-#include <vector>
-#include <memory>
-#include <thread>
-#include <unordered_map>
 
+#include "../core/checklogichandler.h"
 #include "features.h"
 #include "engine_params.h"
-#include "engine.h"
-#include "../core/movecollectors.h"
 
-namespace evaluation {
+namespace Dory::evaluation {
     static engine_params::EvaluationParams params{};
 
     /**

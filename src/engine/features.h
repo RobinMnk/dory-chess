@@ -6,11 +6,10 @@
 #define DORY_FEATURES_H
 
 #include "engine_params.h"
-#include "../core/movegen.h"
+//#include "../core/movegen.h"
 
-using Params = engine_params::EvaluationParams;
-
-namespace features {
+namespace Dory::features {
+    using Params = engine_params::EvaluationParams;
 
     template<Piece_t piece, bool whiteToMove>
     void addScoresForPiece(const Board& board, Params& params, int& mgScore, int& egScore, int& gamePhase) {

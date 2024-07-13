@@ -2,16 +2,16 @@
 // Created by Robin on 29.06.2022.
 //
 
+#ifndef DORY_UTILS_H
+#define DORY_UTILS_H
+
 #include <array>
 #include <chrono>
 #include <ranges>
 #include <sstream>
 #include "../core/board.h"
 
-#ifndef DORY_UTILS_H
-#define DORY_UTILS_H
-
-namespace Utils {
+namespace Dory::Utils {
 
     using ByteBoard = std::array<uint8_t, 64>;
 

@@ -7,7 +7,7 @@
 
 #include "../core/chess.h"
 
-namespace engine_params {
+namespace Dory::engine_params {
 
     struct EvaluationParams {
         const int  MATERIAL_WEIGHT_PAWN = 100;

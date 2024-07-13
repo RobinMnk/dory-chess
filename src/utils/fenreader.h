@@ -9,7 +9,8 @@
 #ifndef DORY_FENREADER_H
 #define DORY_FENREADER_H
 
-namespace Utils {
+namespace Dory::Utils {
+
     std::pair<Board, bool> parseFEN(const std::string_view& fen) {
 
         std::stringstream stream(fen.data());
@@ -229,6 +230,8 @@ namespace Utils {
 //            default: std::cerr << "Depth not implemented!" << std::endl;
 //        }
 //    }
-}
+
+
+} // namespace Dory::Utils
 
 #endif //DORY_FENREADER_H

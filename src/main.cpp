@@ -2,7 +2,9 @@
 
 #include "engine/engine.h"
 #include "utils/fenreader.h"
+#include "core/movecollectors.h"
 
+using Dory::Board, Dory::EngineMC;
 
 //void monteCarlo(const Board& board, const State state, int depth) {
 //    auto fen = MonteCarlo::simulateGame(board, state, depth);
@@ -66,7 +68,7 @@ void timeEvaluation(const Board& board, int depth) {
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
     std::cout << "\n" << std::endl;
-    Utils::printLine(line, eval);
+    Dory::Utils::printLine(line, eval);
 
 //    std::cout << "Evaluation: " << eval << std::endl;
 
@@ -86,17 +88,17 @@ void timeEvaluation(const Board& board, int depth) {
 
 template<bool whiteToMove, int depth>
 void enumerateMoves(const Board& board) {
-    MoveCollectors::nodes.resize(depth + 1);
+    Dory::MoveCollectors::nodes.resize(depth + 1);
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    MoveCollectors::LimitedDFS<depth>::template generateGameTree<whiteToMove>(board);
+    Dory::MoveCollectors::LimitedDFS<depth>::template generateGameTree<whiteToMove>(board);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
     std::chrono::duration<double> seconds = t2 - t1;
 
-    unsigned long long nodes = MoveCollectors::LimitedDFS<1>::totalNodes;
+    unsigned long long nodes = Dory::MoveCollectors::LimitedDFS<1>::totalNodes;
 
     std::cout << "Generated " <<  nodes << " nodes in " << ms_int.count() << "ms";
 
@@ -115,9 +117,9 @@ int main() {
     std::getline(std::cin, depth_str);
     int depth = static_cast<int>(std::strtol(depth_str.c_str(), nullptr, 10));
 
-    const auto [board, whiteToMove] = Utils::parseFEN(fen);
-    PieceSteps::load();
-    Zobrist::init(23984729);
+    const auto [board, whiteToMove] = Dory::Utils::parseFEN(fen);
+    Dory::PieceSteps::load();
+    Dory::Zobrist::init(23984729);
 
     if (command == "perft") {
         if(whiteToMove) enumerateMoves<true, 5>(board);
@@ -125,14 +127,14 @@ int main() {
         return 0;
     } else if (command == "eval") {
         int eval;
-        if(whiteToMove) eval = evaluation::evaluatePosition<true>(board);
-        else eval = evaluation::evaluatePosition<false>(board);
+        if(whiteToMove) eval = Dory::evaluation::evaluatePosition<true>(board);
+        else eval = Dory::evaluation::evaluatePosition<false>(board);
         std::cout << "Static Eval: " << eval << std::endl;
         return 0;
     } else if (command == "zobrist") {
         size_t zobrist;
-        if(whiteToMove) zobrist = Zobrist::hash<true>(board);
-        else zobrist = Zobrist::hash<false>(board);
+        if(whiteToMove) zobrist = Dory::Zobrist::hash<true>(board);
+        else zobrist = Dory::Zobrist::hash<false>(board);
         std::cout << "Zobrist hash: " << zobrist << std::endl;
         return 0;
     }
@@ -140,7 +142,7 @@ int main() {
     std::getline(std::cin, num_lines_str);
     auto num_lines = static_cast<unsigned int>(std::strtol(num_lines_str.c_str(), nullptr, 10));
 
-    NUM_LINES = num_lines;
+    Dory::NUM_LINES = num_lines;
 
     if(whiteToMove) timeEvaluation<true>(board, depth);
     else timeEvaluation<false>(board, depth);

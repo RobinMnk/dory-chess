@@ -8,10 +8,11 @@
 #ifndef DORY_PIECESTEPS_H
 #define DORY_PIECESTEPS_H
 
-// used to terminate arrays that represent list of squares
-const uint8_t END_OF_ARRAY = 0x7f;
 
-namespace PieceSteps {
+namespace Dory::PieceSteps {
+
+    // used to terminate arrays that represent list of squares
+    const uint8_t END_OF_ARRAY = 0x7f;
 
     constexpr std::array<int, 8> directions{8, 9, 1, -7, -8, -9, -1, 7};
     constexpr std::array<int, 4> diagonal{1, 3, 5, 7}, straight{0, 2, 4, 6};
@@ -201,6 +202,6 @@ namespace PieceSteps {
         }
     }
 
-}
+} // namespace Dory::PieceSteps
 
 #endif //DORY_PIECESTEPS_H

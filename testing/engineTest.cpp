@@ -7,49 +7,52 @@
 #include "../src/utils/fenreader.h"
 #include "../src/engine/engine.h"
 
-const std::array<std::string, 2> puzzleFiles{
-    "../resources/puzzles2000.txt",
-    "../resources/puzzlesSacrifices.txt"
-};
+namespace Dory {
 
-std::vector<std::pair<std::string, std::string>> loadTestCases(int index, int limit) {
-    /// Setup Engine
-    PieceSteps::load();
-    Zobrist::init();
+    const std::array<std::string, 2> puzzleFiles{
+            "../resources/puzzles2000.txt",
+            "../resources/puzzlesSacrifices.txt"
+    };
 
-    std::vector<std::pair<std::string, std::string>> testCases;
-    std::string fen, solution;
-    std::ifstream file (puzzleFiles.at(index));
-    int count = 0;
-    if (file.is_open()) {
-        while(count++ <= limit && std::getline(file, fen)) {
-            std::getline(file, solution);
-            testCases.emplace_back(fen, solution);
+    std::vector<std::pair<std::string, std::string>> loadTestCases(int index, int limit) {
+        /// Setup Engine
+        PieceSteps::load();
+        Zobrist::init();
+
+        std::vector<std::pair<std::string, std::string>> testCases;
+        std::string fen, solution;
+        std::ifstream file(puzzleFiles.at(index));
+        int count = 0;
+        if (file.is_open()) {
+            while (count++ <= limit && std::getline(file, fen)) {
+                std::getline(file, solution);
+                testCases.emplace_back(fen, solution);
+            }
+            file.close();
         }
-        file.close();
-    }
-    return testCases;
-}
-
-typedef std::pair<std::string, std::string> TestParam;
-
-class EngineTest : public testing::TestWithParam<TestParam> {};
-
-TEST_P(EngineTest, NegamaxEngine) {
-    auto [fen, solution] = GetParam();
-    auto [board, whiteToMove] = Utils::parseFEN(fen);
-
-    std::string output;
-    if(whiteToMove) {
-        auto [_, line] = EngineMC::iterativeDeepening<true>(board, 6);
-        output = Utils::moveNameShortNotation(line.back());
-    } else {
-        auto [_, line] = EngineMC::iterativeDeepening<false>(board, 6);
-        output = Utils::moveNameShortNotation(line.back());
+        return testCases;
     }
 
-    ASSERT_EQ(output, solution);
-}
+    typedef std::pair<std::string, std::string> TestParam;
+
+    class EngineTest : public testing::TestWithParam<TestParam> {
+    };
+
+    TEST_P(EngineTest, NegamaxEngine) {
+        auto [fen, solution] = GetParam();
+        auto [board, whiteToMove] = Utils::parseFEN(fen);
+
+        std::string output;
+        if (whiteToMove) {
+            auto [_, line] = EngineMC::iterativeDeepening<true>(board, 6);
+            output = Utils::moveNameShortNotation(line.back());
+        } else {
+            auto [_, line] = EngineMC::iterativeDeepening<false>(board, 6);
+            output = Utils::moveNameShortNotation(line.back());
+        }
+
+        ASSERT_EQ(output, solution);
+    }
 
 //TEST_P(EngineTest, MonteCarlo) {
 //    auto [fen, solution] = GetParam();
@@ -61,14 +64,16 @@ TEST_P(EngineTest, NegamaxEngine) {
 //    ASSERT_EQ(output, solution);
 //}
 
-INSTANTIATE_TEST_SUITE_P(
-        Puzzles2000,
-        EngineTest,
-        testing::ValuesIn(loadTestCases(0, 50))
-);
+    INSTANTIATE_TEST_SUITE_P(
+            Puzzles2000,
+            EngineTest,
+            testing::ValuesIn(loadTestCases(0, 50))
+    );
 
-INSTANTIATE_TEST_SUITE_P(
-        PuzzlesSacrifices,
-        EngineTest,
-        testing::ValuesIn(loadTestCases(1, 50))
-);
+    INSTANTIATE_TEST_SUITE_P(
+            PuzzlesSacrifices,
+            EngineTest,
+            testing::ValuesIn(loadTestCases(1, 50))
+    );
+
+} // namespace Dory
