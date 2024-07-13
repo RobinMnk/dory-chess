@@ -49,7 +49,7 @@ public:
 
         for(int depth = 1; depth <= maxDepth;) {
 //            std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
-            auto [eval, line] = searchDepth<whiteToMove>(board, depth, alpha, beta, maxDepth);
+            auto [eval, line] = searchDepth<whiteToMove>(board, depth, alpha, beta);
 
             /// Aspiration Window
             if(eval <= alpha || eval >= beta) {
@@ -81,7 +81,7 @@ public:
     }
 
     template<bool whiteToMove>
-    static NMR searchDepth(const Board& board, int depth, int alpha=-INF, int beta=INF, int maxDepth=MAX_ITER_DEPTH) {
+    static NMR searchDepth(const Board& board, int depth, int alpha=-INF, int beta=INF) {
 //        maxDepth = depth;
         bestLines.clear();
         return negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
@@ -107,6 +107,7 @@ private:
     static NMR negamax(const Board& board, int depth, int alpha, int beta, int maxDepth) {
 
         size_t boardHash = Zobrist::hash<whiteToMove>(board);
+
         /// Check for Threefold-Repetition
         if(repTable.check(boardHash)) {
             return {0, {}};
@@ -133,17 +134,19 @@ private:
         }
 
 
-        // Setup variables before generating legal moves
+        /// Generate legal moves
+
+        // Set move that is searched first
         if constexpr (topLevel) {
             priorityMove = bestMove;
         } else {
             // ttEntry.move may be NULLMOVE, but that does not hurt us
             priorityMove = ttEntry.move;
         }
+
+        // Setup variables before generating legal moves
         moves.at(depth).clear();
         currentDepth = depth;
-
-        /// Generate legal moves
         MoveGenerator<EngineMC>::template generate<whiteToMove>(board);
 
         // No legal moves available
@@ -162,21 +165,35 @@ private:
             }
         }
 
+//        for (int i = 0; i < depth; i++)
+//            std::cout << "   ";
+//        std::cout << depth << ":  " << Utils::moveNameShortNotation(priorityMove) << std::endl;
+
         std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
 
+
+        // Iterate all moves
         Line localBestLine;
         Move localBestMove;
         int bestEval = -INF;
 
-        int isPV = 2;
+        int isPV = 4;
         int eval;
         Line line;
 
+        // Search Extensions
         int mdpt = maxDepth;
         if(MoveGenerator<EngineMC>::pd->inCheck()) mdpt++;
 
 //        if(depth + 1 == maxDepth && MoveGenerator<EngineMC>::pd->inCheck())
 //            maxDepth++;
+
+//        if constexpr (topLevel) {
+//            for(auto& [_, m]: moves.at(depth)) {
+//                std::cout << Utils::moveNameNotation(m) << ",  ";
+//            }
+//            std::cout << std::endl;
+//        }
 
         /// Iterate through all moves
         for(auto& [info, move]: moves.at(depth)) {
@@ -191,7 +208,8 @@ private:
                 eval = -ev;
                 line = ln;
             } else {
-//                if(depth <= 3) mdpt--;
+                int redMdpt = maxDepth;
+//                if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth) redMdpt--;
                 auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -alpha - 1,  -alpha, mdpt);
                 if(ev < -alpha && ev > -beta) {
                     auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1,  -beta,  -alpha, mdpt);
@@ -206,9 +224,15 @@ private:
 
             repTable.remove(boardHash);
 
+//            if(Zobrist::hash<whiteToMove>(board) == 335140086) {
+//                Line l = std::vector<Move>{move};
+//                std::cout << info << " for " << whiteToMove << " -> ";
+//                Utils::printLine(l,  info);
+//            }
+
 //            for (int i = 0; i < depth; i++)
-//                std::cout << " ";
-//            std::cout << depth << " : " << Utils::moveNameNotation(move) << "  " << eval << std::endl;
+//                std::cout << "   ";
+//            std::cout << depth << " : " << Utils::moveNameShortNotation(move) << "  " << eval << std::endl;
 
 //            if constexpr (topLevel) {
 //                Line l = std::vector<Move>{move};
@@ -246,6 +270,10 @@ private:
             if (alpha >= beta) {
                 break;
             }
+        }
+
+        if(bestEval == -INF) {
+            std::cout << "ERROR!!!" << std::endl;
         }
 
         /// Save to lookup table
@@ -294,6 +322,10 @@ private:
             Board nextBoard = board.fork<whiteToMove>(move);
             auto [eval, line] = quiescenceSearch<!whiteToMove>(nextBoard, depth + 1,  -beta,  -alpha);
             eval = -eval;
+
+//            for (int i = 0; i < depth; i++)
+//                std::cout << "   ";
+//            std::cout << depth << " : " << Utils::moveNameShortNotation(move) << "  " << eval << std::endl;
 
             if (eval >= beta) {
                 line.push_back(move);

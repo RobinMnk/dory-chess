@@ -137,7 +137,7 @@ void MoveGenerator<MoveCollector, quiescence, countOnly>::pawnMoves(const Board&
 
     // pawns that can move 1 or 2 squares
     BB pwnMov = pawnsFwd & backward<white>(free);
-    BB pwnMov2 = pwnMov & backward2<white>(free & pd->checkMask) & firstRank<white>();
+    BB pwnMov2 = pwnMov & backward2<white>(free & pd->checkMask) & firstPawnRank<white>();
     pwnMov &= backward<white>(pd->checkMask);
 
     // pawns that can capture Left or Right

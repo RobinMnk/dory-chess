@@ -16,6 +16,7 @@ namespace engine_params {
         const int  MATERIAL_WEIGHT_ROOK = 500;
         const int  MATERIAL_WEIGHT_QUEEN = 900;
         const int  MATERIAL_QUANTIFIER = 1;
+        const int initialWeight = MATERIAL_WEIGHT_QUEEN + 2 * MATERIAL_WEIGHT_ROOK + 2 * MATERIAL_WEIGHT_BISHOP + 2 * MATERIAL_WEIGHT_KNIGHT + 8 * MATERIAL_WEIGHT_PAWN;
 
         const int  MOBILITY_WEIGHT_PAWN = 1;
         const int  MOBILITY_WEIGHT_KNIGHT = 3;
@@ -193,7 +194,7 @@ namespace engine_params {
 
 
         template<bool whiteToMove>
-        int adjustSquare(int square) {
+        [[nodiscard]] inline int adjustSquare(int square) const {
             if constexpr (!whiteToMove) return square;
             else return square^56;
         }
@@ -241,6 +242,15 @@ namespace engine_params {
             else if constexpr (piece == Piece::Queen)
                 return 4;
             return 0;
+        }
+
+        const int ppScore[7] = {0, 850, 600, 200, 100, 50, 50};
+
+        template<bool whiteToMove>
+        [[nodiscard]] int passedPawnScore(int square) const {
+            int stepsToGo = rankOf(square);
+            if constexpr (whiteToMove) stepsToGo = 7 - stepsToGo;
+            return ppScore[stepsToGo];
         }
     };
 

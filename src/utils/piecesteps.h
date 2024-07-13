@@ -24,6 +24,9 @@ namespace PieceSteps {
     std::array<std::array<BB, 64>, 64> DIST{};
 
     template<bool>
+    std::array<BB, 64> PASSED_PAWN_MASK{};
+
+    template<bool>
     std::array<std::array<std::array<uint8_t, 8>, 4>, 64> STEPS{};
 
     std::array<BB, 64> KNIGHT_MOVES{}, KING_MOVES{};
@@ -84,6 +87,30 @@ namespace PieceSteps {
             }
         }
         KING_MOVES[index] = board;
+    }
+
+    template<bool whiteToMove>
+    void load_passed_pawn_mask(int square) {
+        if(hasBitAt(backRank<whiteToMove>(), square))
+            return;
+
+        BB mask{0};
+        BB pawn = newMask(square);
+        BB leftRight{0};
+        if(pawn & pawnCanGoLeft<whiteToMove>()) {
+            leftRight |= backward<whiteToMove>(pawnAtkLeft<whiteToMove>(pawn));
+        }
+        if(pawn & pawnCanGoRight<whiteToMove>()) {
+            leftRight |= backward<whiteToMove>(pawnAtkRight<whiteToMove>(pawn));
+        }
+        pawn |= leftRight;
+
+        while((pawn & backRank<!whiteToMove>()) == 0) {
+            pawn = forward<whiteToMove>(pawn);
+            mask |= pawn;
+        }
+
+        PASSED_PAWN_MASK<whiteToMove>[square] = mask;
     }
 
     template<bool diag>
@@ -165,6 +192,8 @@ namespace PieceSteps {
                 calculate_lines<false>(i);
                 addKnightMoves(i);
                 addKingMoves(i);
+                load_passed_pawn_mask<true>(i);
+                load_passed_pawn_mask<false>(i);
             }
             init_pext();
             load_dist();

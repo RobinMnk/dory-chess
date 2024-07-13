@@ -27,11 +27,14 @@ namespace evaluation {
     template<bool whiteToMove>
     int evaluatePosition(const Board& board) {
 
-        int material = features::material<whiteToMove>(board, params) - features::material<!whiteToMove>(board, params);
+
+        int matFriendly = features::material<whiteToMove>(board, params);
+        int matEnemy = features::material<!whiteToMove>(board, params);
+        int material = matFriendly - matEnemy;
 //
 //        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 //
-        int activity = features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
+        int activity = 0; // features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
 
 //        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 ////                + mobility * params.MOBILITY_QUANTIFIER
@@ -39,7 +42,9 @@ namespace evaluation {
 //
 //        evalEstimate /= 2; // seems important, not sure why -> because of the aspiration window!
 
-        int evalEstimate = material + activity;
+        int passedPawns = features::passedPawns<whiteToMove>(board, params, matEnemy) - features::passedPawns<!whiteToMove>(board, params, matFriendly);
+
+        int evalEstimate = material + activity + passedPawns;
 
         return evalEstimate;
     }
@@ -115,8 +120,8 @@ namespace evaluation {
         }
 
         /// Move towards enemy king
-        heuristic_val += isForwardMove<whiteToMove>(from, to);
-        heuristic_val += (8 - PieceSteps::DIST[singleBitOf(from)][board.enemyKingSquare<whiteToMove>()]) * 32;
+        heuristic_val += isForwardMove<whiteToMove>(from, to) / 4;
+        heuristic_val += (8 - PieceSteps::DIST[singleBitOf(from)][board.enemyKingSquare<whiteToMove>()]) * 64;
 
 
 //        if(to & pd->attacked) {

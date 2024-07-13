@@ -191,9 +191,13 @@ template<bool whiteToMove> constexpr BB pawnOnLastRow() {
     if constexpr (whiteToMove) return rank7;
     else return rank2;
 }
-template<bool whiteToMove> constexpr BB firstRank() {
+template<bool whiteToMove> constexpr BB firstPawnRank() {
     if constexpr (whiteToMove) return rank2;
     else return rank7;
+}
+template<bool whiteToMove> inline constexpr BB backRank() {
+    if constexpr (whiteToMove) return rank1;
+    else return rank8;
 }
 
 constexpr Move createMoveFromBB(BB from, BB to, Piece_t pc, Flag_t fl) {

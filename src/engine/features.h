@@ -56,6 +56,21 @@ namespace features {
     }
 
 
+    template<bool whiteToMove>
+    int passedPawns(const Board& board, const Params& params, int oppMaterial) {
+        int score{0};
+        BB pawns = board.pawns<whiteToMove>();
+        Bitloop(pawns) {
+            int ix = firstBitOf(pawns);
+            if((PieceSteps::PASSED_PAWN_MASK<whiteToMove>[ix] & board.enemyPawns<whiteToMove>()) == 0) {
+                score += params.passedPawnScore<whiteToMove>(ix);
+            }
+        }
+        return static_cast<int>(score * (1 - (static_cast<float>(4 * oppMaterial) / params.initialWeight)));
+    }
+
+
+
 //    template<bool whiteToMove>
 //    int mobility(const Board& board, Params& params) {
 //        // Ignoring castling for simplicity

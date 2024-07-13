@@ -23,6 +23,10 @@ namespace Utils {
 //            rng.seed(4263489725);
         }
 
+        void setSeed(size_t s) {
+            if(s) rng.seed(s);
+        }
+
         unsigned int randomNumberInRange(size_t lo, size_t hi) {
             RNG_INT dist(lo, hi);
             return dist(rng);

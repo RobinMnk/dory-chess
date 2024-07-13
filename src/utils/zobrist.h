@@ -15,7 +15,8 @@ namespace Zobrist {
     static size_t black_to_move_bitstring;
     static Utils::Random random;
 
-    void init() {
+    void init(size_t seed=0) {
+        random.setSeed(seed);
         for(int sq = 0; sq < 64; ++sq) {
             for(int p = 0; p < 12; ++p) {
                 BITSTRINGS[sq][p] = random.randomNumberInRange(0, FULL_BB);
