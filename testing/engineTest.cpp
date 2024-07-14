@@ -44,10 +44,10 @@ namespace Dory {
 
         std::string output;
         if (whiteToMove) {
-            auto [_, line] = Searcher::iterativeDeepening<true>(board, 6);
+            auto [_, line] = Search::Searcher::iterativeDeepening<true>(board, 6);
             output = Utils::moveNameShortNotation(line.back());
         } else {
-            auto [_, line] = Searcher::iterativeDeepening<false>(board, 6);
+            auto [_, line] = Search::Searcher::iterativeDeepening<false>(board, 6);
             output = Utils::moveNameShortNotation(line.back());
         }
 

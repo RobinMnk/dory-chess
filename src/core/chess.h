@@ -42,28 +42,6 @@ namespace Dory {
     const Flag_t MOVEFLAG_ShortCastling = 10;
     const Flag_t MOVEFLAG_LongCastling = 11;
 
-    struct Move {
-        // Optimization potential: piece and flags can be stored in just one byte (3 bits piece, 4 bits flags)
-        uint8_t fromIndex{0}, toIndex{0}, piece{0}, flags{0};
-
-        constexpr Move(uint8_t fromIx, uint8_t toIx, Piece_t pc, Flag_t fl) : fromIndex{fromIx}, toIndex{toIx},
-                                                                              piece{pc}, flags{fl} {}
-
-        constexpr Move() = default;
-
-        [[nodiscard]] BB from() const;
-
-        [[nodiscard]] BB to() const;
-
-        bool operator==(const Move &other) const = default;
-
-        [[nodiscard]] bool is(BB fromBB, BB toBB, Piece_t pc, Flag_t fl) const;
-
-        template<Piece_t pc, Flag_t fl>
-        [[nodiscard]] bool is(BB fromBB, BB toBB) const;
-    };
-
-
 // ---------- BOARD GEOMETRY ----------
 
     static constexpr BB fileH = 0x8080808080808080;
@@ -146,7 +124,7 @@ namespace Dory {
         return _blsi_u64(number);
     }
 
-// ------------- PAWN MOVES -------------
+    // ------------- PAWN MOVES -------------
 
     template<bool whiteToMove>
     constexpr BB forward(BB bb) {
@@ -226,6 +204,38 @@ namespace Dory {
         else return rank8;
     }
 
+
+    // ---------------  MOVES ----------------
+
+    struct Move {
+        // Optimization potential: piece and flags can be stored in just one byte (3 bits piece, 4 bits flags)
+        uint8_t fromIndex{0}, toIndex{0}, piece{0}, flags{0};
+
+        constexpr Move(uint8_t fromIx, uint8_t toIx, Piece_t pc, Flag_t fl)
+            : fromIndex{fromIx}, toIndex{toIx}, piece{pc}, flags{fl} {}
+
+        constexpr Move() = default;
+
+        [[nodiscard]] BB from() const {
+            return newMask(fromIndex);
+        }
+
+        [[nodiscard]] BB to() const {
+            return newMask(toIndex);
+        }
+
+        bool operator==(const Move &other) const = default;
+
+        [[nodiscard]] bool is(BB fromBB, BB toBB, Piece_t pc, Flag_t fl) const {
+            return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
+        }
+
+        template<Piece_t pc, Flag_t fl>
+        [[nodiscard]] bool is(BB fromBB, BB toBB) const{
+            return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
+        }
+    };
+
     constexpr Move createMoveFromBB(BB from, BB to, Piece_t pc, Flag_t fl) {
         return {
                 static_cast<uint8_t>(singleBitOf(from)),
@@ -234,24 +244,7 @@ namespace Dory {
         };
     }
 
-    bool Move::is(BB fromBB, BB toBB, Piece_t pc, Flag_t fl) const {
-        return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
-    }
-
-    template<Piece_t pc, Flag_t fl>
-    bool Move::is(BB fromBB, BB toBB) const {
-        return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
-    }
-
     constexpr static const Move NULLMOVE{0, 0, 0, 0};
-
-    BB Move::from() const {
-        return newMask(fromIndex);
-    }
-
-    BB Move::to() const {
-        return newMask(toIndex);
-    }
 
 } // namespace Dory
 

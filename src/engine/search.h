@@ -9,9 +9,10 @@
 #include "../utils/utils.h"
 #include "../utils/zobrist.h"
 #include "../core/movegen.h"
+#include "moveordering.h"
 #include "tables.h"
 
-namespace Dory {
+namespace Dory::Search {
 
     unsigned int NUM_LINES = 1;
     const int BEST_MOVE_MARGIN = 10;
@@ -30,7 +31,6 @@ namespace Dory {
 
     class Searcher {
         static Move priorityMove;
-
         static std::array<std::vector<std::pair<int, Move>>, 128> moves;
         static int currentDepth;
     public:
@@ -126,7 +126,7 @@ namespace Dory {
             /// Switch to Quiescence Search
             if (depth > maxDepth) {
 //            nodesSearched++;
-//            int eval = evaluation::evaluatePosition(board, state);
+//            int eval = Evaluation::evaluatePosition(board, state);
 //            trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
 //            return { eval, {} };
 
@@ -185,7 +185,7 @@ namespace Dory {
 
             // Search Extensions
             int mdpt = maxDepth;
-//            if (MoveGenerator<Searcher>::pd->inCheck()) mdpt++;
+            if (MoveGenerator<Searcher>::pd->inCheck()) mdpt++;
 
 //            if(depth + 1 == maxDepth && MoveGenerator<Searcher>::pd->inCheck())
 //                mdpt++;
@@ -216,7 +216,8 @@ namespace Dory {
 //                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<Searcher>::pd->inCheck()) redMdpt--;
                     auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, redMdpt);
                     if (ev < -alpha && ev > -beta) {
-                        auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, redMdpt);
+                        auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha,
+                                                                       redMdpt);
                         eval = -ev2;
                         line = ln2;
                     } else {
@@ -225,6 +226,7 @@ namespace Dory {
                     }
                 }
                 isPV--;
+
 
                 repTable.remove(boardHash);
 
@@ -289,7 +291,7 @@ namespace Dory {
         template<bool whiteToMove>
         static NMR quiescenceSearch(const Board &board, int depth, int alpha, int beta) {
             /// Recursion Base Case: Max Depth reached -> return heuristic position eval
-            int standPat = evaluation::evaluatePosition<whiteToMove>(board);
+            int standPat = Evaluation::evaluatePosition<whiteToMove>(board);
 
             if (standPat >= beta) {
                 nodesSearched++;
@@ -350,14 +352,12 @@ namespace Dory {
         static void registerMove(const Board &board, BB from, BB to) {
             // TODO reload checklogichandler and pass PinData to move_info
             moves[currentDepth].emplace_back(
-                    evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<Searcher>::pd,
-                                                                          priorityMove),
+                    move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<Searcher>::pd, priorityMove),
                     createMoveFromBB(from, to, piece, flags)
             );
         }
 
         friend class MoveGenerator<Searcher, true>;
-
         friend class MoveGenerator<Searcher, false>;
     };
 

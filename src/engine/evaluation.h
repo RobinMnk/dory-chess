@@ -9,26 +9,25 @@
 
 #include "../core/checklogichandler.h"
 #include "features.h"
-#include "engine_params.h"
+#include "engineparams.h"
 
-namespace Dory::evaluation {
-    static engine_params::EvaluationParams params{};
+namespace Dory::Evaluation {
 
     /**
-     * Gives estimate for position evaluation score for the side that is to move.
+     * Gives estimate for position Evaluation score for the side that is to move.
      * Positive value is good for the side to move (not necessarily good for white)
      */
     template<bool whiteToMove>
     int evaluatePosition(const Board& board) {
 
 
-        int matFriendly = features::material<whiteToMove>(board, params);
-        int matEnemy = features::material<!whiteToMove>(board, params);
+        int matFriendly = features::material<whiteToMove>(board);
+        int matEnemy = features::material<!whiteToMove>(board);
         int material = matFriendly - matEnemy;
 //
-//        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
+//        int mobility = features::mobility<true>(board) - features::mobility<false>(board);
 //
-        int activity = 0; // features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
+        int activity = 0; // features::activity<whiteToMove>(board) - features::activity<!whiteToMove>(board);
 
 //        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 ////                + mobility * params.MOBILITY_QUANTIFIER
@@ -36,103 +35,14 @@ namespace Dory::evaluation {
 //
 //        evalEstimate /= 2; // seems important, not sure why -> because of the aspiration window!
 
-        int passedPawns = features::passedPawns<whiteToMove>(board, params, matEnemy) - features::passedPawns<!whiteToMove>(board, params, matFriendly);
+        int passedPawns = features::passedPawns<whiteToMove>(board, matEnemy) - features::passedPawns<!whiteToMove>(board, matFriendly);
 
         int evalEstimate = material + activity + passedPawns;
 
         return evalEstimate;
     }
 
-    template<bool whiteToMove>
-    static int isForwardMove(BB from, BB to) {
-        if constexpr (whiteToMove) {
-            return (singleBitOf(to) - singleBitOf(from)) / 8;
-        } else {
-            return (singleBitOf(from) - singleBitOf(to)) / 8;
-        }
-    }
-
-    const int Large = 1000000;
-
-    template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-    static int move_heuristic(const Board &board, BB from, BB to, const PDptr& pd, Move priorityMove) {
-        if(priorityMove.is<piece, flags>(from, to)) {
-            return INF;
-        }
-
-        int heuristic_val{0};
-
-        /// Captures
-        if ((to & board.enemyPieces<whiteToMove>())) {
-            int valueDiff = -engine_params::pieceValue<piece>(params);
-
-            if (board.enemyPawns<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<PIECE_Pawn>(params);
-            else if (board.enemyKnights<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<PIECE_Knight>(params);
-            else if (board.enemyBishops<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<PIECE_Bishop>(params);
-            else if (board.enemyRooks<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<PIECE_Rook>(params);
-            else if (board.enemyQueens<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<PIECE_Queen>(params);
-
-            heuristic_val += 2 * Large + valueDiff;
-
-            if((pd->attacked & to) && valueDiff >= 0) {
-                // Opponent can recapture
-                heuristic_val += 8 * Large;
-            }
-        }
-
-        /// Checks
-//        if (pd->inCheck()) {
-//            heuristic_val += 10 * Large + 100;
-//        }
-
-        /// Promotions
-        if constexpr (flags == MOVEFLAG_PromoteBishop) {
-            heuristic_val += 3 * Large + 3200;
-        }
-        if constexpr (flags == MOVEFLAG_PromoteKnight) {
-            heuristic_val += 3 * Large + 3000;
-        }
-        if constexpr (flags == MOVEFLAG_PromoteRook) {
-            heuristic_val += 3 * Large + 5000;
-        }
-        if constexpr (flags == MOVEFLAG_PromoteQueen) {
-            heuristic_val += 7 * Large;
-        }
-
-//        heuristic_val += pieceValue<piece>(params) / 200;
-
-        /// Do not move to an attacked square
-        if (to & pd->pawnAtk) {
-            heuristic_val -= pieceValue<piece>(params) * 4;
-        } else if (to & pd->attacked) {
-            heuristic_val -= 25; // pieceValue<piece>(params);
-        }
-
-        /// Move towards enemy king
-        heuristic_val += isForwardMove<whiteToMove>(from, to) / 4;
-        heuristic_val += (8 - PieceSteps::DIST[singleBitOf(from)][board.enemyKingSquare<whiteToMove>()]) * 64;
-
-
-//        if(to & pd->attacked) {
-//            heuristic_val -= pieceValue<piece>(params) / 1024;
-//        }
-
-        /// Activity difference
-        int activity_diff_mg = params.middleGamePieceTable<piece, whiteToMove>(firstBitOf(to))
-                - params.middleGamePieceTable<piece, whiteToMove>(firstBitOf(from));
-        int activity_diff_eg = params.endGamePieceTable<piece, whiteToMove>(firstBitOf(to))
-                               - params.endGamePieceTable<piece, whiteToMove>(firstBitOf(from));
-
-        heuristic_val += activity_diff_mg + activity_diff_eg;
-
-        return heuristic_val;
-    }
-}
+} // namespace Dory::Evaluation
 
 
 #endif //DORY_EVALUATION_H

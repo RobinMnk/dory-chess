@@ -5,19 +5,18 @@
 #ifndef DORY_FEATURES_H
 #define DORY_FEATURES_H
 
-#include "engine_params.h"
+#include "engineparams.h"
 //#include "../core/movegen.h"
 
 namespace Dory::features {
-    using Params = engine_params::EvaluationParams;
 
     template<Piece_t piece, bool whiteToMove>
-    void addScoresForPiece(const Board& board, Params& params, int& mgScore, int& egScore, int& gamePhase) {
+    void addScoresForPiece(const Board& board, int& mgScore, int& egScore, int& gamePhase) {
         BB locations = board.getPieceBB<piece, whiteToMove>();
         Bitloop(locations) {
-            mgScore += params.middleGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
-            egScore += params.endGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
-            gamePhase += params.gamePhaseIncrement<piece>();
+            mgScore += ENGINE_PARAMS.middleGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
+            egScore += ENGINE_PARAMS.endGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
+            gamePhase += ENGINE_PARAMS.gamePhaseIncrement<piece>();
         }
 //        BB locationsEnemy = board.getPieceBB<piece, !whiteToMove>();
 //        Bitloop(locationsEnemy) {
@@ -28,15 +27,15 @@ namespace Dory::features {
     }
 
     template<bool whiteToMove>
-    int activity(const Board& board, Params& params) {
+    int activity(const Board& board) {
         int mgScore{0}, egScore{0}, gamePhase{0};
 
-        addScoresForPiece<PIECE_Pawn, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<PIECE_Knight, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<PIECE_Bishop, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<PIECE_Rook, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<PIECE_Queen, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<PIECE_King, whiteToMove>(board, params, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Pawn, whiteToMove>(board, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Knight, whiteToMove>(board, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Bishop, whiteToMove>(board, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Rook, whiteToMove>(board, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Queen, whiteToMove>(board, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_King, whiteToMove>(board, mgScore, egScore, gamePhase);
 
         /* tapered eval */
         if (gamePhase > 24) gamePhase = 24; /* in case of early promotion */
@@ -46,26 +45,26 @@ namespace Dory::features {
 
 
     template<bool whiteToMove>
-    int material(const Board& board, Params& params) {
-        return bitCount(board.pawns<whiteToMove>()) * params.MATERIAL_WEIGHT_PAWN +
-                bitCount(board.knights<whiteToMove>()) * params.MATERIAL_WEIGHT_KNIGHT +
-                bitCount(board.bishops<whiteToMove>()) * params.MATERIAL_WEIGHT_BISHOP +
-                bitCount(board.rooks<whiteToMove>()) * params.MATERIAL_WEIGHT_ROOK +
-                bitCount(board.queens<whiteToMove>()) * params.MATERIAL_WEIGHT_QUEEN;
+    int material(const Board& board) {
+        return bitCount(board.pawns<whiteToMove>()) * ENGINE_PARAMS.MATERIAL_WEIGHT_PAWN +
+                bitCount(board.knights<whiteToMove>()) * ENGINE_PARAMS.MATERIAL_WEIGHT_KNIGHT +
+                bitCount(board.bishops<whiteToMove>()) * ENGINE_PARAMS.MATERIAL_WEIGHT_BISHOP +
+                bitCount(board.rooks<whiteToMove>()) * ENGINE_PARAMS.MATERIAL_WEIGHT_ROOK +
+                bitCount(board.queens<whiteToMove>()) * ENGINE_PARAMS.MATERIAL_WEIGHT_QUEEN;
     }
 
 
     template<bool whiteToMove>
-    int passedPawns(const Board& board, const Params& params, int oppMaterial) {
+    int passedPawns(const Board& board, int oppMaterial) {
         int score{0};
         BB pawns = board.pawns<whiteToMove>();
         Bitloop(pawns) {
             int ix = firstBitOf(pawns);
             if((PieceSteps::PASSED_PAWN_MASK<whiteToMove>[ix] & board.enemyPawns<whiteToMove>()) == 0) {
-                score += params.passedPawnScore<whiteToMove>(ix);
+                score += ENGINE_PARAMS.passedPawnScore<whiteToMove>(ix);
             }
         }
-        return static_cast<int>(score * (1 - (static_cast<float>(4 * oppMaterial) / params.initialWeight)));
+        return static_cast<int>(score * (1 - (static_cast<float>(4 * oppMaterial) / ENGINE_PARAMS.initialWeight)));
     }
 
 

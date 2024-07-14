@@ -2,14 +2,14 @@
 // Created by Robin on 24.08.2023.
 //
 
-#ifndef DORY_ENGINE_PARAMS_H
-#define DORY_ENGINE_PARAMS_H
+#ifndef DORY_ENGINEPARAMS_H
+#define DORY_ENGINEPARAMS_H
 
 #include "../core/chess.h"
 
-namespace Dory::engine_params {
+namespace Dory {
 
-    struct EvaluationParams {
+    struct EngineParams {
         const int  MATERIAL_WEIGHT_PAWN = 100;
         const int  MATERIAL_WEIGHT_KNIGHT = 300;
         const int  MATERIAL_WEIGHT_BISHOP = 325;
@@ -28,7 +28,7 @@ namespace Dory::engine_params {
 
         const int  ACTIVITY_QUANTIFIER = 1;
 
-        EvaluationParams() {
+        EngineParams() {
             for(int pc = 0; pc < 6; pc++) {
                 for (int sq = 0; sq < 64; sq++) {
                     mg_table[pc][sq] += mg_value[pc];
@@ -254,26 +254,28 @@ namespace Dory::engine_params {
         }
     };
 
+    static EngineParams ENGINE_PARAMS{};
+
     template<Piece_t piece>
-    constexpr int pieceValue(EvaluationParams& params) {
+    constexpr int pieceValue() {
         if constexpr (piece == PIECE_Pawn) {
-            return params.MATERIAL_WEIGHT_PAWN;
+            return ENGINE_PARAMS.MATERIAL_WEIGHT_PAWN;
         }
         if constexpr (piece == PIECE_Knight) {
-            return params.MATERIAL_WEIGHT_KNIGHT;
+            return ENGINE_PARAMS.MATERIAL_WEIGHT_KNIGHT;
         }
         if constexpr (piece == PIECE_Bishop) {
-            return params.MATERIAL_WEIGHT_BISHOP;
+            return ENGINE_PARAMS.MATERIAL_WEIGHT_BISHOP;
         }
         if constexpr (piece == PIECE_Rook) {
-            return params.MATERIAL_WEIGHT_ROOK;
+            return ENGINE_PARAMS.MATERIAL_WEIGHT_ROOK;
         }
         if constexpr (piece == PIECE_Queen) {
-            return params.MATERIAL_WEIGHT_QUEEN;
+            return ENGINE_PARAMS.MATERIAL_WEIGHT_QUEEN;
         }
         return 0;
     }
 
 }
 
-#endif //DORY_ENGINE_PARAMS_H
+#endif //DORY_ENGINEPARAMS_H

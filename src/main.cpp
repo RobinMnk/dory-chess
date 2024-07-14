@@ -4,7 +4,7 @@
 #include "utils/fenreader.h"
 #include "core/movecollectors.h"
 
-using Dory::Board, Dory::Searcher;
+using Dory::Board, Dory::Search::Searcher;
 
 //void monteCarlo(const Board& board, const State state, int depth) {
 //    auto fen = MonteCarlo::simulateGame(board, state, depth);
@@ -60,7 +60,7 @@ void timeEvaluation(const Board& board, int depth) {
 //    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Rook)) << " Rook Moves" << std::endl;
 //    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Queen)) << " Queen Moves" << std::endl;
 //    std::cout << static_cast<int>(MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::King)) << " King Moves" << std::endl;
-//    engine_params::EvaluationParams params;
+//    engine_params::EngineParams params;
 //    std::cout << features::mobility(board, state, params);
     /// -----------------------------------------------------------
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -127,8 +127,8 @@ int main() {
         return 0;
     } else if (command == "eval") {
         int eval;
-        if(whiteToMove) eval = Dory::evaluation::evaluatePosition<true>(board);
-        else eval = Dory::evaluation::evaluatePosition<false>(board);
+        if(whiteToMove) eval = Dory::Evaluation::evaluatePosition<true>(board);
+        else eval = Dory::Evaluation::evaluatePosition<false>(board);
         std::cout << "Static Eval: " << eval << std::endl;
         return 0;
     } else if (command == "zobrist") {
@@ -142,7 +142,7 @@ int main() {
     std::getline(std::cin, num_lines_str);
     auto num_lines = static_cast<unsigned int>(std::strtol(num_lines_str.c_str(), nullptr, 10));
 
-    Dory::NUM_LINES = num_lines;
+    Dory::Search::NUM_LINES = num_lines;
 
     if(whiteToMove) timeEvaluation<true>(board, depth);
     else timeEvaluation<false>(board, depth);
@@ -157,7 +157,7 @@ int main() {
 //    Utils::printLine(line, eval);
 
 //    monteCarlo(board, state, 2);
-//    engine_params::EvaluationParams params;
+//    engine_params::EngineParams params;
 //
 //    Utils::print_board(board);
 //    constexpr bool whiteToMove = true;
@@ -166,7 +166,7 @@ int main() {
 //        bitCount(board.bishops<whiteToMove>())  << " Bishops. " << bitCount(board.rooks<whiteToMove>())  << " Rooks. " <<
 //        bitCount(board.queens<whiteToMove>())  << " Queens" << std::endl;
 //
-//                                               int res = evaluation::evaluatePosition(board, state);
+//                                               int res = Evaluation::evaluatePosition(board, state);
 //    std::cout << res << std::endl;
 //    std::cout << features::material<true>(board, params) << std::endl;
 //    std::cout << features::material<false>(board, params) << std::endl;
