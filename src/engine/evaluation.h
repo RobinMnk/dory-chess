@@ -28,7 +28,7 @@ namespace Dory::evaluation {
 //
 //        int mobility = features::mobility<true>(board, params) - features::mobility<false>(board, params);
 //
-        int activity = features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
+        int activity = 0; // features::activity<whiteToMove>(board, params) - features::activity<!whiteToMove>(board, params);
 
 //        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 ////                + mobility * params.MOBILITY_QUANTIFIER
@@ -54,7 +54,7 @@ namespace Dory::evaluation {
 
     const int Large = 1000000;
 
-    template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+    template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
     static int move_heuristic(const Board &board, BB from, BB to, const PDptr& pd, Move priorityMove) {
         if(priorityMove.is<piece, flags>(from, to)) {
             return INF;
@@ -67,15 +67,15 @@ namespace Dory::evaluation {
             int valueDiff = -engine_params::pieceValue<piece>(params);
 
             if (board.enemyPawns<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<Piece::Pawn>(params);
+                valueDiff += engine_params::pieceValue<PIECE_Pawn>(params);
             else if (board.enemyKnights<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<Piece::Knight>(params);
+                valueDiff += engine_params::pieceValue<PIECE_Knight>(params);
             else if (board.enemyBishops<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<Piece::Bishop>(params);
+                valueDiff += engine_params::pieceValue<PIECE_Bishop>(params);
             else if (board.enemyRooks<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<Piece::Rook>(params);
+                valueDiff += engine_params::pieceValue<PIECE_Rook>(params);
             else if (board.enemyQueens<whiteToMove>() & to)
-                valueDiff += engine_params::pieceValue<Piece::Queen>(params);
+                valueDiff += engine_params::pieceValue<PIECE_Queen>(params);
 
             heuristic_val += 2 * Large + valueDiff;
 
@@ -91,16 +91,16 @@ namespace Dory::evaluation {
 //        }
 
         /// Promotions
-        if constexpr (flags == MoveFlag::PromoteBishop) {
+        if constexpr (flags == MOVEFLAG_PromoteBishop) {
             heuristic_val += 3 * Large + 3200;
         }
-        if constexpr (flags == MoveFlag::PromoteKnight) {
+        if constexpr (flags == MOVEFLAG_PromoteKnight) {
             heuristic_val += 3 * Large + 3000;
         }
-        if constexpr (flags == MoveFlag::PromoteRook) {
+        if constexpr (flags == MOVEFLAG_PromoteRook) {
             heuristic_val += 3 * Large + 5000;
         }
-        if constexpr (flags == MoveFlag::PromoteQueen) {
+        if constexpr (flags == MOVEFLAG_PromoteQueen) {
             heuristic_val += 7 * Large;
         }
 

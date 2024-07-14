@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "engine/engine.h"
+#include "engine/search.h"
 #include "utils/fenreader.h"
 #include "core/movecollectors.h"
 
-using Dory::Board, Dory::EngineMC;
+using Dory::Board, Dory::Searcher;
 
 //void monteCarlo(const Board& board, const State state, int depth) {
 //    auto fen = MonteCarlo::simulateGame(board, state, depth);
@@ -42,11 +42,11 @@ using Dory::Board, Dory::EngineMC;
 
 template<bool whiteToMove>
 void timeEvaluation(const Board& board, int depth) {
-    EngineMC::reset();
+    Searcher::reset();
     auto t1 = std::chrono::high_resolution_clock::now();
     /// -----------------------------------------------------------
-//    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
-    auto [eval, line] = EngineMC::template iterativeDeepening<whiteToMove>(board, depth);
+//    auto [eval, line] = Searcher::searchDepth(board, state, depth);
+    auto [eval, line] = Searcher::template iterativeDeepening<whiteToMove>(board, depth);
 //    monteCarlo(board, state, depth);
 //    MonteCarlo::runSimulations(board, state, depth, 10);
 
@@ -74,9 +74,9 @@ void timeEvaluation(const Board& board, int depth) {
 
     std::chrono::duration<double> seconds = t2 - t1;
 
-    std::cout << "Searched " << EngineMC::nodesSearched << " nodes in " << ms_int.count() << "ms";
+    std::cout << "Searched " << Searcher::nodesSearched << " nodes in " << ms_int.count() << "ms";
 
-    double knps = (static_cast<double>(EngineMC::nodesSearched) / 1000) / seconds.count();
+    double knps = (static_cast<double>(Searcher::nodesSearched) / 1000) / seconds.count();
     if (knps < 1000) {
         std::cout << "\t\t(" << knps << " k nps)\n\n";
     } else {
@@ -149,11 +149,11 @@ int main() {
 
 
 
-//    auto [eval, line] = EngineMC::searchDepth(board, state, depth);
+//    auto [eval, line] = Searcher::searchDepth(board, state, depth);
 //    Utils::printLine(line, eval);
 
 
-//    auto [eval, line] = EngineMC::quiescenceSearch(board, state, 0, -INF, INF);
+//    auto [eval, line] = Searcher::quiescenceSearch(board, state, 0, -INF, INF);
 //    Utils::printLine(line, eval);
 
 //    monteCarlo(board, state, 2);
@@ -172,9 +172,9 @@ int main() {
 //    std::cout << features::material<false>(board, params) << std::endl;
 
 
-    std::cout << "\nTable lookups:\t" << EngineMC::trTable.lookups << std::endl;
-    std::cout << "Table size:\t" << EngineMC::trTable.size() << " kB" << std::endl;
-    std::cout << "Searched " << EngineMC::nodesSearched << " nodes";
+    std::cout << "\nTable lookups:\t" << Searcher::trTable.lookups << std::endl;
+    std::cout << "Table size:\t" << Searcher::trTable.size() << " kB" << std::endl;
+    std::cout << "Searched " << Searcher::nodesSearched << " nodes";
 
     return 0;
 }

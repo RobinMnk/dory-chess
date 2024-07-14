@@ -87,17 +87,17 @@ namespace Dory::Utils {
 
     std::string specialMove(Flag_t flags) {
         switch (flags) {
-            case MoveFlag::PromoteBishop:
+            case MOVEFLAG_PromoteBishop:
                 return "=B";
-            case MoveFlag::PromoteKnight:
+            case MOVEFLAG_PromoteKnight:
                 return "=N";
-            case MoveFlag::PromoteRook:
+            case MOVEFLAG_PromoteRook:
                 return "=R";
-            case MoveFlag::PromoteQueen:
+            case MOVEFLAG_PromoteQueen:
                 return "=Q";
-            case MoveFlag::ShortCastling:
+            case MOVEFLAG_ShortCastling:
                 return "0-0";
-            case MoveFlag::LongCastling:
+            case MOVEFLAG_LongCastling:
                 return "0-0-0";
             default:
                 return "";
@@ -106,15 +106,15 @@ namespace Dory::Utils {
 
     std::string pieceString(Piece_t piece) {
         switch (piece) {
-            case Piece::King:
+            case PIECE_King:
                 return "K";
-            case Piece::Queen:
+            case PIECE_Queen:
                 return "Q";
-            case Piece::Rook:
+            case PIECE_Rook:
                 return "R";
-            case Piece::Bishop:
+            case PIECE_Bishop:
                 return "B";
-            case Piece::Knight:
+            case PIECE_Knight:
                 return "N";
             default:
                 return "";
@@ -123,8 +123,8 @@ namespace Dory::Utils {
 
     void printMove(const Move m) {
         if (m.from() + m.to() == 0) std::cout << "NULL" << std::endl;
-        else if (m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling) << std::endl;
-        else if (m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling) << std::endl;
+        else if (m.flags == MOVEFLAG_ShortCastling) std::cout << specialMove(MOVEFLAG_ShortCastling) << std::endl;
+        else if (m.flags == MOVEFLAG_LongCastling) std::cout << specialMove(MOVEFLAG_LongCastling) << std::endl;
         else
             std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to())
                       << specialMove(m.flags) << std::endl;
@@ -136,8 +136,8 @@ namespace Dory::Utils {
 
     void printMoveList(const std::vector<Move> &moves) {
         for (auto &m: moves) {
-            if (m.flags == MoveFlag::ShortCastling) std::cout << specialMove(MoveFlag::ShortCastling);
-            else if (m.flags == MoveFlag::LongCastling) std::cout << specialMove(MoveFlag::LongCastling);
+            if (m.flags == MOVEFLAG_ShortCastling) std::cout << specialMove(MOVEFLAG_ShortCastling);
+            else if (m.flags == MOVEFLAG_LongCastling) std::cout << specialMove(MOVEFLAG_LongCastling);
             else
                 std::cout << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to())
                           << specialMove(m.flags);
@@ -199,8 +199,8 @@ namespace Dory::Utils {
 
     std::string moveNameNotation(Move m) {
         std::stringstream bss{};
-        if (m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
-        else if (m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
+        if (m.flags == MOVEFLAG_ShortCastling) bss << specialMove(MOVEFLAG_ShortCastling);
+        else if (m.flags == MOVEFLAG_LongCastling) bss << specialMove(MOVEFLAG_LongCastling);
         else bss << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to());
         bss << specialMove(m.flags);
         return bss.str();
@@ -208,8 +208,8 @@ namespace Dory::Utils {
 
     std::string moveNameShortNotation(Move m) {
         std::stringstream bss{};
-        if (m.flags == MoveFlag::ShortCastling) bss << specialMove(MoveFlag::ShortCastling);
-        else if (m.flags == MoveFlag::LongCastling) bss << specialMove(MoveFlag::LongCastling);
+        if (m.flags == MOVEFLAG_ShortCastling) bss << specialMove(MOVEFLAG_ShortCastling);
+        else if (m.flags == MOVEFLAG_LongCastling) bss << specialMove(MOVEFLAG_LongCastling);
         else bss << pieceString(m.piece) << squarename(m.to());
         bss << specialMove(m.flags);
         return bss.str();
@@ -264,7 +264,7 @@ namespace Dory::Utils {
 //
 //        explicit MoveSimulator(Board &bd) : board{bd} {}
 //
-//        template<Piece_t piece, Flag_t flag = MoveFlag::Silent>
+//        template<Piece_t piece, Flag_t flag = MOVEFLAG_Silent>
 //        MoveSimulator<getNextState<state, flag>()> move(std::string_view from, std::string_view to) {
 //            BB fromBB = newMask(sqId(from));
 //            BB toBB = newMask(sqId(to));

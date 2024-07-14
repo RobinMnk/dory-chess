@@ -31,12 +31,12 @@ namespace Dory::features {
     int activity(const Board& board, Params& params) {
         int mgScore{0}, egScore{0}, gamePhase{0};
 
-        addScoresForPiece<Piece::Pawn, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<Piece::Knight, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<Piece::Bishop, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<Piece::Rook, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<Piece::Queen, whiteToMove>(board, params, mgScore, egScore, gamePhase);
-        addScoresForPiece<Piece::King, whiteToMove>(board, params, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Pawn, whiteToMove>(board, params, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Knight, whiteToMove>(board, params, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Bishop, whiteToMove>(board, params, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Rook, whiteToMove>(board, params, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_Queen, whiteToMove>(board, params, mgScore, egScore, gamePhase);
+        addScoresForPiece<PIECE_King, whiteToMove>(board, params, mgScore, egScore, gamePhase);
 
         /* tapered eval */
         if (gamePhase > 24) gamePhase = 24; /* in case of early promotion */
@@ -77,12 +77,12 @@ namespace Dory::features {
 //        MoveListGenerator::countLegalMoves(board, state);
 //
 //        unsigned int mobilityScore{0};
-//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Pawn) * params.MOBILITY_WEIGHT_PAWN;
-//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Knight) * params.MOBILITY_WEIGHT_KNIGHT;
-//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Bishop) * params.MOBILITY_WEIGHT_BISHOP;
-//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Rook) * params.MOBILITY_WEIGHT_ROOK;
-//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::Queen) * params.MOBILITY_WEIGHT_QUEEN;
-//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(Piece::King) * params.MOBILITY_WEIGHT_KING;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(PIECE_Pawn) * params.MOBILITY_WEIGHT_PAWN;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(PIECE_Knight) * params.MOBILITY_WEIGHT_KNIGHT;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(PIECE_Bishop) * params.MOBILITY_WEIGHT_BISHOP;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(PIECE_Rook) * params.MOBILITY_WEIGHT_ROOK;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(PIECE_Queen) * params.MOBILITY_WEIGHT_QUEEN;
+//        mobilityScore += MoveGenerator<MoveListGenerator, false, true>::numberOfMovesByPiece.at(PIECE_King) * params.MOBILITY_WEIGHT_KING;
 //        return mobilityScore;
 //    }
 }

@@ -44,7 +44,7 @@ namespace Dory::MoveCollectors {
         }
 
     private:
-        template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
         static void registerMove(const Board& board, BB from, BB to) {
             if constexpr (depth == 1) {
                 totalNodes++;
@@ -85,7 +85,7 @@ namespace Dory::MoveCollectors {
 //        }
 //
 //    private:
-//        template<State state, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+//        template<State state, int depth, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
 //        static void registerMove(const Board &board, [[maybe_unused]] BB from, [[maybe_unused]] BB to) {
 //            positions.push_back(getExtendedBoard<state>(board));
 //        }
@@ -122,7 +122,7 @@ namespace Dory::MoveCollectors {
         }
 
     private:
-        template<bool whiteToMove,  Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        template<bool whiteToMove,  Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
         static void registerMove(const Board& board, BB from, BB to) {
             nodes.at(depth)++;
             Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
@@ -167,7 +167,7 @@ namespace Dory::MoveCollectors {
             }
         }
 
-        template<bool whiteToMove, int depth, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        template<bool whiteToMove, int depth, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
         static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
             if (depth == maxDepth) {
                 Move m = createMoveFromBB(from, to, piece, flags);

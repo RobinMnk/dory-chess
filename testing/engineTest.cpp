@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include "../src/utils/fenreader.h"
-#include "../src/engine/engine.h"
+#include "../src/engine/search.h"
 
 namespace Dory {
 
@@ -44,10 +44,10 @@ namespace Dory {
 
         std::string output;
         if (whiteToMove) {
-            auto [_, line] = EngineMC::iterativeDeepening<true>(board, 6);
+            auto [_, line] = Searcher::iterativeDeepening<true>(board, 6);
             output = Utils::moveNameShortNotation(line.back());
         } else {
-            auto [_, line] = EngineMC::iterativeDeepening<false>(board, 6);
+            auto [_, line] = Searcher::iterativeDeepening<false>(board, 6);
             output = Utils::moveNameShortNotation(line.back());
         }
 

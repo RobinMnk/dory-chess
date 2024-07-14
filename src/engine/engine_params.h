@@ -201,45 +201,45 @@ namespace Dory::engine_params {
 
         template<Piece_t piece, bool whiteToMove>
         int middleGamePieceTable(int square) {
-            if constexpr (piece == Piece::Pawn)
+            if constexpr (piece == PIECE_Pawn)
                 return mg_table[0][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Knight)
+            else if constexpr (piece == PIECE_Knight)
                 return mg_table[1][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Bishop)
+            else if constexpr (piece == PIECE_Bishop)
                 return mg_table[2][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Rook)
+            else if constexpr (piece == PIECE_Rook)
                 return mg_table[3][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Queen)
+            else if constexpr (piece == PIECE_Queen)
                 return mg_table[4][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::King)
+            else if constexpr (piece == PIECE_King)
                 return mg_table[5][adjustSquare<whiteToMove>(square)];
             return 0;
         }
 
         template<Piece_t piece, bool whiteToMove>
         int endGamePieceTable(int square) {
-            if constexpr (piece == Piece::Pawn)
+            if constexpr (piece == PIECE_Pawn)
                 return eg_table[0][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Knight)
+            else if constexpr (piece == PIECE_Knight)
                 return eg_table[1][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Bishop)
+            else if constexpr (piece == PIECE_Bishop)
                 return eg_table[2][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Rook)
+            else if constexpr (piece == PIECE_Rook)
                 return eg_table[3][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::Queen)
+            else if constexpr (piece == PIECE_Queen)
                 return eg_table[4][adjustSquare<whiteToMove>(square)];
-            else if constexpr (piece == Piece::King)
+            else if constexpr (piece == PIECE_King)
                 return eg_table[5][adjustSquare<whiteToMove>(square)];
             return 0;
         }
 
         template<Piece_t piece>
         int gamePhaseIncrement() {
-            if constexpr (piece == Piece::Knight || piece == Piece::Bishop)
+            if constexpr (piece == PIECE_Knight || piece == PIECE_Bishop)
                 return 1;
-            else if constexpr (piece == Piece::Rook)
+            else if constexpr (piece == PIECE_Rook)
                 return 2;
-            else if constexpr (piece == Piece::Queen)
+            else if constexpr (piece == PIECE_Queen)
                 return 4;
             return 0;
         }
@@ -256,19 +256,19 @@ namespace Dory::engine_params {
 
     template<Piece_t piece>
     constexpr int pieceValue(EvaluationParams& params) {
-        if constexpr (piece == Piece::Pawn) {
+        if constexpr (piece == PIECE_Pawn) {
             return params.MATERIAL_WEIGHT_PAWN;
         }
-        if constexpr (piece == Piece::Knight) {
+        if constexpr (piece == PIECE_Knight) {
             return params.MATERIAL_WEIGHT_KNIGHT;
         }
-        if constexpr (piece == Piece::Bishop) {
+        if constexpr (piece == PIECE_Bishop) {
             return params.MATERIAL_WEIGHT_BISHOP;
         }
-        if constexpr (piece == Piece::Rook) {
+        if constexpr (piece == PIECE_Rook) {
             return params.MATERIAL_WEIGHT_ROOK;
         }
-        if constexpr (piece == Piece::Queen) {
+        if constexpr (piece == PIECE_Queen) {
             return params.MATERIAL_WEIGHT_QUEEN;
         }
         return 0;

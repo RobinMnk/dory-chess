@@ -5,7 +5,7 @@
 #ifndef DORY_MONTE_CARLO_H
 #define DORY_MONTE_CARLO_H
 
-#include "engine.h"
+#include "search.h"
 #include "../utils/random.h"
 
 double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.95;
@@ -51,8 +51,8 @@ public:
             return 1;
         }
 
-//            printf("%zu\n", EngineMC::bestMoves().size());
-//            printf("%zu\n", EngineMC::topLevelLegalMoves().size());
+//            printf("%zu\n", Searcher::bestMoves().size());
+//            printf("%zu\n", Searcher::topLevelLegalMoves().size());
 
 //            nextMove = line.back();
 
@@ -70,7 +70,7 @@ public:
         // Count moves since last pawn move or capture
 //        if(nextMove.piece == Piece::Pawn || board.isCapture<whiteToMove>(nextMove)) {
 //            action_counter = 0;
-//            EngineMC::repTable.reset();
+//            Searcher::repTable.reset();
 //        } else if(action_counter++ >= 100) {
 ////                std::cout << "Draw - 50 move rule!  (" << (ply / 2) << " moves)" << std::endl;
 //            return 1;
@@ -94,7 +94,7 @@ public:
 
 //    template<bool whiteToMove>
 //    static int simulateGame(const Board& board, int depth) {
-//        EngineMC::reset();
+//        Searcher::reset();
 //
 //        int action_counter = 0;
 ////        std::stringstream fen{};

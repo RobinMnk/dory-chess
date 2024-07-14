@@ -11,7 +11,7 @@
 
 namespace Dory {
 
-#define Bitloop(X) for(;X; X = _blsr_u64(X))
+    #define Bitloop(X) for(;X; X = _blsr_u64(X))
 
     using BB = uint64_t;
     using square = uint64_t;
@@ -21,30 +21,26 @@ namespace Dory {
 // ---------- PIECES ----------
 
     using Piece_t = uint8_t;
-    namespace Piece {
-        const Piece_t Queen = 0;
-        const Piece_t Rook = 1;
-        const Piece_t Bishop = 2;
-        const Piece_t Knight = 3;
-        const Piece_t Pawn = 4;
-        const Piece_t King = 5;
-    }
+    const Piece_t PIECE_Queen = 0;
+    const Piece_t PIECE_Rook = 1;
+    const Piece_t PIECE_Bishop = 2;
+    const Piece_t PIECE_Knight = 3;
+    const Piece_t PIECE_Pawn = 4;
+    const Piece_t PIECE_King = 5;
 
     using Flag_t = uint8_t;
-    namespace MoveFlag {
-        const Flag_t Silent = 0;
-        const Flag_t RemoveShortCastling = 1;
-        const Flag_t RemoveLongCastling = 2;
-        const Flag_t RemoveAllCastling = 3;
-        const Flag_t PawnDoublePush = 4;
-        const Flag_t EnPassantCapture = 5;
-        const Flag_t PromoteQueen = 6;
-        const Flag_t PromoteRook = 7;
-        const Flag_t PromoteBishop = 8;
-        const Flag_t PromoteKnight = 9;
-        const Flag_t ShortCastling = 10;
-        const Flag_t LongCastling = 11;
-    }
+    const Flag_t MOVEFLAG_Silent = 0;
+    const Flag_t MOVEFLAG_RemoveShortCastling = 1;
+    const Flag_t MOVEFLAG_RemoveLongCastling = 2;
+    const Flag_t MOVEFLAG_RemoveAllCastling = 3;
+    const Flag_t MOVEFLAG_PawnDoublePush = 4;
+    const Flag_t MOVEFLAG_EnPassantCapture = 5;
+    const Flag_t MOVEFLAG_PromoteQueen = 6;
+    const Flag_t MOVEFLAG_PromoteRook = 7;
+    const Flag_t MOVEFLAG_PromoteBishop = 8;
+    const Flag_t MOVEFLAG_PromoteKnight = 9;
+    const Flag_t MOVEFLAG_ShortCastling = 10;
+    const Flag_t MOVEFLAG_LongCastling = 11;
 
     struct Move {
         // Optimization potential: piece and flags can be stored in just one byte (3 bits piece, 4 bits flags)

@@ -2,8 +2,8 @@
 // Created by Robin on 24.08.2023.
 //
 
-#ifndef DORY_ENGINE_H
-#define DORY_ENGINE_H
+#ifndef DORY_SEARCH_H
+#define DORY_SEARCH_H
 
 #include "evaluation.h"
 #include "../utils/utils.h"
@@ -28,7 +28,7 @@ namespace Dory {
         else return -eval;
     }
 
-    class EngineMC {
+    class Searcher {
         static Move priorityMove;
 
         static std::array<std::vector<std::pair<int, Move>>, 128> moves;
@@ -149,11 +149,11 @@ namespace Dory {
             // Setup variables before generating legal moves
             moves.at(depth).clear();
             currentDepth = depth;
-            MoveGenerator<EngineMC>::template generate<whiteToMove>(board);
+            MoveGenerator<Searcher>::template generate<whiteToMove>(board);
 
             // No legal moves available
             if (moves.at(depth).empty()) {
-                if (MoveGenerator<EngineMC>::pd->inCheck()) {
+                if (MoveGenerator<Searcher>::pd->inCheck()) {
                     // Checkmate!
                     nodesSearched++;
                     int eval = -(INF - depth);
@@ -185,9 +185,10 @@ namespace Dory {
 
             // Search Extensions
             int mdpt = maxDepth;
-            if (MoveGenerator<EngineMC>::pd->inCheck()) mdpt++;
+//            if (MoveGenerator<Searcher>::pd->inCheck()) mdpt++;
 
-//        if(depth + 1 == maxDepth && MoveGenerator<EngineMC>::pd->inCheck())
+//            if(depth + 1 == maxDepth && MoveGenerator<Searcher>::pd->inCheck())
+//                mdpt++;
 //            maxDepth++;
 
 //        if constexpr (topLevel) {
@@ -212,7 +213,7 @@ namespace Dory {
                 } else {
                     int redMdpt = maxDepth;
 //                if constexpr (topLevel)
-//                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<EngineMC>::pd->inCheck()) redMdpt--;
+//                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<Searcher>::pd->inCheck()) redMdpt--;
                     auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, redMdpt);
                     if (ev < -alpha && ev > -beta) {
                         auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, redMdpt);
@@ -301,13 +302,13 @@ namespace Dory {
             moves.at(depth).clear();
             currentDepth = depth;
 
-            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<EngineMC, true>::pd);
+            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
 
-            if (MoveGenerator<EngineMC, true>::pd->inCheck()) {
-                *MoveGenerator<EngineMC>::pd = *MoveGenerator<EngineMC, true>::pd;
-                MoveGenerator<EngineMC>::template generate<whiteToMove, false>(board);
+            if (MoveGenerator<Searcher, true>::pd->inCheck()) {
+                *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
+                MoveGenerator<Searcher>::template generate<whiteToMove, false>(board);
             } else {
-                MoveGenerator<EngineMC, true>::template generate<whiteToMove, false>(board);
+                MoveGenerator<Searcher, true>::template generate<whiteToMove, false>(board);
             }
 
             if (moves.at(depth).empty()) {
@@ -345,32 +346,32 @@ namespace Dory {
             return {alpha, localBestLine};
         }
 
-        template<bool whiteToMove, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
         static void registerMove(const Board &board, BB from, BB to) {
             // TODO reload checklogichandler and pass PinData to move_info
             moves[currentDepth].emplace_back(
-                    evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<EngineMC>::pd,
+                    evaluation::move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<Searcher>::pd,
                                                                           priorityMove),
                     createMoveFromBB(from, to, piece, flags)
             );
         }
 
-        friend class MoveGenerator<EngineMC, true>;
+        friend class MoveGenerator<Searcher, true>;
 
-        friend class MoveGenerator<EngineMC, false>;
+        friend class MoveGenerator<Searcher, false>;
     };
 
-    std::array<std::vector<std::pair<int, Move>>, 128> EngineMC::moves{};
-    int EngineMC::currentDepth{0};
-//int EngineMC::maxDepth{0};
-    BB EngineMC::nodesSearched{0};
-    std::vector<std::pair<Line, int>> EngineMC::bestLines{};
-    std::vector<Move> EngineMC::bestMoves{};
-    TranspositionTable EngineMC::trTable{};
-    RepetitionTable EngineMC::repTable{};
-    Move EngineMC::bestMove{};
-    Move EngineMC::priorityMove{};
+    std::array<std::vector<std::pair<int, Move>>, 128> Searcher::moves{};
+    int Searcher::currentDepth{0};
+//int Searcher::maxDepth{0};
+    BB Searcher::nodesSearched{0};
+    std::vector<std::pair<Line, int>> Searcher::bestLines{};
+    std::vector<Move> Searcher::bestMoves{};
+    TranspositionTable Searcher::trTable{};
+    RepetitionTable Searcher::repTable{};
+    Move Searcher::bestMove{};
+    Move Searcher::priorityMove{};
 
 } // namespace Dory
 
-#endif //DORY_ENGINE_H
+#endif //DORY_SEARCH_H
