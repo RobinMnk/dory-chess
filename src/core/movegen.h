@@ -21,7 +21,7 @@ namespace Dory {
         static std::array<unsigned int, 6> numberOfMovesByPiece;
         static unsigned long numberOfMoves;
 
-        template<bool, bool= true>
+        template<bool, bool=true>
         static void generate(const Board &board);
 
     private:
@@ -348,10 +348,9 @@ namespace Dory {
     unsigned long MoveGenerator<MC, qc, co>::numberOfMoves{0};
 
 
-
-    template<typename MoveCollector, bool whiteToMove>
+    template<typename MoveCollector, bool whiteToMove, bool reloadClh=true, bool quiescence=false>
     void generateMoves(const Board &board) {
-        MoveGenerator<MoveCollector>::template generate<whiteToMove>(board);
+        MoveGenerator<MoveCollector, quiescence>::template generate<whiteToMove, reloadClh>(board);
     }
 
 } // namespace Dory

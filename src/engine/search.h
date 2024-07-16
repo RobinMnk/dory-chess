@@ -150,8 +150,6 @@ namespace Dory::Search {
             // Setup variables before generating legal moves
             moves.at(depth).clear();
             currentDepth = depth;
-//            MoveGenerator<Searcher>::template generate<whiteToMove>(board);
-
             generateMoves<Searcher, whiteToMove>(board);
 
             // No legal moves available
@@ -307,14 +305,16 @@ namespace Dory::Search {
             moves.at(depth).clear();
             currentDepth = depth;
 
-            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
+//            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
 
-            if (MoveGenerator<Searcher, true>::pd->inCheck()) {
-                *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
-                MoveGenerator<Searcher>::template generate<whiteToMove, false>(board);
-            } else {
-                MoveGenerator<Searcher, true>::template generate<whiteToMove, false>(board);
-            }
+//            if (MoveGenerator<Searcher, true>::pd->inCheck()) {
+//                *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
+////                MoveGenerator<Searcher>::template generate<whiteToMove, false>(board);
+//                generateMoves<Searcher, whiteToMove, false>(board);
+//            } else {
+//                MoveGenerator<Searcher, true>::template generate<whiteToMove, false>(board);
+            generateMoves<Searcher, whiteToMove, true, true>(board);
+//            }
 
             if (moves.at(depth).empty()) {
                 nodesSearched++;
