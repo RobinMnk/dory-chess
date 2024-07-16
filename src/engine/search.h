@@ -30,19 +30,20 @@ namespace Dory::Search {
     }
 
     class Searcher {
-        static Move priorityMove;
-        static std::array<std::vector<std::pair<int, Move>>, 128> moves;
+        static std::array<std::vector<std::pair<float, Move>>, 128> moves; // Todo: make fixed-size array?
         static int currentDepth;
     public:
         static TranspositionTable trTable;
         static RepetitionTable repTable;
+        static MoveOrderer moveOrderer;
+
         static std::vector<std::pair<Line, int>> bestLines;
         static BB nodesSearched;
         static Move bestMove;
         static std::vector<Move> bestMoves;
 
         template<bool whiteToMove>
-        static NMR iterativeDeepening(const Board &board, int maxDepth = MAX_ITER_DEPTH) {
+        static NMR iterativeDeepening(const Board& board, int maxDepth = MAX_ITER_DEPTH) {
             reset();
 //        repTable.reset();
             Line bestLine;
@@ -83,19 +84,19 @@ namespace Dory::Search {
         }
 
         template<bool whiteToMove>
-        static NMR searchDepth(const Board &board, int depth, int alpha = -INF, int beta = INF) {
+        static NMR searchDepth(const Board& board, int depth, int alpha = -INF, int beta = INF) {
 //        maxDepth = depth;
             bestLines.clear();
             return negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
         }
 
-        static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
+        static bool sortMovePairs(const std::pair<float, Move>& a, const std::pair<float, Move>& b) {
             return a.first > b.first;
         }
 
-        static std::vector<std::pair<int, Move>> topLevelLegalMoves() {
-            return moves[1];
-        }
+//        static std::vector<Move> topLevelLegalMoves() {
+//            return moves[1];
+//        }
 
         static void reset() {
             trTable.reset();
@@ -106,7 +107,7 @@ namespace Dory::Search {
     private:
 
         template<bool whiteToMove, bool topLevel>
-        static NMR negamax(const Board &board, int depth, int alpha, int beta, int maxDepth) {
+        static NMR negamax(const Board& board, int depth, int alpha, int beta, int maxDepth) {
 
             size_t boardHash = Zobrist::hash<whiteToMove>(board);
 
@@ -140,16 +141,18 @@ namespace Dory::Search {
 
             // Set move that is searched first
             if constexpr (topLevel) {
-                priorityMove = bestMove;
+                moveOrderer.priorityMove = bestMove;
             } else {
                 // ttEntry.move may be NULLMOVE, but that does not hurt us
-                priorityMove = ttEntry.move;
+                moveOrderer.priorityMove = ttEntry.move;
             }
 
             // Setup variables before generating legal moves
             moves.at(depth).clear();
             currentDepth = depth;
-            MoveGenerator<Searcher>::template generate<whiteToMove>(board);
+//            MoveGenerator<Searcher>::template generate<whiteToMove>(board);
+
+            generateMoves<Searcher, whiteToMove>(board);
 
             // No legal moves available
             if (moves.at(depth).empty()) {
@@ -171,7 +174,7 @@ namespace Dory::Search {
 //            std::cout << "   ";
 //        std::cout << depth << ":  " << Utils::moveNameShortNotation(priorityMove) << std::endl;
 
-            std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
+            moveOrderer.sort(moves.at(depth));
 
 
             // Iterate all moves
@@ -199,7 +202,7 @@ namespace Dory::Search {
 //        }
 
             /// Iterate through all moves
-            for (auto &[info, move]: moves.at(depth)) {
+            for (auto [info, move]: moves.at(depth)) {
 
                 repTable.insert(boardHash);
 
@@ -323,7 +326,7 @@ namespace Dory::Search {
             Line localBestLine;
 
             /// Iterate through all moves
-            for (auto &[info, move]: moves.at(depth)) {
+            for (auto [info, move]: moves.at(depth)) {
 
                 Board nextBoard = board.fork<whiteToMove>(move);
                 auto [eval, line] = quiescenceSearch<!whiteToMove>(nextBoard, depth + 1, -beta, -alpha);
@@ -352,8 +355,8 @@ namespace Dory::Search {
         static void registerMove(const Board &board, BB from, BB to) {
             // TODO reload checklogichandler and pass PinData to move_info
             moves[currentDepth].emplace_back(
-                    move_heuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<Searcher>::pd, priorityMove),
-                    createMoveFromBB(from, to, piece, flags)
+                moveOrderer.moveHeuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<Searcher>::pd),
+                createMoveFromBB(from, to, piece, flags)
             );
         }
 
@@ -361,7 +364,7 @@ namespace Dory::Search {
         friend class MoveGenerator<Searcher, false>;
     };
 
-    std::array<std::vector<std::pair<int, Move>>, 128> Searcher::moves{};
+    std::array<std::vector<std::pair<float, Move>>, 128> Searcher::moves{};
     int Searcher::currentDepth{0};
 //int Searcher::maxDepth{0};
     BB Searcher::nodesSearched{0};
@@ -369,8 +372,8 @@ namespace Dory::Search {
     std::vector<Move> Searcher::bestMoves{};
     TranspositionTable Searcher::trTable{};
     RepetitionTable Searcher::repTable{};
+    MoveOrderer Searcher::moveOrderer{};
     Move Searcher::bestMove{};
-    Move Searcher::priorityMove{};
 
 } // namespace Dory
 

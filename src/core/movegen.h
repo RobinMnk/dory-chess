@@ -89,8 +89,7 @@ namespace Dory {
     template<typename MoveCollector, bool quiescence, bool countOnly>
     template<bool whiteToMove, Piece_t piece, Flag_t flags>
     requires ValidMoveCollector<MoveCollector, whiteToMove, piece, flags>
-    void
-    MoveGenerator<MoveCollector, quiescence, countOnly>::generateSuccessorBoard(const Board &board, BB from, BB to) {
+    void MoveGenerator<MoveCollector, quiescence, countOnly>::generateSuccessorBoard(const Board &board, BB from, BB to) {
         if constexpr (quiescence) {
             if ((to & board.enemyPieces<whiteToMove>()) == 0)
                 return;
@@ -347,6 +346,13 @@ namespace Dory {
     std::array<unsigned int, 6> MoveGenerator<MC, qc, co>::numberOfMovesByPiece{};
     template<typename MC, bool qc, bool co>
     unsigned long MoveGenerator<MC, qc, co>::numberOfMoves{0};
+
+
+
+    template<typename MoveCollector, bool whiteToMove>
+    void generateMoves(const Board &board) {
+        MoveGenerator<MoveCollector>::template generate<whiteToMove>(board);
+    }
 
 } // namespace Dory
 
