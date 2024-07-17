@@ -125,7 +125,10 @@ namespace Dory::Search {
             }
 
             /// Switch to Quiescence Search
-            if (depth > maxDepth) {
+
+            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher>::pd);
+
+            if (!MoveGenerator<Searcher>::pd->inCheck() && depth > maxDepth) {
 //            nodesSearched++;
 //            int eval = Evaluation::evaluatePosition(board, state);
 //            trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
@@ -150,7 +153,7 @@ namespace Dory::Search {
             // Setup variables before generating legal moves
             moves.at(depth).clear();
             currentDepth = depth;
-            generateMoves<Searcher, whiteToMove>(board);
+            generateMoves<Searcher, whiteToMove, false>(board);
 
             // No legal moves available
             if (moves.at(depth).empty()) {
@@ -178,6 +181,7 @@ namespace Dory::Search {
             // Iterate all moves
             Line localBestLine;
             Move localBestMove;
+            Board nextBoard;
             int bestEval = -INF;
 
             int isPV = 4;
@@ -186,7 +190,7 @@ namespace Dory::Search {
 
             // Search Extensions
             int mdpt = maxDepth;
-            if (MoveGenerator<Searcher>::pd->inCheck()) mdpt++;
+            if (MoveGenerator<Searcher>::pd->inCheck()) mdpt++; // apparently super important!
 
 //            if(depth + 1 == maxDepth && MoveGenerator<Searcher>::pd->inCheck())
 //                mdpt++;
@@ -204,7 +208,7 @@ namespace Dory::Search {
 
                 repTable.insert(boardHash);
 
-                Board nextBoard = board.fork<whiteToMove>(move);
+                nextBoard = board.fork<whiteToMove>(move);
 
                 /// Pricipal Variation Search
                 if (isPV > 0) {
@@ -212,13 +216,11 @@ namespace Dory::Search {
                     eval = -ev;
                     line = ln;
                 } else {
-                    int redMdpt = maxDepth;
 //                if constexpr (topLevel)
 //                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<Searcher>::pd->inCheck()) redMdpt--;
-                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, redMdpt);
+                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, mdpt);
                     if (ev < -alpha && ev > -beta) {
-                        auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha,
-                                                                       redMdpt);
+                        auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, maxDepth-1);
                         eval = -ev2;
                         line = ln2;
                     } else {
@@ -305,30 +307,29 @@ namespace Dory::Search {
             moves.at(depth).clear();
             currentDepth = depth;
 
-//            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
+            CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
 
-//            if (MoveGenerator<Searcher, true>::pd->inCheck()) {
-//                *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
-////                MoveGenerator<Searcher>::template generate<whiteToMove, false>(board);
-//                generateMoves<Searcher, whiteToMove, false>(board);
-//            } else {
-//                MoveGenerator<Searcher, true>::template generate<whiteToMove, false>(board);
-            generateMoves<Searcher, whiteToMove, true, true>(board);
-//            }
+            if (MoveGenerator<Searcher, true>::pd->inCheck()) {
+                *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
+                generateMoves<Searcher, whiteToMove, false>(board);
+            } else {
+                generateMoves<Searcher, whiteToMove, false, true>(board);
+            }
 
             if (moves.at(depth).empty()) {
                 nodesSearched++;
                 return {alpha, {}};
             }
 
-            std::sort(moves.at(depth).begin(), moves.at(depth).end(), sortMovePairs);
+            moveOrderer.sort(moves.at(depth));
 
             Line localBestLine;
+            Board nextBoard;
 
             /// Iterate through all moves
             for (auto [info, move]: moves.at(depth)) {
 
-                Board nextBoard = board.fork<whiteToMove>(move);
+                nextBoard = board.fork<whiteToMove>(move);
                 auto [eval, line] = quiescenceSearch<!whiteToMove>(nextBoard, depth + 1, -beta, -alpha);
                 eval = -eval;
 

@@ -27,7 +27,7 @@ namespace Dory::Evaluation {
 //
 //        int mobility = features::mobility<true>(board) - features::mobility<false>(board);
 //
-        int activity = 0; // features::activity<whiteToMove>(board) - features::activity<!whiteToMove>(board);
+        int activity = features::activity<whiteToMove>(board) - features::activity<!whiteToMove>(board);
 
 //        int evalEstimate = material * params.MATERIAL_QUANTIFIER
 ////                + mobility * params.MOBILITY_QUANTIFIER
@@ -39,7 +39,7 @@ namespace Dory::Evaluation {
 
         int evalEstimate = material + activity + passedPawns;
 
-        return evalEstimate;
+        return evalEstimate / 16;
     }
 
 } // namespace Dory::Evaluation
