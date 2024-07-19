@@ -23,8 +23,19 @@ namespace Dory::Search {
             }
         }
 
+//        std::array<std::array<Move, 2>, 128> killerMoves;
+//        std::array<int, 128> kmPositions{};
     public:
         Move priorityMove;
+
+//        void reset() {
+//            kmPositions.fill(0);
+//        }
+//
+//        void addKillerMove(Move move, int dp) {
+//            killerMoves[dp][kmPositions[dp]++] = move;
+//            kmPositions[dp] %= 4;
+//        }
 
         template<typename T>
         void sort(std::vector<std::pair<float, T>> &moves) {
@@ -40,7 +51,6 @@ namespace Dory::Search {
             }
 
             int heuristic_val{0};
-
             /// Captures
             if ((to & board.enemyPieces<whiteToMove>())) {
                 int valueDiff = -pieceValue<piece>();
@@ -58,10 +68,16 @@ namespace Dory::Search {
 
                 heuristic_val += 2 * Large + valueDiff;
 
-                if ((pd->attacked & to) && valueDiff >= 0) {
-                    // Opponent can recapture
-                    heuristic_val += 8 * Large; // TODO isnt this the wrong way around?
+                // Good Capture
+                if (valueDiff >= -25) {
+                    heuristic_val += 8 * Large;
                 }
+//            } else {
+//                for(int i = 0; i < kmPositions[depth]; i++)
+//                    if(killerMoves[depth][i].is<piece, flags>(from, to)) {
+//                        heuristic_val += Large;
+//                        break;
+//                    }
             }
 
             /// Checks

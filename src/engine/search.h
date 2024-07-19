@@ -101,6 +101,7 @@ namespace Dory::Search {
         static void reset() {
             trTable.reset();
             repTable.reset();
+//            moveOrderer.reset();
 //        nodesSearched = 0;
         }
 
@@ -277,6 +278,7 @@ namespace Dory::Search {
                 }
 
                 if (alpha >= beta) {
+//                    moveOrderer.addKillerMove(move, depth);
                     break;
                 }
             }
