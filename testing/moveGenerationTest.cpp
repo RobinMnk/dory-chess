@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "../src/dory.h"
+#include "../src/utils/perft.h"
 
 /**
  * Best Move found at depth 2
