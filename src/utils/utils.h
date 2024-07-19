@@ -215,7 +215,7 @@ namespace Dory::Utils {
         return bss.str();
     }
 
-    void printLine(std::vector<Move>& line, int eval) {
+    void printLine(const std::vector<Move>& line, int eval) {
         if (eval == INF-1) {
             std::cout << "Checkmate - White wins!" << std::endl;
             return;

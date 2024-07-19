@@ -7,7 +7,6 @@
 
 #include "engine/search.h"
 #include "utils/fenreader.h"
-#include "utils/perft.h"
 
 namespace Dory {
 
@@ -46,6 +45,11 @@ namespace DoryUtils {
     std::pair<Dory::Board, bool> parseFEN(const std::string_view& fen) {
         return Dory::Utils::parseFEN(fen);
     }
+
+    void printLine(const std::vector<Dory::Move>& line, int eval) {
+        Dory::Utils::printLine(line, eval);
+    }
+
 }
 
 
