@@ -215,6 +215,33 @@ namespace Dory::Utils {
         return bss.str();
     }
 
+    std::string moveFullNotation(Move m) {
+        std::stringstream bss{};
+        bss << squarename(m.from()) << squarename(m.to());
+        bss << specialMove(m.flags);
+        return bss.str();
+    }
+
+    template<bool whiteToMove>
+    Piece_t getPiece(const Board& board, int ix) {
+        BB mask = newMask(ix);
+        if(board.pawns<whiteToMove>() & mask) return PIECE_Pawn;
+        if(board.knights<whiteToMove>() & mask) return PIECE_Knight;
+        if(board.bishops<whiteToMove>() & mask) return PIECE_Bishop;
+        if(board.rooks<whiteToMove>() & mask) return PIECE_Rook;
+        if(board.queens<whiteToMove>() & mask) return PIECE_Queen;
+        if(board.kingSquare<whiteToMove>() == ix) return PIECE_King;
+        throw std::runtime_error("Unrecognized Move!");
+    }
+
+    Move parseMove(const Board& board, bool whiteToMove, std::string_view str) {
+        uint8_t fromIx = 8 * (str[1] - '1') + (str[0]-'a');
+        uint8_t toIx = 8 * (str[3] - '1') + (str[2]-'a');
+        Piece_t piece = whiteToMove ? getPiece<true>(board, fromIx) : getPiece<false>(board, fromIx);
+        Flag_t flags = MOVEFLAG_Silent;
+        return {fromIx, toIx, piece, flags};
+    }
+
     void printLine(const std::vector<Move>& line, int eval) {
         if (eval == INF-1) {
             std::cout << "Checkmate - White wins!" << std::endl;

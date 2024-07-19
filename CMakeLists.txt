@@ -19,7 +19,11 @@ target_compile_options(Dory PUBLIC -fomit-frame-pointer -foptimize-sibling-calls
 target_compile_options(Dory PUBLIC -O3)
 
 
-add_executable(UCI src/utils/uci_controller.cpp)
+add_executable(UCI src/uci.cpp)
+target_compile_options(UCI PUBLIC -Wall -Wextra)
+target_compile_options(UCI PUBLIC -march=native)
+target_compile_options(UCI PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)
+target_compile_options(UCI PUBLIC -O3)
 
 enable_testing()
 

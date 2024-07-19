@@ -357,7 +357,7 @@ namespace Dory {
             throw std::runtime_error("INVALID PIECE MOVED");
         }
 
-        template<bool whiteMoved, Piece_t piece, Flag_t flags>
+        template<bool whiteMoved, Piece_t piece, Flag_t flags=MOVEFLAG_Silent>
         void makeMove(BB from, BB to) {
             BB change = from | to;
 
