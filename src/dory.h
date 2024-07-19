@@ -14,6 +14,7 @@ namespace Dory {
     bool readyOk = false;
 
     void initialize() {
+        if(readyOk) return;
         Dory::PieceSteps::load();
         Dory::Zobrist::init(23984729);
         readyOk = true;

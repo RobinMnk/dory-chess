@@ -21,11 +21,12 @@ namespace Dory {
             1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860, 84'998'978'956
         };
 
-        DoryUtils::perft<true, 7>(STARTBOARD);
+        const int maxDepth = 7;
+        std::vector<uLong> result = DoryUtils::perft<true, maxDepth>(STARTBOARD);
 
-        for (int i{1}; i <= 7; i++) {
+        for (int i{1}; i <= maxDepth; i++) {
             uLong expected = ground_truth.at(i);
-            uLong output = MoveCollectors::nodes.at(8 - i);
+            uLong output = result.at(maxDepth + 1 - i);
             ASSERT_EQ(output, expected);
         }
     }
@@ -33,14 +34,12 @@ namespace Dory {
     template<int depth>
     void runNodeCountTest(std::string_view fen, std::vector<uLong> ground_truth) {
         initialize();
-
         const auto [board, whiteToMove] = Utils::parseFEN(fen);
-
-        DoryUtils::perft<depth>(board, whiteToMove);
+        std::vector<uLong> result = DoryUtils::perft<depth>(board, whiteToMove);
 
         for (int i{1}; i <= depth; i++) {
             uLong expected = ground_truth.at(i);
-            uLong output = MoveCollectors::nodes.at(depth + 1 - i);
+            uLong output = result.at(depth + 1 - i);
             ASSERT_EQ(output, expected);
         }
     }
@@ -102,12 +101,8 @@ namespace Dory {
     template<int depth>
     void checkSingleDepth(std::string_view fen, uLong expected) {
         initialize();
-
         const auto [board, whiteToMove] = Utils::parseFEN(fen);
-
-        DoryUtils::perftSingleDepth<depth>(board, whiteToMove);
-
-        uLong output = MoveCollectors::LimitedDFS<1>::totalNodes;
+        uLong output = DoryUtils::perftSingleDepth<depth>(board, whiteToMove);
         ASSERT_EQ(output, expected);
     }
 
@@ -167,4 +162,5 @@ namespace Dory {
     TEST(Scenarios, StalemateAndCheckmate2) {
         checkSingleDepth<4>("8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1", 23527);
     }
-}
+
+} // namespace Dory

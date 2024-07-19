@@ -10,31 +10,34 @@
 namespace DoryUtils {
 
     template<bool whiteToMove, int depth>
-    void perft(const Dory::Board& board) {
-        Dory::MoveCollectors::nodes.clear();
-        Dory::MoveCollectors::nodes.resize(depth + 1);
-        Dory::MoveCollectors::PerftCollector<depth>::template generateGameTree<whiteToMove>(board);
+    std::vector<unsigned long long> perft(const Dory::Board& board) {
+        using namespace Dory::MoveCollectors;
+        nodes.clear();
+        nodes.resize(depth + 1);
+        PerftCollector<depth>::template generateGameTree<whiteToMove>(board);
+        return nodes;
     }
 
     template<int depth>
-    void perft(const Dory::Board& board, bool whiteToMove) {
-        if(whiteToMove) perft<true, depth>(board);
-        else perft<false, depth>(board);
+    std::vector<unsigned long long> perft(const Dory::Board& board, bool whiteToMove) {
+        if(whiteToMove) return perft<true, depth>(board);
+        else return perft<false, depth>(board);
     }
 
 
     template<bool whiteToMove, int depth>
-    void perftSingleDepth(const Dory::Board& board) {
-        Dory::MoveCollectors::LimitedDFS<1>::totalNodes = 0;
-        Dory::MoveCollectors::LimitedDFS<depth>::template generateGameTree<whiteToMove>(board);
+    unsigned long long perftSingleDepth(const Dory::Board& board) {
+        using namespace Dory::MoveCollectors;
+        LimitedDFS<1>::totalNodes = 0;
+        LimitedDFS<depth>::template generateGameTree<whiteToMove>(board);
+        return LimitedDFS<1>::totalNodes;
     }
 
     template<int depth>
-    void perftSingleDepth(const Dory::Board& board, bool whiteToMove) {
-        if(whiteToMove) perftSingleDepth<true, depth>(board);
-        else perftSingleDepth<false, depth>(board);
+    unsigned long long perftSingleDepth(const Dory::Board& board, bool whiteToMove) {
+        if(whiteToMove) return perftSingleDepth<true, depth>(board);
+        else return perftSingleDepth<false, depth>(board);
     }
-
 
 }
 
