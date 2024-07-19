@@ -3,49 +3,25 @@
 //
 
 #include <gtest/gtest.h>
-
-#include "../src/utils/fenreader.h"
-#include "../src/core/movecollectors.h"
+#include "../src/dory.h"
 
 /**
  * Best Move found at depth 2
  * k7/p7/6b1/8/2K5/8/n3R1p1/8 w - - 0 1
  */
 
-namespace PerftTesting {
+namespace Dory {
 
     using uLong = unsigned long long;
 
-//    // Gives node counts at all depths
-//    struct PerftRunner {
-//        template<State state, int depth>
-//        static void main(const Board &board) {
-//            MoveCollectors::PerftCollector<depth>::template generateGameTree<state.whiteToMove>(board);
-//        }
-//    };
-//
-//    // Gives node count only at given depth
-//    struct NodeCountingRunner {
-//        template<State state, int depth>
-//        static void main(const Board &board) {
-//            MoveCollectors::LimitedDFS<depth>::template generateGameTree<state.whiteToMove>(board);
-//        }
-//    };
-
-
-
-
-
     TEST(NodeCounts, StartingPosition) {
-        PieceSteps::load(); // make sure this is run on the first test!
-        MoveCollectors::nodes.clear();
-        MoveCollectors::nodes.resize(10);
+        initialize();
 
         std::vector<uLong> ground_truth{
             1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860, 84'998'978'956
         };
 
-        MoveCollectors::PerftCollector<7>::template generateGameTree<true>(STARTBOARD);
+        DoryUtils::perft<true, 7>(STARTBOARD);
 
         for (int i{1}; i <= 7; i++) {
             uLong expected = ground_truth.at(i);
@@ -56,16 +32,11 @@ namespace PerftTesting {
 
     template<int depth>
     void runNodeCountTest(std::string_view fen, std::vector<uLong> ground_truth) {
-        PieceSteps::load();
-        MoveCollectors::nodes.clear();
-        MoveCollectors::nodes.resize(depth + 1);
+        initialize();
 
         const auto [board, whiteToMove] = Utils::parseFEN(fen);
-        if(whiteToMove) {
-            MoveCollectors::PerftCollector<depth>::template generateGameTree<true>(board);
-        } else {
-            MoveCollectors::PerftCollector<depth>::template generateGameTree<false>(board);
-        }
+
+        DoryUtils::perft<depth>(board, whiteToMove);
 
         for (int i{1}; i <= depth; i++) {
             uLong expected = ground_truth.at(i);
@@ -130,15 +101,11 @@ namespace PerftTesting {
 
     template<int depth>
     void checkSingleDepth(std::string_view fen, uLong expected) {
-        PieceSteps::load();
-        MoveCollectors::LimitedDFS<1>::totalNodes = 0;
+        initialize();
 
         const auto [board, whiteToMove] = Utils::parseFEN(fen);
-        if(whiteToMove) {
-            MoveCollectors::LimitedDFS<depth>::template generateGameTree<true>(board);
-        } else {
-            MoveCollectors::LimitedDFS<depth>::template generateGameTree<false>(board);
-        }
+
+        DoryUtils::perftSingleDepth<depth>(board, whiteToMove);
 
         uLong output = MoveCollectors::LimitedDFS<1>::totalNodes;
         ASSERT_EQ(output, expected);

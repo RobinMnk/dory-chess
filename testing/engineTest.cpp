@@ -4,8 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <fstream>
-#include "../src/utils/fenreader.h"
-#include "../src/engine/search.h"
+#include "../src/dory.h"
 
 namespace Dory {
 
@@ -15,9 +14,7 @@ namespace Dory {
     };
 
     std::vector<std::pair<std::string, std::string>> loadTestCases(int index, int limit) {
-        /// Setup Engine
-        PieceSteps::load();
-        Zobrist::init();
+        initialize();
 
         std::vector<std::pair<std::string, std::string>> testCases;
         std::string fen, solution;

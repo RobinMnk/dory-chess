@@ -7,6 +7,7 @@
 
 #include "engine/search.h"
 #include "utils/fenreader.h"
+#include "utils/perft.h"
 
 namespace Dory {
 
