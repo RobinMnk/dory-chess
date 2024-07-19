@@ -19,8 +19,6 @@ namespace Dory::Evaluation {
      */
     template<bool whiteToMove>
     int evaluatePosition(const Board& board) {
-
-
         int matFriendly = features::material<whiteToMove>(board);
         int matEnemy = features::material<!whiteToMove>(board);
         int material = matFriendly - matEnemy;

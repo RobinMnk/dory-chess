@@ -24,7 +24,7 @@ namespace Dory {
         std::unordered_map<BB, TTEntry> lookup_table;
     public:
         static const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
-        unsigned long long lookups{0};
+//        unsigned long long lookups{0};
 
         void insert(size_t boardHash, int eval, Move move, int depthDiff, int alpha, int beta) {
             uint8_t flag;
@@ -67,7 +67,7 @@ namespace Dory {
         }
 
         void reset() {
-            lookups = 0;
+//            lookups = 0;
             lookup_table.clear();
 //        lookup_table.reserve(145000);
         }
