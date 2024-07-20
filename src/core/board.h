@@ -360,6 +360,7 @@ namespace Dory {
         template<bool whiteMoved, Piece_t piece, Flag_t flags=MOVEFLAG_Silent>
         void makeMove(BB from, BB to) {
             BB change = from | to;
+            int epSq = enPassantSq;
             enPassantSq = flags == MOVEFLAG_PawnDoublePush ? singleBitOf(forward<whiteMoved>(from)) : 0;
 
             if constexpr (flags == MOVEFLAG_RemoveShortCastling) {
@@ -473,7 +474,7 @@ namespace Dory {
 
             // Silent Moves
             if constexpr (piece == PIECE_Pawn) {
-                BB epMask = flags == MOVEFLAG_EnPassantCapture ? ~backward<whiteMoved>(newMask(enPassantSq)) : FULL_BB;
+                BB epMask = flags == MOVEFLAG_EnPassantCapture ? ~backward<whiteMoved>(newMask(epSq)) : FULL_BB;
                 if constexpr (whiteMoved) {
                     wPawns ^= change;
                     bPawns &= epMask & ~to;
