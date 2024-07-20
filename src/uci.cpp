@@ -36,7 +36,7 @@ class UciManager {
                 whiteToMove = w;
             }
 
-            unsigned int ix = 3;
+            unsigned int ix = 2;
             while(ix < seglist.size() && seglist.at(ix) != "moves") ix++;
             ix++;
 
