@@ -31,12 +31,16 @@ class UciManager {
         if(seglist.at(0) == "position") {
             if(seglist.at(1) == "startpos") { board = Dory::STARTBOARD; whiteToMove = true; }
             else {
-                auto [b, w] = DoryUtils::parseFEN(seglist.at(1));
+                auto [b, w] = Dory::Utils::parseFEN(seglist, 2);
                 board = b;
                 whiteToMove = w;
             }
-            if(seglist.size() > 2) {
-                unsigned int ix = 3;
+
+            unsigned int ix = 3;
+            while(ix < seglist.size() && seglist.at(ix) != "moves") ix++;
+            ix++;
+
+            if(seglist.size() > ix) {
                 while(ix < seglist.size()) {
                     Dory::Move move = Dory::Utils::parseMove(board, whiteToMove, seglist.at(ix));
                     board.makeMove(move, whiteToMove);
@@ -59,7 +63,7 @@ public:
         std::string cmd;
         while(cmd != "quit") {
             std::getline(std::cin, cmd, '\n');
-            processCommand(cmd);
+            if(!cmd.empty()) processCommand(cmd);
         }
     }
 };

@@ -11,15 +11,9 @@
 
 namespace Dory::Utils {
 
-    std::pair<Board, bool> parseFEN(const std::string_view& fen) {
+    std::pair<Board, bool> parseFEN(std::vector<std::string>& fenParts, int ix) {
 
-        std::stringstream stream(fen.data());
-        std::string segment;
-        std::vector<std::string> seglist;
-//        try {
-        while(std::getline(stream, segment, ' ')) seglist.push_back(segment);
-
-        std::string position = seglist.at(0), currentPlayer = seglist.at(1), castling = seglist.at(2), ep = seglist.at(3);
+        std::string position = fenParts.at(ix), currentPlayer = fenParts.at(ix+1), castling = fenParts.at(ix+2), ep = fenParts.at(ix+3);
 
         int rank{7}, file{0};
 
@@ -79,13 +73,13 @@ namespace Dory::Utils {
         if(ep != "-") enPassantField = sqId(ep);
 
         // second position is side to move
-        const bool w = seglist.at(1) == "w";
+        const bool w = fenParts.at(ix+1) == "w";
 
         // castling rights
-        const bool wcs = seglist.at(2).find('K') != std::string::npos;
-        const bool wcl = seglist.at(2).find('Q') != std::string::npos;
-        const bool bcs = seglist.at(2).find('k') != std::string::npos;
-        const bool bcl = seglist.at(2).find('q') != std::string::npos;
+        const bool wcs = fenParts.at(ix+2).find('K') != std::string::npos;
+        const bool wcl = fenParts.at(ix+2).find('Q') != std::string::npos;
+        const bool bcs = fenParts.at(ix+2).find('k') != std::string::npos;
+        const bool bcl = fenParts.at(ix+2).find('q') != std::string::npos;
 
         uint8_t castlingRights{0};
         if(wcs) castlingRights |= wCastleShortMask;
@@ -95,6 +89,15 @@ namespace Dory::Utils {
 
         return {{ wPawns, bPawns, wKnights, bKnights, wBishops, bBishops, wRooks, bRooks, wQueens, bQueens, wKing, bKing, enPassantField, castlingRights }, w};
     }
+
+    std::pair<Board, bool> parseFEN(const std::string_view& fen) {
+        std::stringstream stream(fen.data());
+        std::string segment;
+        std::vector<std::string> seglist;
+        while(std::getline(stream, segment, ' ')) seglist.push_back(segment);
+        return parseFEN(seglist, 0);
+    }
+
 
 //    template<typename Main, int depth>
 //    void run(uint8_t state_code, const Board& board) {

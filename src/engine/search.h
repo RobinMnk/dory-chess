@@ -81,8 +81,8 @@ namespace Dory {
                     bestLine = line;
 
 //            std::cout << "Line for depth " << depth << std::endl;
-                    std::cout << "Depth " << depth << " -> ";
-                    Utils::printLine(bestLine, bestEval);
+//                    std::cout << "Depth " << depth << " -> ";
+//                    Utils::printLine(bestLine, bestEval);
 
                     depth++;
                 }
@@ -107,7 +107,7 @@ namespace Dory {
             static void reset() {
                 searchResults.reset();
                 trTable.reset();
-                repTable.reset();
+//                repTable.reset();
 //            moveOrderer.reset();
 //        nodesSearched = 0;
             }
@@ -204,12 +204,12 @@ namespace Dory {
 //                mdpt++;
 //            maxDepth++;
 
-//        if constexpr (topLevel) {
-//            for(auto& [_, m]: moves.at(depth)) {
-//                std::cout << Utils::moveNameNotation(m) << ",  ";
-//            }
-//            std::cout << std::endl;
-//        }
+//                if constexpr (topLevel) {
+//                    for(auto& [_, m]: moves.at(depth)) {
+//                        std::cout << Utils::moveNameNotation(m) << ",  ";
+//                    }
+//                    std::cout << "Called at top level" << std::endl;
+//                }
 
                 /// Iterate through all moves
                 for (auto [info, move]: moves.at(depth)) {

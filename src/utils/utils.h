@@ -7,6 +7,7 @@
 
 #include <array>
 #include <chrono>
+#include <vector>
 #include <ranges>
 #include <sstream>
 #include "../core/board.h"
