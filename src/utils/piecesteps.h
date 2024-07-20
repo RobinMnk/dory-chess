@@ -22,7 +22,7 @@ namespace Dory::PieceSteps {
 
     std::array<std::array<BB, 64>, 64> FROM_TO{};
 
-    std::array<std::array<BB, 64>, 64> DIST{};
+    std::array<std::array<uint8_t, 64>, 64> DIST{};
 
     template<bool>
     std::array<BB, 64> PASSED_PAWN_MASK{};

@@ -104,6 +104,21 @@ namespace Dory::Utils {
         }
     }
 
+    std::string promotionsFlag(Flag_t flags) {
+        switch (flags) {
+            case MOVEFLAG_PromoteBishop:
+                return "b";
+            case MOVEFLAG_PromoteKnight:
+                return "n";
+            case MOVEFLAG_PromoteRook:
+                return "r";
+            case MOVEFLAG_PromoteQueen:
+                return "q";
+            default:
+                return "";
+        }
+    }
+
     std::string pieceString(Piece_t piece) {
         switch (piece) {
             case PIECE_King:
@@ -218,7 +233,7 @@ namespace Dory::Utils {
     std::string moveFullNotation(Move m) {
         std::stringstream bss{};
         bss << squarename(m.from()) << squarename(m.to());
-        bss << specialMove(m.flags);
+        bss << promotionsFlag(m.flags);
         return bss.str();
     }
 
@@ -234,11 +249,36 @@ namespace Dory::Utils {
         throw std::runtime_error("Unrecognized Move!");
     }
 
+    template<bool whiteToMove>
+    Flag_t parseMoveFlag(const Board& board, Piece_t piece, int fromIx, int toIx, std::string_view str) {
+        BB fromBB = newMask(fromIx);
+        if(piece == PIECE_King) {
+            if(str == "e1g1" || str == "e8g8") return MOVEFLAG_ShortCastling;
+            if(str == "e1c1" || str == "e8c8") return MOVEFLAG_LongCastling;
+            return MOVEFLAG_RemoveAllCastling;
+        }
+        if (piece == PIECE_Pawn) {
+            if((firstPawnRank<whiteToMove>() & fromBB) && (hasBitAt(forward2<whiteToMove>(fromBB), toIx)))
+                return MOVEFLAG_PawnDoublePush;
+            if(toIx == board.enPassantSq) return MOVEFLAG_EnPassantCapture;
+            if (str.length() == 5) {
+                if(str[4] == 'q') return MOVEFLAG_PromoteQueen;
+                if(str[4] == 'r') return MOVEFLAG_PromoteRook;
+                if(str[4] == 'n') return MOVEFLAG_PromoteKnight;
+                if(str[4] == 'b') return MOVEFLAG_PromoteBishop;
+            }
+        } else if (piece == PIECE_Rook) {
+            if (startingKingsideRook<whiteToMove>() & fromBB)  return MOVEFLAG_RemoveShortCastling;
+            if (startingQueensideRook<whiteToMove>() & fromBB) return MOVEFLAG_RemoveLongCastling;
+        }
+        return MOVEFLAG_Silent;
+    }
+
     Move parseMove(const Board& board, bool whiteToMove, std::string_view str) {
         uint8_t fromIx = 8 * (str[1] - '1') + (str[0]-'a');
         uint8_t toIx = 8 * (str[3] - '1') + (str[2]-'a');
         Piece_t piece = whiteToMove ? getPiece<true>(board, fromIx) : getPiece<false>(board, fromIx);
-        Flag_t flags = MOVEFLAG_Silent;
+        Flag_t flags = whiteToMove ? parseMoveFlag<true>(board, piece, fromIx, toIx, str) : parseMoveFlag<false>(board, piece, fromIx, toIx, str);
         return {fromIx, toIx, piece, flags};
     }
 

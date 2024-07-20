@@ -39,8 +39,7 @@ class UciManager {
                 unsigned int ix = 3;
                 while(ix < seglist.size()) {
                     Dory::Move move = Dory::Utils::parseMove(board, whiteToMove, seglist.at(ix));
-                    if(whiteToMove) board.makeMove<true>(move);
-                    else board.makeMove<false>(move);
+                    board.makeMove(move, whiteToMove);
                     whiteToMove = !whiteToMove;
                     ++ix;
                 }

@@ -663,6 +663,11 @@ namespace Dory {
             }
             throw std::runtime_error("INVALID PIECE MOVED");
         }
+
+        void makeMove(Move move, bool whiteToMove) {
+            if(whiteToMove) makeMove<true>(move);
+            else makeMove<false>(move);
+        }
     };
 
 
