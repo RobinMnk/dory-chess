@@ -261,7 +261,7 @@ namespace Dory::Utils {
         if (piece == PIECE_Pawn) {
             if((firstPawnRank<whiteToMove>() & fromBB) && (hasBitAt(forward2<whiteToMove>(fromBB), toIx)))
                 return MOVEFLAG_PawnDoublePush;
-            if(toIx == board.enPassantSq) return MOVEFLAG_EnPassantCapture;
+            if(board.hasEnPassant() && toIx == board.enPassantSq) return MOVEFLAG_EnPassantCapture;
             if (str.length() == 5) {
                 if(str[4] == 'q') return MOVEFLAG_PromoteQueen;
                 if(str[4] == 'r') return MOVEFLAG_PromoteRook;
