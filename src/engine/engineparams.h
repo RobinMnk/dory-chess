@@ -200,7 +200,7 @@ namespace Dory {
         }
 
         template<Piece_t piece, bool whiteToMove>
-        int middleGamePieceTable(int square) {
+        inline int middleGamePieceTable(int square) {
             if constexpr (piece == PIECE_Pawn)
                 return mg_table[0][adjustSquare<whiteToMove>(square)];
             else if constexpr (piece == PIECE_Knight)
@@ -217,7 +217,7 @@ namespace Dory {
         }
 
         template<Piece_t piece, bool whiteToMove>
-        int endGamePieceTable(int square) {
+        inline int endGamePieceTable(int square) {
             if constexpr (piece == PIECE_Pawn)
                 return eg_table[0][adjustSquare<whiteToMove>(square)];
             else if constexpr (piece == PIECE_Knight)
@@ -234,7 +234,7 @@ namespace Dory {
         }
 
         template<Piece_t piece>
-        int gamePhaseIncrement() {
+        inline int gamePhaseIncrement() {
             if constexpr (piece == PIECE_Knight || piece == PIECE_Bishop)
                 return 1;
             else if constexpr (piece == PIECE_Rook)
@@ -247,7 +247,7 @@ namespace Dory {
         const int ppScore[7] = {0, 850, 600, 200, 100, 50, 50};
 
         template<bool whiteToMove>
-        [[nodiscard]] int passedPawnScore(int square) const {
+        [[nodiscard]] inline int passedPawnScore(int square) const {
             int stepsToGo = rankOf(square);
             if constexpr (whiteToMove) stepsToGo = 7 - stepsToGo;
             return ppScore[stepsToGo];
@@ -257,7 +257,7 @@ namespace Dory {
     static EngineParams ENGINE_PARAMS{};
 
     template<Piece_t piece>
-    constexpr int pieceValue() {
+    inline int pieceValue() {
         if constexpr (piece == PIECE_Pawn) {
             return ENGINE_PARAMS.MATERIAL_WEIGHT_PAWN;
         }

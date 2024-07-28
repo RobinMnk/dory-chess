@@ -40,13 +40,11 @@ class UciManager {
             while(ix < seglist.size() && seglist.at(ix) != "moves") ix++;
             ix++;
 
-            if(seglist.size() > ix) {
-                while(ix < seglist.size()) {
-                    Dory::Move move = Dory::Utils::parseMove(board, whiteToMove, seglist.at(ix));
-                    board.makeMove(move, whiteToMove);
-                    whiteToMove = !whiteToMove;
-                    ++ix;
-                }
+            while(ix < seglist.size()) {
+                Dory::Move move = Dory::Utils::parseMove(board, whiteToMove, seglist.at(ix));
+                board.makeMove(move, whiteToMove);
+                whiteToMove = !whiteToMove;
+                ++ix;
             }
             status = READY;
         }
