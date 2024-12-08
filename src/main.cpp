@@ -2,6 +2,7 @@
 
 #include "dory.h"
 #include "utils/perft.h"
+#include "engine/mc.h"
 
 void timeEvaluation(const Dory::Board& board, int depth, bool whiteToMove) {
     auto start = std::chrono::high_resolution_clock::now();
@@ -42,6 +43,14 @@ int main() {
     if(command == "eval") {
         int eval = Dory::staticEvaluation(board, whiteToMove);
         printf("Eval: %d\n", eval);
+        return 0;
+    }
+    if(command == "montecarlo") {
+        int res;
+        Dory::initialize();
+        if(whiteToMove) res = Dory::MonteCarlo::simulateGame<true>(board, depth);
+        else res = Dory::MonteCarlo::simulateGame<false>(board, depth);
+        std::cout << "Result: " << res << std::endl;
         return 0;
     }
 

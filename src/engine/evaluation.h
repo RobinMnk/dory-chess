@@ -11,10 +11,10 @@
 #include "features.h"
 #include "engineparams.h"
 
-namespace Dory::Evaluation {
+namespace Dory::evaluation {
 
     /**
-     * Gives estimate for position Evaluation score for the side that is to move.
+     * Gives estimate for position evaluation score for the side that is to move.
      * Positive value is good for the side to move (not necessarily good for white)
      */
     template<bool whiteToMove>
@@ -40,7 +40,7 @@ namespace Dory::Evaluation {
         return evalEstimate / 16;
     }
 
-} // namespace Dory::Evaluation
+} // namespace Dory::evaluation
 
 
 #endif //DORY_EVALUATION_H

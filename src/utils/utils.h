@@ -218,7 +218,7 @@ namespace Dory::Utils {
         if (m.flags == MOVEFLAG_ShortCastling) bss << specialMove(MOVEFLAG_ShortCastling);
         else if (m.flags == MOVEFLAG_LongCastling) bss << specialMove(MOVEFLAG_LongCastling);
         else bss << pieceString(m.piece) << squarename(m.from()) << "-" << squarename(m.to());
-        bss << specialMove(m.flags);
+        bss << promotionsFlag(m.flags);
         return bss.str();
     }
 
@@ -227,7 +227,7 @@ namespace Dory::Utils {
         if (m.flags == MOVEFLAG_ShortCastling) bss << specialMove(MOVEFLAG_ShortCastling);
         else if (m.flags == MOVEFLAG_LongCastling) bss << specialMove(MOVEFLAG_LongCastling);
         else bss << pieceString(m.piece) << squarename(m.to());
-        bss << specialMove(m.flags);
+        bss << promotionsFlag(m.flags);
         return bss.str();
     }
 

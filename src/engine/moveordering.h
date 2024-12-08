@@ -40,7 +40,7 @@ namespace Dory::Search {
         template<typename T>
         void sort(std::vector<std::pair<float, T>> &moves) {
             std::sort(moves.begin(), moves.end(),
-                      [](const std::pair<float, T>& a, const std::pair<float, T>& b) { return a.first > b.first; }
+                  [](const std::pair<float, T>& a, const std::pair<float, T>& b) { return a.first > b.first; }
             );
         }
 

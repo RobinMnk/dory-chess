@@ -138,7 +138,7 @@ namespace Dory {
 
                 if (!MoveGenerator<Searcher>::pd->inCheck() && depth > maxDepth) {
 //            nodesSearched++;
-//            int eval = Evaluation::evaluatePosition(board, state);
+//            int eval = evaluation::evaluatePosition(board, state);
 //            trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
 //            return { eval, {} };
 
@@ -304,7 +304,7 @@ namespace Dory {
             template<bool whiteToMove>
             static Result quiescenceSearch(const Board &board, int depth, int alpha, int beta) {
                 /// Recursion Base Case: Max Depth reached -> return heuristic position eval
-                int standPat = Evaluation::evaluatePosition<whiteToMove>(board);
+                int standPat = evaluation::evaluatePosition<whiteToMove>(board);
 
                 if (standPat >= beta) {
                     searchResults.nodesSearched++;

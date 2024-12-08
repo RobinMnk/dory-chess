@@ -5,69 +5,71 @@
 #ifndef DORY_MONTE_CARLO_H
 #define DORY_MONTE_CARLO_H
 
+namespace Dory::MonteCarlo {
+
 #include "search.h"
 #include "../utils/random.h"
 
-double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.95;
-double USE_RANDOM_MOVE_IN_ROLLOUT = 0.5;
+    double USE_ENGINE_BEST_MOVES_PROBABILITY = 0.95;
+    double USE_RANDOM_MOVE_IN_ROLLOUT = 0.5;
 
-class MonteCarlo {
-    static Utils::Random random;
-public:
+    class MonteCarlo {
+        static Utils::Random random;
+    public:
 
-    template<bool whiteToMove>
-    static void runSimulations(const Board& board, int depth, int numSimulations) {
-        int wins{0}, losses{0};
-        for(int i = 1; i <= numSimulations; i++) {
-            EngineMC::reset();
-            int res = simulateGame<whiteToMove>(board, depth);
-            if(res == 1) wins++;
-            else if (res == -1) losses++;
+        template<bool whiteToMove>
+        static void runSimulations(const Board &board, int depth, int numSimulations) {
+            int wins{0}, losses{0};
+            for (int i = 1; i <= numSimulations; i++) {
+                EngineMC::reset();
+                int res = simulateGame<whiteToMove>(board, depth);
+                if (res == 1) wins++;
+                else if (res == -1) losses++;
 
+            }
+            std::cout << "\n" << wins << " wins, " << losses << " losses, " << numSimulations << " games" << std::endl;
         }
-        std::cout << "\n" << wins << " wins, " << losses << " losses, " << numSimulations << " games" << std::endl;
-    }
 
 
-    template<bool whiteToMove>
-    static int simulateGame(const Board& board, int depth, int ply=0) {
+        template<bool whiteToMove>
+        static int simulateGame(const Board &board, int depth, int ply = 0) {
 
 //            Utils::print_board(currentBoard);
 //            std::cout << (currentState.whiteToMove ? "White" : "Black") << " to move" << std::endl;
-        auto [eval, line] = EngineMC::iterativeDeepening<whiteToMove>(board, depth);
+            auto [eval, line] = EngineMC::iterativeDeepening<whiteToMove>(board, depth);
 
-        if (line.empty()) {
-            // Game over
-            if(eval > (INF - 50)) {
-                // White wins by Checkmate
+            if (line.empty()) {
+                // Game over
+                if (eval > (INF - 50)) {
+                    // White wins by Checkmate
 //                    std::cout << "Checkmate - White wins!  (" << (ply / 2) << " moves)" << std::endl;
-                return whiteToMove ? 2 : 0;
-            } else if(eval < -(INF - 50)) {
-                // Black wins by Checkmate
+                    return whiteToMove ? 2 : 0;
+                } else if (eval < -(INF - 50)) {
+                    // Black wins by Checkmate
 //                    std::cout << "Checkmate - Black wins!  (" << (ply / 2) << " moves)" << std::endl;
-                return whiteToMove ? 0 : 2;
-            }
+                    return whiteToMove ? 0 : 2;
+                }
 //                std::cout << "Draw - Threefold repetition!  (" << (ply / 2) << " moves)" << std::endl;
-            return 1;
-        }
+                return 1;
+            }
 
 //            printf("%zu\n", Searcher::bestMoves().size());
 //            printf("%zu\n", Searcher::topLevelLegalMoves().size());
 
 //            nextMove = line.back();
 
-        Move nextMove;
-        if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
-            nextMove = random.randomElementOf(EngineMC::bestMoves);
-        } else {
+            Move nextMove;
+            if (random.bernoulli(USE_ENGINE_BEST_MOVES_PROBABILITY)) {
+                nextMove = random.randomElementOf(EngineMC::bestMoves);
+            } else {
 //                std::cout << "Picking legal move at random" << std::endl;
-            nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
-        }
+                nextMove = random.randomElementOf(EngineMC::topLevelLegalMoves()).second;
+            }
 
 //            std::cout << "Eval:  " << eval << std::endl;
 //            Utils::printMove(nextMove);
 
-        // Count moves since last pawn move or capture
+            // Count moves since last pawn move or capture
 //        if(nextMove.piece == Piece::Pawn || board.isCapture<whiteToMove>(nextMove)) {
 //            action_counter = 0;
 //            Searcher::repTable.reset();
@@ -76,21 +78,21 @@ public:
 //            return 1;
 //        }
 
-        EngineMC::repTable.insert(Zobrist::hash<whiteToMove>(board));
+            EngineMC::repTable.insert(Zobrist::hash<whiteToMove>(board));
 
-        board.makeMove<whiteToMove>(nextMove);
+            board.makeMove<whiteToMove>(nextMove);
 
-        ply++;
-        if(ply == 200) // After 200 moves of simulation a game is considered a draw
-            return 1;
+            ply++;
+            if (ply == 200) // After 200 moves of simulation a game is considered a draw
+                return 1;
 
-        return simulatePly<!whiteToMove>(board, ply, depth);
+            return simulatePly<!whiteToMove>(board, ply, depth);
 
 //            if (ply % 2 == 1) {
 //                fen << (1 + (ply >> 1)) << ". ";
 //            }
 //            fen << Utils::moveNameNotation(nextMove) << " ";
-    }
+        }
 
 //    template<bool whiteToMove>
 //    static int simulateGame(const Board& board, int depth) {
@@ -109,26 +111,26 @@ public:
 ////        return fen.str();
 ////        throw std::runtime_error("Game simulation aborted unexpectedly");
 //    }
-};
+    };
 
-Utils::Random MonteCarlo::random{};
+    Utils::Random MonteCarlo::random{};
 
 
-int randomPlayout(Board& board, State state, Utils::Random rand) {
-    bool white = state.whiteToMove;
+    int randomPlayout(Board &board, State state, Utils::Random rand) {
+        bool white = state.whiteToMove;
 
-    // After 300 moves of simulation a game is considered a draw
-    for(int ply{0}; ply < 600; ply++) {
-        std::vector<Move> moveList;
-        MoveListGenerator::getMoves<false>(board, state, moveList);
+        // After 300 moves of simulation a game is considered a draw
+        for (int ply{0}; ply < 600; ply++) {
+            std::vector<Move> moveList;
+            MoveListGenerator::getMoves<false>(board, state, moveList);
 
-        if(moveList.empty()) {
-            if(MoveGenerator<MoveListGenerator, false>::pd->inCheck()) {
-                // Checkmate
-                return state.whiteToMove == white ? 0 : 2;
+            if (moveList.empty()) {
+                if (MoveGenerator<MoveListGenerator, false>::pd->inCheck()) {
+                    // Checkmate
+                    return state.whiteToMove == white ? 0 : 2;
+                }
+                return 1;
             }
-            return 1;
-        }
 
 //        Move move;
 //        if (rand.bernoulli(USE_RANDOM_MOVE_IN_ROLLOUT)) {
@@ -139,7 +141,7 @@ int randomPlayout(Board& board, State state, Utils::Random rand) {
 //            moveList.pop_back();
 //            for(Move m: moveList) {
 //                auto [nextBoard, nextState] = fork(board, state, m);
-//                int eval = subjectiveEval(Evaluation::evaluatePosition(nextBoard, nextState), nextState);
+//                int eval = subjectiveEval(evaluation::evaluatePosition(nextBoard, nextState), nextState);
 //                if(eval > bestEval) {
 //                    bestEval = eval;
 //                    move = m;
@@ -147,154 +149,161 @@ int randomPlayout(Board& board, State state, Utils::Random rand) {
 //            }
 //        }
 
-        Move move = rand.randomElementOf(moveList);
-        board.makeMove(state, move);
-        state.update(move.flags);
-    }
-
-    return 1;
-}
-
-
-struct TreeNode;
-using TPT = std::shared_ptr<TreeNode>;
-
-struct ChildrenData {
-    Move move;
-    TPT node;
-    float score;
-};
-
-struct TreeNode {
-    int wins{0};
-    int total{0};
-    TPT parent;
-    int index;
-    std::vector<ChildrenData> children;
-
-    TreeNode(TPT& pt, int ix) : parent(pt), index(ix) {}
-
-    ~TreeNode() {
-        for(auto& [_, x, _2]: children) {
-            x.reset();
-        }
-    }
-};
-
-class GameTree {
-    Board startBoard;
-    State startState;
-    Utils::Random random;
-
-    const double c = 1.414;
-
-public:
-    TPT root;
-
-    GameTree (const Board& board, const State& state) : startBoard{board}, startState(state) {
-        root = std::make_unique<TreeNode>(root, 0);
-    }
-    ~GameTree() {
-        root.reset();
-    }
-
-    void run() {
-        /// 1. SELECT
-        TPT node = root;
-        Board board = startBoard;
-        State state = startState;
-
-        while(!node->children.empty()) {
-            ChildrenData best = node->children.front();
-            for(auto& cd: node->children) {
-                if (cd.node->total > 0) {
-                    cd.score = static_cast<double>(cd.node->wins) / cd.node->total + c * std::sqrt(std::sqrt(node->total) / cd.node->total);
-                    if(cd.score <= best.score) {
-                        continue;
-                    }
-                } else cd.score = INFINITY;
-                best = cd;
-            }
-
-            auto [move, next, _] = best;
+            Move move = rand.randomElementOf(moveList);
             board.makeMove(state, move);
             state.update(move.flags);
-            node = next;
         }
 
-        /// 2. EXPAND
-        if(node->total > 0) {
-            currentNode = node;
-            generate<MC, false>(board, state);
-
-            if(currentNode->children.empty()) {
-                // currentNode is terminal
-                return;
-            }
-
-            ChildrenData child = random.randomElementOf(currentNode->children);
-            board.makeMove(state, child.move);
-            state.update(child.move.flags);
-            node = child.node;
-        }
-
-        /// 3. SIMULATE
-        int result = randomPlayout(board, state, random);
-        //        int result = MonteCarlo::simulateGame(board, state, depth);
-
-
-        /// 4. BACKPROPAGATE
-        node->wins += result;
-        node->total += 2;
-
-        while(node != root) {
-            node = node->parent;
-            node->wins += result;
-            node->total += 2;
-        }
-
-//            int ix = node->index;
-//            float score = static_cast<double>(node->result) / node->total + c * std::sqrt(std::sqrt(node->parent->total + 2) / node->total);
-//            node->children.at(ix).score = score;
-//            for(unsigned int index = ix+1; index < node->children.size(); index++)
-//                updateScore(node->children.at(index).node);
-//            while(ix > 0 && node->children.at(ix-1).score < score) {
-//                // ensure children list sorted desc by score
-//                updateScore(node->children.at(ix-1).node);
-//                std::swap(node->children.at(ix-1), node->children.at(ix));
-//                node->children.at(ix-1).node->index = ix-1;
-//                node->children.at(ix).node->index = ix;
-//                ix--;
-//            }
-//        }
-
+        return 1;
     }
 
-    static TPT currentNode;
-    class MC {
-        template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
-        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
-            ChildrenData cd{
-                createMoveFromBB(from, to, piece, flags),
-                std::make_shared<TreeNode>(currentNode, currentNode->children.size()),
-                0
-            };
-            currentNode->children.emplace_back(cd);
-        }
-        friend class MoveGenerator<MC, false>;
+
+    struct TreeNode;
+    using TPT = std::shared_ptr<TreeNode>;
+
+    struct ChildrenData {
+        Move move;
+        TPT node;
+        float score;
     };
-};
 
-TPT GameTree::currentNode{nullptr};
+    struct TreeNode {
+        int wins{0};
+        int total{0};
+        TPT parent;
+        int index;
+        std::vector<ChildrenData> children;
 
+        TreeNode(TPT &pt, int ix) : parent(pt), index(ix) {}
 
-Move MCTS(const Board& board, const State state, int iterations=25000) {
-    GameTree gt{board, state};
-    for(int i = 0; i < iterations; i++) {
-        gt.run();
-    }
-    ChildrenData best = *std::max_element(gt.root->children.begin(), gt.root->children.end(), [](auto& a, auto& b) {return a.score < b.score;});
-    return best.move;
-}
+        ~TreeNode() {
+            for (auto &[_, x, _2]: children) {
+                x.reset();
+            }
+        }
+    };
+
+//    class GameTree {
+//        Board startBoard;
+//        State startState;
+//        Utils::Random random;
+//
+//        const double c = 1.414;
+//
+//    public:
+//        TPT root;
+//
+//        GameTree(const Board &board, const State &state) : startBoard{board}, startState(state) {
+//            root = std::make_unique<TreeNode>(root, 0);
+//        }
+//
+//        ~GameTree() {
+//            root.reset();
+//        }
+//
+//        void run() {
+//            /// 1. SELECT
+//            TPT node = root;
+//            Board board = startBoard;
+//            State state = startState;
+//
+//            while (!node->children.empty()) {
+//                ChildrenData best = node->children.front();
+//                for (auto &cd: node->children) {
+//                    if (cd.node->total > 0) {
+//                        cd.score = static_cast<double>(cd.node->wins) / cd.node->total +
+//                                   c * std::sqrt(std::sqrt(node->total) / cd.node->total);
+//                        if (cd.score <= best.score) {
+//                            continue;
+//                        }
+//                    } else cd.score = INFINITY;
+//                    best = cd;
+//                }
+//
+//                auto [move, next, _] = best;
+//                board.makeMove(state, move);
+//                state.update(move.flags);
+//                node = next;
+//            }
+//
+//            /// 2. EXPAND
+//            if (node->total > 0) {
+//                currentNode = node;
+//                generate<MC, false>(board, state);
+//
+//                if (currentNode->children.empty()) {
+//                    // currentNode is terminal
+//                    return;
+//                }
+//
+//                ChildrenData child = random.randomElementOf(currentNode->children);
+//                board.makeMove(state, child.move);
+//                state.update(child.move.flags);
+//                node = child.node;
+//            }
+//
+//            /// 3. SIMULATE
+//            int result = randomPlayout(board, state, random);
+//            //        int result = MonteCarlo::simulateGame(board, state, depth);
+//
+//
+//            /// 4. BACKPROPAGATE
+//            node->wins += result;
+//            node->total += 2;
+//
+//            while (node != root) {
+//                node = node->parent;
+//                node->wins += result;
+//                node->total += 2;
+//            }
+//
+////            int ix = node->index;
+////            float score = static_cast<double>(node->result) / node->total + c * std::sqrt(std::sqrt(node->parent->total + 2) / node->total);
+////            node->children.at(ix).score = score;
+////            for(unsigned int index = ix+1; index < node->children.size(); index++)
+////                updateScore(node->children.at(index).node);
+////            while(ix > 0 && node->children.at(ix-1).score < score) {
+////                // ensure children list sorted desc by score
+////                updateScore(node->children.at(ix-1).node);
+////                std::swap(node->children.at(ix-1), node->children.at(ix));
+////                node->children.at(ix-1).node->index = ix-1;
+////                node->children.at(ix).node->index = ix;
+////                ix--;
+////            }
+////        }
+//
+//        }
+//
+//        static TPT currentNode;
+//
+//        class MC {
+//            template<State state, Piece_t piece, Flag_t flags = MoveFlag::Silent>
+//            static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+//                ChildrenData cd{
+//                        createMoveFromBB(from, to, piece, flags),
+//                        std::make_shared<TreeNode>(currentNode, currentNode->children.size()),
+//                        0
+//                };
+//                currentNode->children.emplace_back(cd);
+//            }
+//
+//            friend class MoveGenerator<MC, false>;
+//        };
+//    };
+//
+//    TPT GameTree::currentNode{nullptr};
+//
+//
+//    Move MCTS(const Board &board, const State state, int iterations = 25000) {
+//        GameTree gt{board, state};
+//        for (int i = 0; i < iterations; i++) {
+//            gt.run();
+//        }
+//        ChildrenData best = *std::max_element(gt.root->children.begin(), gt.root->children.end(),
+//                                              [](auto &a, auto &b) { return a.score < b.score; });
+//        return best.move;
+//    }
+
+} // namespace Dory::MonteCarlo
 
 #endif //DORY_MONTE_CARLO_H

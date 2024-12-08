@@ -31,7 +31,7 @@ namespace Dory {
 
     template<bool whiteToMove>
     int staticEvaluation(const Board& board) {
-        return Evaluation::evaluatePosition<whiteToMove>(board);
+        return evaluation::evaluatePosition<whiteToMove>(board);
     }
 
     int staticEvaluation(const Board& board, bool whiteToMove) {
