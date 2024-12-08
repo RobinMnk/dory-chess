@@ -21,23 +21,15 @@ namespace Dory::evaluation {
     int evaluatePosition(const Board& board) {
         int matFriendly = features::material<whiteToMove>(board);
         int matEnemy = features::material<!whiteToMove>(board);
-        int material = matFriendly - matEnemy;
-//
-//        int mobility = features::mobility<true>(board) - features::mobility<false>(board);
-//
-        int activity = features::activity<whiteToMove>(board) - features::activity<!whiteToMove>(board);
 
-//        int evalEstimate = material * params.MATERIAL_QUANTIFIER
-////                + mobility * params.MOBILITY_QUANTIFIER
-//                + activity * params.ACTIVITY_QUANTIFIER;
-//
-//        evalEstimate /= 2; // seems important, not sure why -> because of the aspiration window!
+        // includes material!
+        int activity = features::activity<whiteToMove>(board) - features::activity<!whiteToMove>(board);
 
         int passedPawns = features::passedPawns<whiteToMove>(board, matEnemy) - features::passedPawns<!whiteToMove>(board, matFriendly);
 
-        int evalEstimate = material + activity + passedPawns;
+        int evalEstimate = activity + passedPawns;
 
-        return evalEstimate / 16;
+        return evalEstimate;
     }
 
 } // namespace Dory::evaluation

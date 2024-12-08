@@ -46,6 +46,10 @@ namespace DoryUtils {
         return Dory::Utils::parseFEN(fen);
     }
 
+    std::string parseEval(int eval) {
+        return Dory::Utils::parseEval(eval);
+    }
+
     void printLine(const std::vector<Dory::Move>& line, int eval) {
         Dory::Utils::printLine(line, eval);
     }

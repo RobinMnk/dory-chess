@@ -283,6 +283,18 @@ namespace Dory::Utils {
         return {fromIx, toIx, piece, flags};
     }
 
+    std::string parseEval(int eval) {
+        std::stringstream bss{};
+        if(eval > INF - 50) {
+            bss << "M" << (INF - eval) / 2 ;
+        } else if(eval < -INF + 50) {
+            bss << "-M" << (INF + eval) / 2;
+        } else {
+            bss << static_cast<float>(eval) / 100;
+        }
+        return bss.str();
+    }
+
     void printLine(const std::vector<Move>& line, int eval) {
         if (eval == INF-1) {
             std::cout << "Checkmate - White wins!" << std::endl;
@@ -292,13 +304,7 @@ namespace Dory::Utils {
             std::cout << "Checkmate - Black wins!" << std::endl;
             return;
         }
-        if(eval > INF - 50) {
-            std::cout << "M" << (INF - eval) / 2 ;
-        } else if(eval < -INF + 50) {
-            std::cout << "-M" << (INF + eval) / 2;
-        } else
-            std::cout << static_cast<float>(eval) / 100;
-        std::cout << ":  ";
+        std::cout << parseEval(eval) << ":  ";
         for (auto& it : std::ranges::reverse_view(line)) {
             std::cout << Utils::moveNameShortNotation(it) << " ";
         }

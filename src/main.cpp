@@ -41,8 +41,9 @@ int main() {
         return 0;
     }
     if(command == "eval") {
+        Dory::initialize();
         int eval = Dory::staticEvaluation(board, whiteToMove);
-        printf("Eval: %d\n", eval);
+        printf("Eval: %s\n", DoryUtils::parseEval(eval).c_str());
         return 0;
     }
     if(command == "montecarlo") {

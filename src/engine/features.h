@@ -64,7 +64,8 @@ namespace Dory::features {
                 score += ENGINE_PARAMS.passedPawnScore<whiteToMove>(ix);
             }
         }
-        return static_cast<int>(score * (1 - (static_cast<float>(4 * oppMaterial) / ENGINE_PARAMS.initialWeight)));
+        return score;
+//        return static_cast<int>(score * (1 - (static_cast<float>(oppMaterial) / ENGINE_PARAMS.initialWeight)));
     }
 
 
