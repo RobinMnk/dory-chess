@@ -32,8 +32,9 @@ namespace Dory {
 
     typedef std::pair<std::string, std::string> TestParam;
 
-    class EngineTest : public testing::TestWithParam<TestParam> {
-    };
+    class EngineTest : public testing::TestWithParam<TestParam> { };
+
+    const int MAX_SEARCH_DEPTH = 6;
 
     TEST_P(EngineTest, NegamaxEngine) {
         auto [fen, solution] = GetParam();
@@ -41,10 +42,10 @@ namespace Dory {
 
         std::string output;
         if (whiteToMove) {
-            auto [_, line] = Search::Searcher::iterativeDeepening<true>(board, 6);
+            auto [_, line] = Search::Searcher::iterativeDeepening<true>(board, MAX_SEARCH_DEPTH);
             output = Utils::moveNameShortNotation(line.back());
         } else {
-            auto [_, line] = Search::Searcher::iterativeDeepening<false>(board, 6);
+            auto [_, line] = Search::Searcher::iterativeDeepening<false>(board, MAX_SEARCH_DEPTH);
             output = Utils::moveNameShortNotation(line.back());
         }
 

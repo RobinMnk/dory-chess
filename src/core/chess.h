@@ -231,7 +231,7 @@ namespace Dory {
         }
 
         template<Piece_t pc, Flag_t fl>
-        [[nodiscard]] bool is(BB fromBB, BB toBB) const{
+        [[nodiscard]] bool is(BB fromBB, BB toBB) const {
             return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
         }
     };

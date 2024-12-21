@@ -669,6 +669,11 @@ namespace Dory {
             if(whiteToMove) makeMove<true>(move);
             else makeMove<false>(move);
         }
+
+        template<bool whiteToMove>
+        bool isCapture(Move move) {
+            return hasBitAt(enemyPieces<whiteToMove>(), move.toIndex);
+        }
     };
 
 

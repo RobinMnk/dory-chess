@@ -231,6 +231,38 @@ namespace Dory::Utils {
         return bss.str();
     }
 
+//    template<bool whiteToMove, Piece_t piece>
+//    BB targetSquaresForPiece(const Board& board, BB from) {
+//        QuickCollector::targets = 0;
+//        if constexpr (piece == PIECE_Knight) {
+//            MoveGenerator<QuickCollector>::template knightMoves<whiteToMove>(board);
+//        }
+//        if constexpr (piece == PIECE_Bishop) {
+//            MoveGenerator<QuickCollector>::template bishopMoves<whiteToMove>(board);
+//        }
+//        if constexpr (piece == PIECE_Rook) {
+//            MoveGenerator<QuickCollector>::template rookMoves<whiteToMove>(board);
+//        }
+//        if constexpr (piece == PIECE_Queen) {
+//            MoveGenerator<QuickCollector>::template queenMoves<whiteToMove>(board);
+//        }
+//        return QuickCollector::targets;
+//    }
+//
+//    std::string disambiguationChar(Move m, const Board& board) {
+//        Piece_t piece = m.piece;
+//
+//    }
+
+    std::string moveNameShortForBoard(Move m, const Board& board) {
+        std::stringstream bss{};
+        if (m.flags == MOVEFLAG_ShortCastling) bss << specialMove(MOVEFLAG_ShortCastling);
+        else if (m.flags == MOVEFLAG_LongCastling) bss << specialMove(MOVEFLAG_LongCastling);
+        else bss << pieceString(m.piece) << squarename(m.to());
+        bss << promotionsFlag(m.flags);
+        return bss.str();
+    }
+
     std::string moveFullNotation(Move m) {
         std::stringstream bss{};
         bss << squarename(m.from()) << squarename(m.to());

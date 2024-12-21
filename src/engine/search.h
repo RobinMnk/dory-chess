@@ -96,20 +96,12 @@ namespace Dory {
                 return negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
             }
 
-            static bool sortMovePairs(const std::pair<float, Move> &a, const std::pair<float, Move> &b) {
-                return a.first > b.first;
-            }
-
-//        static std::vector<Move> topLevelLegalMoves() {
-//            return moves[1];
-//        }
 
             static void reset() {
                 searchResults.reset();
                 trTable.reset();
 //                repTable.reset();
-//            moveOrderer.reset();
-//        nodesSearched = 0;
+                moveOrderer.reset();
             }
 
         private:
@@ -135,15 +127,9 @@ namespace Dory {
                 /// Switch to Quiescence Search
 
                 CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher>::pd);
+                bool inCheck = MoveGenerator<Searcher>::pd->inCheck();
 
-                if (!MoveGenerator<Searcher>::pd->inCheck() && depth > maxDepth) {
-//            nodesSearched++;
-//            int eval = evaluation::evaluatePosition(board, state);
-//            trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
-//            return { eval, {} };
-
-//                return negamax<false, true>(board, state, depth, alpha, beta);
-
+                if (!inCheck && depth > maxDepth) {
                     return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
                 }
 
@@ -165,7 +151,7 @@ namespace Dory {
 
                 // No legal moves available
                 if (moves.at(depth).empty()) {
-                    if (MoveGenerator<Searcher>::pd->inCheck()) {
+                    if (inCheck) {
                         // Checkmate!
                         searchResults.nodesSearched++;
                         int eval = -(INF - depth);
@@ -198,18 +184,9 @@ namespace Dory {
 
                 // Search Extensions
                 int mdpt = maxDepth;
-                if (MoveGenerator<Searcher>::pd->inCheck()) mdpt++; // apparently super important!
+                if (inCheck) mdpt++; // very important!
 
-//            if(depth + 1 == maxDepth && MoveGenerator<Searcher>::pd->inCheck())
-//                mdpt++;
-//            maxDepth++;
-
-//                if constexpr (topLevel) {
-//                    for(auto& [_, m]: moves.at(depth)) {
-//                        std::cout << Utils::moveNameNotation(m) << ",  ";
-//                    }
-//                    std::cout << "Called at top level" << std::endl;
-//                }
+                int reducedDepth = maxDepth - 1;
 
                 /// Iterate through all moves
                 for (auto [info, move]: moves.at(depth)) {
@@ -220,16 +197,16 @@ namespace Dory {
 
                     /// Pricipal Variation Search
                     if (isPV > 0) {
+                        // Principal Variations -> do full search
                         auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
                         eval = -ev;
                         line = ln;
                     } else {
-//                if constexpr (topLevel)
-//                    if(mdpt - depth >= 3 && !board.isCapture<whiteToMove>(move) && mdpt == maxDepth && !MoveGenerator<Searcher>::pd->inCheck()) redMdpt--;
+                        // not part of the principal variation -> try a zero-window search
                         auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, mdpt);
                         if (ev < -alpha && ev > -beta) {
-                            auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha,
-                                                                           maxDepth - 1);
+                            // zero-window assumption failed -> needs full search
+                            auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha,reducedDepth);
                             eval = -ev2;
                             line = ln2;
                         } else {
@@ -238,7 +215,6 @@ namespace Dory {
                         }
                     }
                     isPV--;
-
 
                     repTable.remove(boardHash);
 
@@ -267,26 +243,13 @@ namespace Dory {
                         localBestMove = move;
 
                         if constexpr (topLevel) {
-//                    bestLines.clear();
-//                    bestLines.emplace_back(line, eval);
                             bestMove = move;
-//                    bestMoves.clear();
-//                    bestMoves.push_back(move);
                         }
-//            } else {
-//                if constexpr (topLevel) {
-//                    if (bestLines.size() < NUM_LINES) {
-//                        if (eval >= alpha - BEST_MOVE_MARGIN) {
-//                            line.push_back(move);
-//                            bestLines.emplace_back(line, eval);
-//                            bestMoves.push_back(move);
-//                        }
-//                    }
-//                }
                     }
 
                     if (alpha >= beta) {
-//                    moveOrderer.addKillerMove(move, depth);
+                        if(!board.isCapture<whiteToMove>(move))
+                            moveOrderer.addKillerMove(move, depth);
                         break;
                     }
                 }
@@ -317,12 +280,15 @@ namespace Dory {
                 moves.at(depth).clear();
                 currentDepth = depth;
 
+                // Reload CLH
                 CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
 
                 if (MoveGenerator<Searcher, true>::pd->inCheck()) {
+                    // if in check, any legal move is considered
                     *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
                     generateMoves<Searcher, whiteToMove, false>(board);
                 } else {
+                    // if not in check, consider only captures
                     generateMoves<Searcher, whiteToMove, false, true>(board);
                 }
 
@@ -350,7 +316,7 @@ namespace Dory {
                     if (eval >= beta) {
                         line.push_back(move);
                         searchResults.nodesSearched++;
-                        return {beta, line};
+                        return { beta, line };
                     }
                     if (eval > alpha) {
                         alpha = eval;
@@ -366,14 +332,12 @@ namespace Dory {
             static void registerMove(const Board &board, BB from, BB to) {
                 // TODO reload checklogichandler and pass PinData to move_info
                 moves[currentDepth].emplace_back(
-                        moveOrderer.moveHeuristic<whiteToMove, piece, flags>(board, from, to,
-                                                                             MoveGenerator<Searcher>::pd),
+                        moveOrderer.moveHeuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<Searcher>::pd, currentDepth),
                         createMoveFromBB(from, to, piece, flags)
                 );
             }
 
             friend class MoveGenerator<Searcher, true>;
-
             friend class MoveGenerator<Searcher, false>;
         };
 

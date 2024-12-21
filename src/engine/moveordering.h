@@ -13,7 +13,6 @@ namespace Dory::Search {
     class MoveOrderer {
         const int Large = 1000000;
 
-
         template<bool whiteToMove>
         int isForwardMove(BB from, BB to) {
             if constexpr (whiteToMove) {
@@ -23,19 +22,19 @@ namespace Dory::Search {
             }
         }
 
-//        std::array<std::array<Move, 2>, 128> killerMoves;
-//        std::array<int, 128> kmPositions{};
+        std::array<std::array<Move, 4>, 128> killerMoves;
+        std::array<int, 128> kmPositions{};
     public:
         Move priorityMove;
 
-//        void reset() {
-//            kmPositions.fill(0);
-//        }
-//
-//        void addKillerMove(Move move, int dp) {
-//            killerMoves[dp][kmPositions[dp]++] = move;
-//            kmPositions[dp] %= 4;
-//        }
+        void reset() {
+            kmPositions.fill(0);
+        }
+
+        void addKillerMove(Move move, int dp) {
+            killerMoves[dp][kmPositions[dp]++] = move;
+            kmPositions[dp] %= 4;
+        }
 
         template<typename T>
         void sort(std::vector<std::pair<float, T>> &moves) {
@@ -45,14 +44,20 @@ namespace Dory::Search {
         }
 
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        int moveHeuristic(const Board &board, BB from, BB to, const PDptr &pd) {
+        int moveHeuristic(const Board &board, BB from, BB to, const PDptr &pd, int depth) {
             if (priorityMove.is<piece, flags>(from, to)) {
                 return INF;
             }
 
+            for(int i = 0; i < kmPositions[depth]; i++) {
+                if(killerMoves[depth][i].is<piece, flags>(from, to)) {
+                    return 64 * Large;
+                }
+            }
+
             int heuristic_val{0};
             /// Captures
-            if ((to & board.enemyPieces<whiteToMove>())) {
+            if (to & board.enemyPieces<whiteToMove>()) {
                 int valueDiff = -pieceValue<piece>();
 
                 if (board.enemyPawns<whiteToMove>() & to)
@@ -79,11 +84,6 @@ namespace Dory::Search {
 //                        break;
 //                    }
             }
-
-            /// Checks
-            //        if (pd->inCheck()) {
-            //            heuristic_val += 10 * Large + 100;
-            //        }
 
             /// Promotions
             if constexpr (flags == MOVEFLAG_PromoteBishop) {
