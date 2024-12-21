@@ -186,8 +186,6 @@ namespace Dory {
                 int mdpt = maxDepth;
                 if (inCheck) mdpt++; // very important!
 
-                int reducedDepth = maxDepth - 1;
-
                 /// Iterate through all moves
                 for (auto [info, move]: moves.at(depth)) {
 
@@ -196,25 +194,28 @@ namespace Dory {
                     nextBoard = board.fork<whiteToMove>(move);
 
                     /// Pricipal Variation Search
-                    if (isPV > 0) {
-                        // Principal Variations -> do full search
-                        auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
-                        eval = -ev;
-                        line = ln;
-                    } else {
-                        // not part of the principal variation -> try a zero-window search
+                    bool doFullSearch = true;
+                    int dpt = mdpt;
+                    if(isPV <= 0 && !board.isCapture<whiteToMove>(move)) {
+                        // not part of the principal variation and no capture -> try a zero-window search
                         auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, mdpt);
                         if (ev < -alpha && ev > -beta) {
                             // zero-window assumption failed -> needs full search
-                            auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha,reducedDepth);
-                            eval = -ev2;
-                            line = ln2;
+                            doFullSearch = true;
+                            dpt = maxDepth - 1; // reduce depth
                         } else {
                             eval = -ev;
                             line = ln;
+                            doFullSearch = false;
                         }
                     }
                     isPV--;
+
+                    if(doFullSearch) {
+                        auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, dpt);
+                        eval = -ev;
+                        line = ln;
+                    }
 
                     repTable.remove(boardHash);
 
