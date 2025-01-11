@@ -59,6 +59,6 @@ int main() {
     timeEvaluation(board, depth, whiteToMove);
 
     std::cout << "Table lookups:\t" << Dory::searchResults.tableLookups << std::endl;
-    std::cout << "Table size:\t" << Dory::searchResults.trTableSizeMb() << " MB" << std::endl;
+    std::cout << "Table size:\t" << Dory::searchResults.trTableSizeKb() << " kB" << std::endl;
     std::cout << "Searched " << Dory::searchResults.nodesSearched << " nodes";
 }

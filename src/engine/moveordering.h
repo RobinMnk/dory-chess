@@ -56,6 +56,11 @@ namespace Dory::Search {
             }
 
             int heuristic_val{0};
+
+            // See if move results in a check!
+            // -> That is the case when the 'to' square can reach the enemyKing for the given piece Type
+
+
             /// Captures
             if (to & board.enemyPieces<whiteToMove>()) {
                 int valueDiff = -pieceValue<piece>();

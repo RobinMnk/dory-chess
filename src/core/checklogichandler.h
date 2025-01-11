@@ -7,7 +7,7 @@
 
 #include <memory>
 #include "board.h"
-#include "../utils/piecesteps.h"
+#include "piecesteps.h"
 
 namespace Dory {
 

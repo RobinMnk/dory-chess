@@ -254,14 +254,14 @@ namespace Dory::Utils {
 //
 //    }
 
-    std::string moveNameShortForBoard(Move m, const Board& board) {
-        std::stringstream bss{};
-        if (m.flags == MOVEFLAG_ShortCastling) bss << specialMove(MOVEFLAG_ShortCastling);
-        else if (m.flags == MOVEFLAG_LongCastling) bss << specialMove(MOVEFLAG_LongCastling);
-        else bss << pieceString(m.piece) << squarename(m.to());
-        bss << promotionsFlag(m.flags);
-        return bss.str();
-    }
+//    std::string moveNameShortForBoard(Move m, const Board& board) {
+//        std::stringstream bss{};
+//        if (m.flags == MOVEFLAG_ShortCastling) bss << specialMove(MOVEFLAG_ShortCastling);
+//        else if (m.flags == MOVEFLAG_LongCastling) bss << specialMove(MOVEFLAG_LongCastling);
+//        else bss << pieceString(m.piece) << squarename(m.to());
+//        bss << promotionsFlag(m.flags);
+//        return bss.str();
+//    }
 
     std::string moveFullNotation(Move m) {
         std::stringstream bss{};

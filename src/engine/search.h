@@ -344,7 +344,6 @@ namespace Dory {
 
         std::array<std::vector<std::pair<float, Move>>, 128> Searcher::moves{};
         int Searcher::currentDepth{0};
-//int Searcher::maxDepth{0};
         std::vector<std::pair<Line, int>> Searcher::bestLines{};
         std::vector<Move> Searcher::bestMoves{};
         TranspositionTable Searcher::trTable{};
