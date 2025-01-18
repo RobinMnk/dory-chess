@@ -116,17 +116,12 @@ namespace Dory::MoveCollectors {
     template<int depth>
     class PerftCollector {
     public:
-
         template<bool whiteToMove>
         static void generateGameTree(const Board& board) {
-//            if constexpr (depth == 1) {
-//                MoveGenerator<PerftCollector<depth>, false, true>::template generate<state>(board);
-//                for (auto num_moves: MoveGenerator<PerftCollector<depth>, false, true>::numberOfMovesByPiece) {
-//                    nodes.at(depth) += num_moves;
-//                }
-//            }
-//            else
-            if constexpr (depth > 0) {
+            if constexpr (depth == 1) {
+                MoveGenerator<PerftCollector<depth>, false, true>::template generate<whiteToMove>(board);
+                nodes.at(depth) += MoveGenerator<PerftCollector<depth>, false, true>::numberOfMoves;
+            } else if constexpr (depth > 0) {
                 MoveGenerator<PerftCollector<depth>>::template generate<whiteToMove>(board);
             }
         }
