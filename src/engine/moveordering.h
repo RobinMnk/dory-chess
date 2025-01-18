@@ -49,20 +49,43 @@ namespace Dory::Search {
                 return INF;
             }
 
-            for(int i = 0; i < kmPositions[depth]; i++) {
-                if(killerMoves[depth][i].is<piece, flags>(from, to)) {
-                    return 64 * Large;
+            bool isCapture = to & board.enemyPieces<whiteToMove>();
+
+            if(!isCapture) {
+                for(int i = 0; i < kmPositions[depth]; i++) {
+                    if(killerMoves[depth][i].is<piece, flags>(from, to)) {
+                        return 64 * Large;
+                    }
                 }
             }
 
             int heuristic_val{0};
 
-            // See if move results in a check!
+            // See if move results in a check *from the moving piece*!
             // -> That is the case when the 'to' square can reach the enemyKing for the given piece Type
 
+            int ix = firstBitOf(to);
+            BB atk = 0;
+            if constexpr (piece == PIECE_Pawn) {
+                atk = pawnAtkLeft<whiteToMove>(to & pawnCanGoLeft<whiteToMove>()) | pawnAtkRight<whiteToMove>(to & pawnCanGoRight<whiteToMove>());
+            }
+            if constexpr (piece == PIECE_Knight) {
+                atk = PieceSteps::KNIGHT_MOVES[ix];
+            }
+            BB nextOcc = board.occ() ^ (from | to);
+            if constexpr (piece == PIECE_Bishop || piece == PIECE_Queen) {
+                atk = PieceSteps::slideMask<true>(nextOcc, ix);
+            }
+            if constexpr (piece == PIECE_Rook || piece == PIECE_Queen) {
+                atk = PieceSteps::slideMask<false>(nextOcc, ix);
+            }
+
+            if (atk & board.enemyKing<whiteToMove>()) {
+                heuristic_val += 8 * Large;
+            }
 
             /// Captures
-            if (to & board.enemyPieces<whiteToMove>()) {
+            if (isCapture) {
                 int valueDiff = -pieceValue<piece>();
 
                 if (board.enemyPawns<whiteToMove>() & to)
@@ -80,14 +103,8 @@ namespace Dory::Search {
 
                 // Good Capture
                 if (valueDiff >= -25) {
-                    heuristic_val += 8 * Large;
+                    heuristic_val += 4 * Large;
                 }
-//            } else {
-//                for(int i = 0; i < kmPositions[depth]; i++)
-//                    if(killerMoves[depth][i].is<piece, flags>(from, to)) {
-//                        heuristic_val += Large;
-//                        break;
-//                    }
             }
 
             /// Promotions
@@ -104,7 +121,7 @@ namespace Dory::Search {
                 heuristic_val += 7 * Large;
             }
 
-            //        heuristic_val += pieceValue<piece>() / 200;
+            heuristic_val += pieceValue<piece>() / 256;
 
             /// Do not move to an attacked square
             if (to & pd->pawnAtk) {
@@ -114,13 +131,9 @@ namespace Dory::Search {
             }
 
             /// Move towards enemy king
-            heuristic_val += isForwardMove<whiteToMove>(from, to) / 4;
-            heuristic_val += (8 - PieceSteps::DIST[singleBitOf(from)][board.enemyKingSquare<whiteToMove>()]) * 64;
+            // heuristic_val += isForwardMove<whiteToMove>(from, to) / 4;
+            // heuristic_val += (8 - PieceSteps::DIST[singleBitOf(from)][board.enemyKingSquare<whiteToMove>()]) * 64;
 
-
-            //        if(to & pd->attacked) {
-            //            heuristic_val -= pieceValue<piece>() / 1024;
-            //        }
 
             /// Activity difference
             int activity_diff_mg = ENGINE_PARAMS.middleGamePieceTable<piece, whiteToMove>(firstBitOf(to))

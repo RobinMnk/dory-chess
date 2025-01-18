@@ -35,6 +35,7 @@ namespace Dory {
         const int BEST_MOVE_MARGIN = 10;
         const int MAX_ITER_DEPTH = 6;
         const int MAX_WINDOW_INCREASES = 3;
+        const int NUM_PV_NODES = 3;
 
         class Searcher {
             static std::array<std::vector<std::pair<float, Move>>, 128> moves; // Todo: make fixed-size array?
@@ -149,6 +150,7 @@ namespace Dory {
                 currentDepth = depth;
                 generateMoves<Searcher, whiteToMove, false>(board);
 
+                /// Check for Checkmate / Stalemate
                 // No legal moves available
                 if (moves.at(depth).empty()) {
                     if (inCheck) {
@@ -171,6 +173,10 @@ namespace Dory {
 
                 moveOrderer.sort(moves.at(depth));
 
+//                for(unsigned int i = 0; i < moves.at(depth).size(); i++) {
+//                    std::cout << Utils::moveNameShortNotation(moves[depth][i].second) << "  : " << moves[depth][i].first << std::endl;
+//                }
+
 
                 // Iterate all moves
                 Line localBestLine;
@@ -178,15 +184,17 @@ namespace Dory {
                 Board nextBoard;
                 int bestEval = -INF;
 
-                int isPV = 4;
                 int eval;
                 Line line;
 
                 // Search Extensions
-                int mdpt = maxDepth;
+                int mdpt = maxDepth, rdpt = maxDepth;
                 if (inCheck) mdpt++; // very important!
+                else if (rdpt > 2) rdpt--;
+
 
                 /// Iterate through all moves
+                int moveIx = 0;
                 for (auto [info, move]: moves.at(depth)) {
 
                     repTable.insert(boardHash);
@@ -195,24 +203,20 @@ namespace Dory {
 
                     /// Pricipal Variation Search
                     bool doFullSearch = true;
-                    int dpt = mdpt;
-                    if(isPV <= 0 && !board.isCapture<whiteToMove>(move)) {
+                    if (moveIx > NUM_PV_NODES && !board.isCapture<whiteToMove>(move) && !inCheck) {
                         // not part of the principal variation and no capture -> try a zero-window search
-                        auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, mdpt);
+                        auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, rdpt);
                         if (ev < -alpha && ev > -beta) {
                             // zero-window assumption failed -> needs full search
-                            doFullSearch = true;
-                            dpt = maxDepth - 1; // reduce depth
                         } else {
                             eval = -ev;
                             line = ln;
                             doFullSearch = false;
                         }
                     }
-                    isPV--;
 
                     if(doFullSearch) {
-                        auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, dpt);
+                        auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
                         eval = -ev;
                         line = ln;
                     }
@@ -253,7 +257,9 @@ namespace Dory {
                             moveOrderer.addKillerMove(move, depth);
                         break;
                     }
-                }
+
+                    moveIx++;
+                } // end iterate moves
 
                 if (bestEval == -INF) {
                     std::cout << "ERROR!!!" << std::endl;
