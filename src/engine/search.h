@@ -67,9 +67,9 @@ namespace Dory {
                             alpha = -INF;
                             beta = INF;
                         } else {
-                            window *= 4;
                             alpha = bestEval - window;
                             beta = bestEval + window;
+                            window *= 2;
                         }
                         continue; // Search again with same depth
                     }

@@ -58,7 +58,7 @@ namespace Dory {
                         && bitCount(kl & board.pawns<whiteToMove>()) == 1         // one own pawn
                         && bitCount(kl & board.enemyPawns<whiteToMove>()) == 1    // one enemy pawn
                         && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
-                            )
+                    )
                         blockEP = true;
                 }
             }
