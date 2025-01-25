@@ -36,9 +36,9 @@ namespace Dory::Search {
             kmPositions[dp] %= 4;
         }
 
-        template<typename T>
-        void sort(std::vector<std::pair<float, T>> &moves) {
-            std::sort(moves.begin(), moves.end(),
+        template<typename T, std::size_t N>
+        void sort(std::array<std::pair<float, T>, N> &moves, unsigned int numMoves) {
+            std::sort(moves.begin(), moves.begin() + numMoves,
                   [](const std::pair<float, T>& a, const std::pair<float, T>& b) { return a.first > b.first; }
             );
         }
@@ -81,7 +81,7 @@ namespace Dory::Search {
             }
 
             if (atk & board.enemyKing<whiteToMove>()) {
-                heuristic_val += 8 * Large;
+                heuristic_val += 4 * Large;
             }
 
             /// Captures

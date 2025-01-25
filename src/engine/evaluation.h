@@ -62,6 +62,17 @@ namespace Dory::evaluation {
         return score;
     }
 
+    template<bool whiteToMove>
+    int kingVulnerability(const Board& board, int gamePhase) {
+        int ks = board.kingSquare<whiteToMove>();
+        BB lines = PieceSteps::slideMask<true>(board.occ(), ks) | PieceSteps::slideMask<false>(board.occ(), ks);
+        BB mobility = PieceSteps::KING_MOVES[ks] & ~board.occ();
+
+        int distToBorder = std::min(std::min(fileOf(ks), 8- fileOf(ks)), std::min(rankOf(ks), 8- rankOf(ks)));
+
+        return gamePhase * bitCount(lines | mobility) + (24 - gamePhase) * distToBorder;
+    }
+
 
     /**
      * Gives estimate for position evaluation score for the side that is to move.
@@ -78,7 +89,9 @@ namespace Dory::evaluation {
 
         int passedPawnsScore = passedPawns<whiteToMove>(board) - passedPawns<!whiteToMove>(board);
 
-        int evalEstimate = activityScore + passedPawnsScore;
+        int kingPenalty = kingVulnerability<whiteToMove>(board, gamePhase) - kingVulnerability<!whiteToMove>(board, gamePhase);
+
+        int evalEstimate = activityScore + passedPawnsScore - kingPenalty;
 
         return evalEstimate;
     }
