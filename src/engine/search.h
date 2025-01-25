@@ -31,8 +31,6 @@ namespace Dory {
 
     namespace Search {
 
-        unsigned int NUM_LINES = 1;
-        const int BEST_MOVE_MARGIN = 10;
         const int MAX_ITER_DEPTH = 6;
         const int MAX_WINDOW_INCREASES = 2;
         const int NUM_PV_NODES = 2;
@@ -59,7 +57,7 @@ namespace Dory {
                 int alpha = -INF, beta = INF;
 
                 for (int depth = 1; depth <= maxDepth;) {
-                    std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+//                    std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
                     auto [eval, line] = negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
 
                     /// Aspiration Window
@@ -84,7 +82,7 @@ namespace Dory {
 
 //                    std::cout << "Line for depth " << depth << std::endl;
 //                    std::cout << "Depth " << depth << " -> ";
-                    Utils::printLine(bestLine, bestEval);
+//                    Utils::printLine(bestLine, bestEval);
 
                     depth++;
                 }
