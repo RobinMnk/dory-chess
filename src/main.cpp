@@ -35,6 +35,12 @@ int main() {
 
     const auto [board, whiteToMove] = DoryUtils::parseFEN(fen);
 
+    Dory::MoveGenerator mg{};
+
+    mg.generate();
+
+
+
     if(command == "perft") {
         auto res = DoryUtils::perftSingleDepth(board, whiteToMove, depth);
         printf("%llu\n", res);
@@ -46,14 +52,14 @@ int main() {
         printf("Eval: %s\n", DoryUtils::parseEval(eval).c_str());
         return 0;
     }
-    if(command == "montecarlo") {
-        int res;
-        Dory::initialize();
-        if(whiteToMove) res = Dory::MonteCarlo::simulateGame<true>(board, depth);
-        else res = Dory::MonteCarlo::simulateGame<false>(board, depth);
-        std::cout << "Result: " << res << std::endl;
-        return 0;
-    }
+//    if(command == "montecarlo") {
+//        int res;
+//        Dory::initialize();
+//        if(whiteToMove) res = Dory::MonteCarlo::simulateGame<true>(board, depth);
+//        else res = Dory::MonteCarlo::simulateGame<false>(board, depth);
+//        std::cout << "Result: " << res << std::endl;
+//        return 0;
+//    }
 
     Dory::initialize();
     timeEvaluation(board, depth, whiteToMove);

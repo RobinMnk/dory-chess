@@ -12,28 +12,30 @@
 namespace Dory {
 
     struct PinData {
-        bool isDoubleCheck{false}, blockEP{false};
         BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0}, pawnAtk{0};
+        bool isDoubleCheck{false}, blockEP{false};
 
         [[nodiscard]] bool inCheck() const {
             return checkMask != FULL_BB;
         }
     };
 
-    using PDptr = std::unique_ptr<PinData>;
-
-
     class CheckLogicHandler {
         template<bool, bool>
         static BB addPins(const Board &board, int kingSquare, bool &blockEP);
 
+        template<bool, int>
+        static void handlePin(const Board &board, BB line, BB pieces, int kingSquare, BB &mask, bool &blockEP);
+
     public:
+        CheckLogicHandler() = delete;
+
         template<bool>
-        static void reload(const Board &board, const PDptr &pd);
+        static void reload(const Board &board, PinData& pd);
     };
 
     template<bool whiteToMove, int dir>
-    void handlePin(const Board &board, BB line, BB pieces, int kingSquare, BB &mask, bool &blockEP) {
+    void CheckLogicHandler::handlePin(const Board &board, BB line, BB pieces, int kingSquare, BB &mask, bool &blockEP) {
         constexpr int dir_off = PieceSteps::directions[dir];
         BB sol = line & pieces;
         if (sol) {
@@ -88,7 +90,7 @@ namespace Dory {
     }
 
     template<bool whiteToMove>
-    void CheckLogicHandler::reload(const Board &board, const PDptr &pd) {
+    void CheckLogicHandler::reload(const Board &board, PinData& pd) {
         BB attacked{0}, checkMask{0}, mask, pawnAtk{0};
         int numChecks = 0;
         int kingSquare = board.kingSquare<whiteToMove>();
@@ -157,18 +159,18 @@ namespace Dory {
             }
         }
 
-        pd->isDoubleCheck = numChecks > 1;
-        if (pd->isDoubleCheck) checkMask = 0;
+        pd.isDoubleCheck = numChecks > 1;
+        if (pd.isDoubleCheck) checkMask = 0;
         if (numChecks == 0) checkMask = FULL_BB;
 
         bool blockEP = false;
-        pd->pinsDiag = addPins<whiteToMove, true>(board, kingSquare, blockEP);
-        pd->pinsStr = addPins<whiteToMove, false>(board, kingSquare, blockEP);
-        pd->targetSquares = board.enemyOrEmpty<whiteToMove>() & checkMask;
-        pd->attacked = attacked;
-        pd->checkMask = checkMask;
-        pd->blockEP = blockEP;
-        pd->pawnAtk = pawnAtk;
+        pd.pinsDiag = addPins<whiteToMove, true>(board, kingSquare, blockEP);
+        pd.pinsStr = addPins<whiteToMove, false>(board, kingSquare, blockEP);
+        pd.targetSquares = board.enemyOrEmpty<whiteToMove>() & checkMask;
+        pd.attacked = attacked;
+        pd.checkMask = checkMask;
+        pd.blockEP = blockEP;
+        pd.pawnAtk = pawnAtk;
     }
 
 } // namespace Dory

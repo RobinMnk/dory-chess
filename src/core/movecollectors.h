@@ -45,7 +45,7 @@ namespace Dory::MoveCollectors {
 
     private:
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void registerMove(const Board& board, BB from, BB to) {
+        static void nextMove(const Board& board, BB from, BB to) {
             if constexpr (depth == 1) {
                 totalNodes++;
             }
@@ -55,7 +55,6 @@ namespace Dory::MoveCollectors {
         }
 
         friend class MoveGenerator<LimitedDFS<depth>>;
-        friend class MoveGenerator<LimitedDFS<depth>, false, true>;
     };
 
     template<int depth>
@@ -66,76 +65,83 @@ namespace Dory::MoveCollectors {
         static BB targets;
 
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void registerMove(const Board &board, BB from, BB to) {
+        static void nextMove(const Board &board, BB from, BB to) {
             targets |= to;
         }
     };
 
+    /**
+     * Forwards nextMove call to given object. If template deduction fails here, make sure the function
+     * nextMove<whiteToMove, piece, flags>(board, from, to) exists with the correct signature on type T.
+     */
+    template<typename T, bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
+    requires ValidMoveCollectorObj<T, whiteToMove, piece, flags>
+    void forward(T* obj, const Board& board, BB from, BB to) {
+        obj->template nextMove<whiteToMove, piece, flags>(board, from, to);
+    }
 
-//    /**
-//     * A Movecollector that produces a list of successor boards from the given position.
-//     */
-//    class SuccessorBoards {
-//    public:
-//        static std::vector<ExtendedBoard> positions;
-//
-//        static void getLegalMoves(ExtendedBoard& eboard) {
-//            Utils::template run<SuccessorBoards, 1>(eboard.castling, eboard.board);
-//        }
-//
-//        template<State state, int depth>
-//        static void main(Board& board) {
-//            generateGameTree<state, depth>(board);
-//        }
-//
-//        template<State state, int depth>
-//        static void generateGameTree(Board& board) {
-//            positions.clear();
-//            MoveGenerator<SuccessorBoards>::template generate<state, 1>(board);
-//        }
-//
-//    private:
-//        template<State state, int depth, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-//        static void registerMove(const Board &board, [[maybe_unused]] BB from, [[maybe_unused]] BB to) {
-//            positions.push_back(getExtendedBoard<state>(board));
-//        }
-//
-//        template<State nextState, int depth>
-//        static void next([[maybe_unused]] Board& nextBoard) {}
-//
-//        static void done() {}
-//
-//        friend class MoveGenerator<SuccessorBoards>;
-//    };
-//
-//    std::vector<ExtendedBoard> SuccessorBoards::positions{};
+    template<typename T>
+    class ObjectCollector {
+        static T* _ref;
+
+        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
+        static void nextMove(const Board& board, BB from, BB to) {
+            forward<T, whiteToMove, piece, flags>(_ref, board, from, to);
+        }
+        friend class MoveGenerator<ObjectCollector>;
+
+    public:
+        template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
+        static void generate(T* ref, const Board& board) {
+            _ref = ref;
+            MoveGenerator<ObjectCollector<T>>::template generate<whiteToMove, config>(board);
+        }
+    };
+
+    template<typename T, bool whiteToMove, GenerationConfig config=GC_DEFAULT>
+    void generateMoves(T* ref, const Board& board) {
+        ObjectCollector<T>::generate<whiteToMove, config>(ref, board);
+    }
+
+    // Example for using class as MoveCollector
+    struct A {
+        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
+        void nextMove(const Board& board, BB from, BB to) const {
+
+        }
+
+        template<bool whiteToMove>
+        void generate(const Board& board) {
+            generateMoves<A, whiteToMove>(this, board);
+        }
+    };
 
 
     static std::vector<unsigned long long> nodes;
 
     template<int depth>
     class PerftCollector {
+        using Generator = MoveGenerator<PerftCollector<depth>>;
+        friend Generator;
     public:
         template<bool whiteToMove>
         static void generateGameTree(const Board& board) {
             if constexpr (depth == 1) {
-                MoveGenerator<PerftCollector<depth>, false, true>::template generate<whiteToMove>(board);
-                nodes.at(depth) += MoveGenerator<PerftCollector<depth>, false, true>::numberOfMoves;
+                Generator::numberOfMoves = 0;
+                Generator::template generate<whiteToMove, GC_COUNT_ONLY>(board);
+                nodes.at(depth) += Generator::numberOfMoves;
             } else if constexpr (depth > 0) {
-                MoveGenerator<PerftCollector<depth>>::template generate<whiteToMove>(board);
+                Generator::template generate<whiteToMove>(board);
             }
         }
 
     private:
         template<bool whiteToMove,  Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void registerMove(const Board& board, BB from, BB to) {
+        static void nextMove(const Board& board, BB from, BB to) {
             nodes.at(depth)++;
             Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
             PerftCollector<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
         }
-
-        friend class MoveGenerator<PerftCollector<depth>>;
-        friend class MoveGenerator<PerftCollector<depth>, false, true>;
     };
 
     /**
@@ -173,7 +179,7 @@ namespace Dory::MoveCollectors {
         }
 
         template<bool whiteToMove, int depth, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void registerMove([[maybe_unused]] const Board &board, BB from, BB to) {
+        static void nextMove([[maybe_unused]] const Board &board, BB from, BB to) {
             if (depth == maxDepth) {
                 Move m = createMoveFromBB(from, to, piece, flags);
                 moves.push_back(Utils::moveNameShort(m));

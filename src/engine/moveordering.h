@@ -44,7 +44,7 @@ namespace Dory::Search {
         }
 
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        int moveHeuristic(const Board &board, BB from, BB to, const PDptr &pd, int depth) {
+        int moveHeuristic(const Board &board, BB from, BB to, const PinData& pd, int depth) {
             if (priorityMove.is<piece, flags>(from, to)) {
                 return INF;
             }
@@ -124,9 +124,9 @@ namespace Dory::Search {
             heuristic_val += pieceValue<piece>() / 256;
 
             /// Do not move to an attacked square
-            if (to & pd->pawnAtk) {
+            if (to & pd.pawnAtk) {
                 heuristic_val -= pieceValue<piece>() * 4;
-            } else if (to & pd->attacked) {
+            } else if (to & pd.attacked) {
                 heuristic_val -= 25; // pieceValue<piece>();
             }
 

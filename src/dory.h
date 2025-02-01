@@ -21,7 +21,8 @@ namespace Dory {
 
     template<bool whiteToMove>
     Result searchDepth(const Board& board, int depth) {
-        return Search::Searcher::iterativeDeepening<whiteToMove>(board, depth);
+//        return Search::Searcher::iterativeDeepening<whiteToMove>(board, depth);
+        return {};
     }
 
     Result searchDepth(const Board& board, int depth, bool whiteToMove) {

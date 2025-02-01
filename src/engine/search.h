@@ -9,6 +9,7 @@
 #include "../utils/utils.h"
 #include "../utils/zobrist.h"
 #include "../core/movegen.h"
+#include "../core/movecollectors.h"
 #include "moveordering.h"
 #include "tables.h"
 
@@ -31,25 +32,59 @@ namespace Dory {
 
     namespace Search {
 
+        class ListCollector {
+            const Board* brdPtr{nullptr};
+            std::array<std::pair<float, Move>, 128> moves;
+
+        public:
+            ListCollector() {
+
+            }
+
+            void setBoard(const Board& board) {
+                brdPtr = &board;
+            }
+
+            template<bool whiteToMove, bool quiescence=false>
+            void generate(const Board& board) {
+                constexpr GenerationConfig config = quiescence ? GC_QUIESCENCE : GC_DEFAULT;
+                MoveCollectors::generateMoves<ListCollector, whiteToMove, config>(this, board);
+            }
+
+        private:
+            template<bool whiteToMove,  Piece_t piece, Flag_t flags>
+            void nextMove(const Board& board, BB from, BB to) {
+
+            }
+        };
+
+        ListCollector mainList{};
+ 
         const int MAX_ITER_DEPTH = 6;
         const int MAX_WINDOW_INCREASES = 2;
         const int NUM_PV_NODES = 2;
         const int NUM_FULL_DEPTH_NODES = 4;
 
         class Searcher {
-            static std::array<std::array<std::pair<float, Move>, 256>, 128> moves;
-            static std::array<unsigned int, 128> moveIndices;
-            static int currentDepth;
-        public:
-            static TranspositionTable trTable;
-            static RepetitionTable repTable;
-            static MoveOrderer moveOrderer;
+            std::array<std::array<std::pair<float, Move>, 256>, 128> moves{};
+            std::array<unsigned int, 128> moveIndices{};
+            int currentDepth;
 
-            static Move bestMove;
-            static std::vector<Move> bestMoves;
+            TranspositionTable trTable;
+            RepetitionTable repTable;
+            MoveOrderer moveOrderer;
+        public:
+            Move bestMove;
+
+
+            Searcher() {
+
+            }
+
+
 
             template<bool whiteToMove>
-            static Result iterativeDeepening(const Board &board, int maxDepth = MAX_ITER_DEPTH) {
+            Result iterativeDeepening(const Board &board, int maxDepth = MAX_ITER_DEPTH) {
                 reset();
 //        repTable.reset();
                 Line bestLine;
@@ -89,7 +124,7 @@ namespace Dory {
                 return {bestEval, bestLine};
             }
 
-            static void reset() {
+            void reset() {
                 searchResults.reset();
                 trTable.reset();
 //                repTable.reset();
@@ -100,7 +135,7 @@ namespace Dory {
         private:
 
             template<bool whiteToMove, bool topLevel>
-            static Result negamax(const Board &board, int depth, int alpha, int beta, int maxDepth) {
+            Result negamax(const Board &board, int depth, int alpha, int beta, int maxDepth) {
 
                 size_t boardHash = Zobrist::hash<whiteToMove>(board);
 
@@ -119,7 +154,7 @@ namespace Dory {
 
                 /// Switch to Quiescence Search
                 CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher>::pd);
-                bool inCheck = MoveGenerator<Searcher>::pd->inCheck();
+                bool inCheck = MoveGenerator<Searcher>::pd.inCheck();
 
                 if (!inCheck && depth > maxDepth) {
                     return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
@@ -265,7 +300,7 @@ namespace Dory {
             }
 
             template<bool whiteToMove>
-            static Result quiescenceSearch(const Board &board, int depth, int alpha, int beta) {
+            Result quiescenceSearch(const Board &board, int depth, int alpha, int beta) {
                 /// Recursion Base Case: Max Depth reached -> return heuristic position eval
                 int standPat = evaluation::evaluatePosition<whiteToMove>(board);
 
@@ -281,16 +316,16 @@ namespace Dory {
                 currentDepth = depth;
 
                 // Reload CLH
-                CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
-
-                if (MoveGenerator<Searcher, true>::pd->inCheck()) {
-                    // if in check, any legal move is considered
-                    *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
-                    generateMoves<Searcher, whiteToMove, false>(board);
-                } else {
-                    // if not in check, consider only captures
-                    generateMoves<Searcher, whiteToMove, false, true>(board);
-                }
+//                CheckLogicHandler::reload<whiteToMove>(board, MoveGenerator<Searcher, true>::pd);
+//
+//                if (MoveGenerator<Searcher, true>::pd->inCheck()) {
+//                    // if in check, any legal move is considered
+//                    *MoveGenerator<Searcher>::pd = *MoveGenerator<Searcher, true>::pd;
+//                    generateMoves<Searcher, whiteToMove, false>(board);
+//                } else {
+//                    // if not in check, consider only captures
+//                    generateMoves<Searcher, whiteToMove, false, true>(board);
+//                }
 
                 if (moveIndices.at(depth) == 0) {
                     searchResults.nodesSearched++;
@@ -330,7 +365,7 @@ namespace Dory {
             }
 
             template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-            static void registerMove(const Board &board, BB from, BB to) {
+            void registerMove(const Board &board, BB from, BB to) {
                 moves[currentDepth].at(moveIndices.at(currentDepth)++)
                     = std::make_pair(
                         moveOrderer.moveHeuristic<whiteToMove, piece, flags>(board, from, to, MoveGenerator<Searcher>::pd, currentDepth),
@@ -338,27 +373,26 @@ namespace Dory {
                     );
             }
 
-            friend class MoveGenerator<Searcher, true>;
-            friend class MoveGenerator<Searcher, false>;
+            friend class MoveGenerator<Searcher>;
         };
 
-        std::array<std::array<std::pair<float, Move>, 256>, 128> Searcher::moves{};
-        std::array<unsigned int, 128> Searcher::moveIndices{};
-        int Searcher::currentDepth{0};
-        std::vector<Move> Searcher::bestMoves{};
-        TranspositionTable Searcher::trTable{};
-        RepetitionTable Searcher::repTable{};
-        MoveOrderer Searcher::moveOrderer{};
-        Move Searcher::bestMove{};
+//        std::array<std::array<std::pair<float, Move>, 256>, 128> Searcher::moves{};
+//        std::array<unsigned int, 128> Searcher::moveIndices{};
+//        int Searcher::currentDepth{0};
+//        std::vector<Move> Searcher::bestMoves{};
+//        TranspositionTable Searcher::trTable{};
+//        RepetitionTable Searcher::repTable{};
+//        MoveOrderer Searcher::moveOrderer{};
+//        Move Searcher::bestMove{};
 
     } // namespace Search
 
-    size_t SearchResults::trTableSizeKb() {
-        return Search::Searcher::trTable.size();
-    }
-    size_t SearchResults::trTableSizeMb() {
-        return Search::Searcher::trTable.size() / 1024;
-    }
+//    size_t SearchResults::trTableSizeKb() {
+//        return Search::Searcher::trTable.size();
+//    }
+//    size_t SearchResults::trTableSizeMb() {
+//        return Search::Searcher::trTable.size() / 1024;
+//    }
 
 
 } // namespace Dory
