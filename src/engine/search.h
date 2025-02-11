@@ -23,109 +23,162 @@ namespace Dory {
         struct WeightedMove {
             Move move{};
             int weight{0};
+
+            bool operator>(const WeightedMove& other) const { return weight > other.weight; }
         };
 
-        class MoveList {
+//        class MoveList {
+//            const MoveOrderer* moveOrderer;
+//            PinData pd{};
+//            size_t depth, ix{0};
+//            std::array<WeightedMove, 256> moves;
+//
+//        public:
+//            constexpr explicit MoveList(size_t dpt, const MoveOrderer* orderer) : moveOrderer{orderer}, depth{dpt} {}
+//
+//            [[nodiscard]] PinData& getPinData() {
+//                return pd;
+//            }
+//
+//            [[nodiscard]] bool empty() const {
+//                return ix == 0;
+//            }
+//
+//            [[nodiscard]] auto begin() const {
+//                return moves.begin();
+//            }
+//
+//            [[nodiscard]] auto end() const {
+//                return moves.begin() + ix;
+//            }
+//
+//            void sort() {
+//                std::sort(moves.begin(), moves.begin() + ix,
+//                  [](const WeightedMove& a, const WeightedMove& b) { return a.weight > b.weight; }
+//                );
+//            }
+//
+//            void reset() {
+//                ix = 0;
+//            }
+//
+//            template<bool whiteToMove,  Piece_t piece, Flag_t flags>
+//            void nextMove(const Board& board, BB from, BB to) {
+//                moves.at(ix++) = {
+//                    createMoveFromBB(from, to, piece, flags),
+//                    moveOrderer->moveHeuristic<whiteToMove, piece, flags>(board, from, to, pd, depth)
+//                };
+//            }
+//        };
+//
+//        template<size_t depth>
+//        constexpr std::array<MoveList, depth> buildCollectors(const MoveOrderer* orderer) {
+//            return [orderer]<size_t... Is>(std::index_sequence<Is...>) {
+//                return std::array<MoveList, depth>{MoveList(Is, orderer)... };
+//            }(std::make_index_sequence<depth>{});
+//        }
+//
+//        template<size_t maxDepth>
+//        class MoveStorage {
+//            std::array<MoveList, maxDepth> container;
+//
+//        public:
+//            explicit MoveStorage(const MoveOrderer* moveOrderer) : container{buildCollectors<maxDepth>(moveOrderer)} {}
+//
+//            template<bool whiteToMove>
+//            const PinData& loadClh(const Board& board, size_t depth) {
+//                container.at(depth).reset();
+//                CheckLogicHandler::reload<whiteToMove>(board, container.at(depth).getPinData());
+//                return container.at(depth).getPinData();
+//            }
+//
+//            template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
+//            void generate(const Board& board, size_t depth) {
+//                if constexpr (config.reloadClh) {
+//                    loadClh<whiteToMove>(board, depth);
+//                }
+//                MoveCollectors::template generateMoves<MoveList, whiteToMove, config>(&container.at(depth), board, container.at(depth).getPinData());
+//            }
+//
+//            [[nodiscard]] const PinData& pd(size_t depth) const {
+//                return container.at(depth).getPinData();
+//            }
+//
+//            [[nodiscard]] auto begin(size_t depth) const {
+//                return container.at(depth).begin();
+//            }
+//
+//            [[nodiscard]] auto end(size_t depth) const {
+//                return container.at(depth).end();
+//            }
+//
+//            [[nodiscard]] bool empty(size_t depth) const {
+//                return container.at(depth).empty();
+//            }
+//
+//            void sort(size_t depth) {
+//                container.at(depth).sort();
+//            }
+//
+//            void reset() {
+//                for(auto it: container) it.reset();
+//            }
+//
+//            MoveList list(size_t depth) {
+//                return container.at(depth);
+//            }
+//        };
+
+//        template<size_t stacksize, size_t maxdepth>
+        class MoveContainer {
+        public:
+            std::array<WeightedMove, 1024> moves{};
+            std::array<size_t, 64> starts{}, currents{};
             const MoveOrderer* moveOrderer;
-            PinData pd{};
-            size_t depth, ix{0};
-            std::array<WeightedMove, 256> moves;
+            size_t currentDepth{};
+            PinData pd;
 
-        public:
-            constexpr explicit MoveList(size_t dpt, const MoveOrderer* orderer) : moveOrderer{orderer}, depth{dpt} {}
-
-            [[nodiscard]] PinData& getPinData() {
-                return pd;
-            }
-
-            [[nodiscard]] bool empty() const {
-                return ix == 0;
-            }
-
-            [[nodiscard]] auto begin() const {
-                return moves.begin();
-            }
-
-            [[nodiscard]] auto end() const {
-                return moves.begin() + ix;
-            }
-
-            void sort() {
-                std::sort(moves.begin(), moves.begin() + ix,
-                  [](const WeightedMove& a, const WeightedMove& b) { return a.weight > b.weight; }
-                );
-            }
-
-            void reset() {
-                ix = 0;
-            }
-
-            template<bool whiteToMove,  Piece_t piece, Flag_t flags>
-            void nextMove(const Board& board, BB from, BB to) {
-                moves.at(ix++) = {
-                    createMoveFromBB(from, to, piece, flags),
-                    moveOrderer->moveHeuristic<whiteToMove, piece, flags>(board, from, to, pd, depth)
-                };
-            }
-        };
-
-        template<size_t depth>
-        constexpr std::array<MoveList, depth> buildCollectors(const MoveOrderer* orderer) {
-            return [orderer]<size_t... Is>(std::index_sequence<Is...>) {
-                return std::array<MoveList, depth>{MoveList(Is, orderer)... };
-            }(std::make_index_sequence<depth>{});
-        }
-
-        template<size_t maxDepth>
-        class MoveStorage {
-            std::array<MoveList, maxDepth> container;
-
-        public:
-            explicit MoveStorage(const MoveOrderer* moveOrderer) : container{buildCollectors<maxDepth>(moveOrderer)} {}
+            explicit MoveContainer(const MoveOrderer* mO) : moveOrderer{mO} {}
 
             template<bool whiteToMove>
-            const PinData& loadClh(const Board& board, size_t depth) {
-                container.at(depth).reset();
-                CheckLogicHandler::reload<whiteToMove>(board, container.at(depth).getPinData());
-                return container.at(depth).getPinData();
+            const PinData& loadClh(const Board& board) {
+                CheckLogicHandler::reload<whiteToMove>(board, pd);
+                return pd;
             }
 
             template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
             void generate(const Board& board, size_t depth) {
                 if constexpr (config.reloadClh) {
-                    loadClh<whiteToMove>(board, depth);
+                    CheckLogicHandler::reload<whiteToMove>(board, pd);
                 }
-                MoveCollectors::template generateMoves<MoveList, whiteToMove, config>(&container.at(depth), board, container.at(depth).getPinData());
+                currentDepth = depth;
+                currents[depth] = starts[depth];
+                starts[depth+1] = starts[depth];
+                MoveCollectors::template generateMoves<MoveContainer, whiteToMove, config>(this, board, pd);
             }
 
-            [[nodiscard]] const PinData& pd(size_t depth) const {
-                return container.at(depth).getPinData();
+            template<bool whiteToMove,  Piece_t piece, Flag_t flags>
+            void nextMove(const Board& board, BB from, BB to) {
+                moves.at(currents[currentDepth]++) = {
+                    createMoveFromBB(from, to, piece, flags),
+                    moveOrderer->moveHeuristic<whiteToMove, piece, flags>(board, from, to, pd, currentDepth)
+                };
+                starts[currentDepth+1]++;
             }
 
-            [[nodiscard]] auto begin(size_t depth) const {
-                return container.at(depth).begin();
-            }
+            [[nodiscard]] auto begin(size_t depth) const { return moves.begin() + starts[depth]; }
+            [[nodiscard]] auto end(size_t depth) const { return moves.begin() + starts[depth+1]; }
+            [[nodiscard]] bool empty(size_t depth) const { return starts[depth] == starts[depth+1]; }
 
-            [[nodiscard]] auto end(size_t depth) const {
-                return container.at(depth).end();
-            }
-
-            [[nodiscard]] bool empty(size_t depth) const {
-                return container.at(depth).empty();
-            }
-
-            void sort(size_t depth) {
-                container.at(depth).sort();
-            }
-
+            // Modifiers
+            void sort(size_t depth) { std::sort(moves.begin() + starts[depth], moves.begin() + starts[depth+1], std::greater<>()); }
             void reset() {
-                for(auto it: container) it.reset();
-            }
-
-            MoveList list(size_t depth) {
-                return container.at(depth);
+                starts.fill(0);
+                currents.fill(0);
             }
         };
+
+
 
         const int MAX_ITER_DEPTH = 6;
         const int MAX_WINDOW_INCREASES = 2;
@@ -136,7 +189,7 @@ namespace Dory {
             TranspositionTable trTable{};
             RepetitionTable repTable{};
             MoveOrderer moveOrderer{};
-            MoveStorage<200> moveContainer;
+            MoveContainer moveContainer;
 
         public:
             BB nodesSearched{0}, tableLookups{0};
@@ -178,7 +231,7 @@ namespace Dory {
             int alpha = -INF, beta = INF;
 
             for (int depth = 1; depth <= maxDepth;) {
-//                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
                 auto [eval, line] = negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
 
                 /// Aspiration Window
@@ -203,7 +256,7 @@ namespace Dory {
 
 //                std::cout << "Line for depth " << depth << std::endl;
 //                std::cout << "Depth " << depth << " -> ";
-//                Utils::printLine(bestLine, bestEval);
+                Utils::printLine(bestLine, bestEval);
 
                 depth++;
             }
@@ -233,7 +286,7 @@ namespace Dory {
             }
 
             /// Switch to Quiescence Search
-            const PinData& pd = moveContainer.loadClh<whiteToMove>(board, depth);
+            const PinData& pd = moveContainer.loadClh<whiteToMove>(board);
             bool inCheck = pd.inCheck();
 
             if (!inCheck && depth > maxDepth) {
@@ -308,8 +361,8 @@ namespace Dory {
 
             /// Iterate through all moves
             int moveIx = 0;
-            for(WeightedMove wm: moveContainer.list(depth)) {
-                Move move = wm.move;
+            for(auto it = moveContainer.begin(depth); it != moveContainer.end(depth); ++it) {
+                Move move = (*it).move;
 
                 repTable.insert(boardHash);
 
@@ -404,7 +457,7 @@ namespace Dory {
             }
 
             // Reload CLH
-            const PinData& pd = moveContainer.loadClh<whiteToMove>(board, depth);
+            const PinData& pd = moveContainer.loadClh<whiteToMove>(board);
             bool inCheck = pd.inCheck();
 
             if (inCheck) {
