@@ -96,11 +96,25 @@ namespace Dory::MoveCollectors {
             _ref = ref;
             MoveGenerator<ObjectCollector<T>>::template generate<whiteToMove, config>(board);
         }
+
+        template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
+        static void generate(T* ref, const Board& board, PinData& pd) {
+            _ref = ref;
+            MoveGenerator<ObjectCollector<T>>::template generate<whiteToMove, config>(board, pd);
+        }
     };
+
+    template<typename T>
+    T* ObjectCollector<T>::_ref = nullptr;
 
     template<typename T, bool whiteToMove, GenerationConfig config=GC_DEFAULT>
     void generateMoves(T* ref, const Board& board) {
-        ObjectCollector<T>::generate<whiteToMove, config>(ref, board);
+        ObjectCollector<T>::template generate<whiteToMove, config>(ref, board);
+    }
+
+    template<typename T, bool whiteToMove, GenerationConfig config=GC_DEFAULT>
+    void generateMoves(T* ref, const Board& board, PinData& pd) {
+        ObjectCollector<T>::template generate<whiteToMove, config>(ref, board, pd);
     }
 
     // Example for using class as MoveCollector

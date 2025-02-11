@@ -72,7 +72,7 @@ namespace Dory {
 //        lookup_table.reserve(145000);
         }
 
-        size_t size() { // in kB
+        size_t size() const { // in kB
             return lookup_table.size() * sizeof(TTEntry) / 1024;
         }
     };

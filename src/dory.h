@@ -10,24 +10,36 @@
 
 namespace Dory {
 
-    bool readyOk = false;
+    class Dory {
+        Search::Searcher searcher{};
+
+    public:
+        Dory() {
+            PieceSteps::load();
+            Zobrist::init(23984729);
+        }
+
+        template<bool whiteToMove>
+        Result searchDepth(const Board& board, int depth) {
+            return searcher.iterativeDeepening<whiteToMove>(board, depth);
+        }
+
+        Result searchDepth(const Board& board, int depth, bool whiteToMove) {
+            if(whiteToMove) return searchDepth<true>(board, depth);
+            return searchDepth<false>(board, depth);
+        }
+
+        [[nodiscard]] uint64_t nodesSearched() const { return searcher.nodesSearched; }
+
+        [[nodiscard]] uint64_t tableLookups() const { return searcher.tableLookups; }
+
+        [[nodiscard]] size_t trTableSizeKb() const { return searcher.trTableSizeKb(); }
+
+        [[nodiscard]] size_t trTableSizeMb() const { return searcher.trTableSizeMb(); }
+    };
 
     void initialize() {
-        if(readyOk) return;
-        Dory::PieceSteps::load();
-        Dory::Zobrist::init(23984729);
-        readyOk = true;
-    }
-
-    template<bool whiteToMove>
-    Result searchDepth(const Board& board, int depth) {
-//        return Search::Searcher::iterativeDeepening<whiteToMove>(board, depth);
-        return {};
-    }
-
-    Result searchDepth(const Board& board, int depth, bool whiteToMove) {
-        if(whiteToMove) return searchDepth<true>(board, depth);
-        return searchDepth<false>(board, depth);
+        PieceSteps::load();
     }
 
     template<bool whiteToMove>

@@ -36,15 +36,8 @@ namespace Dory::Search {
             kmPositions[dp] %= 4;
         }
 
-        template<typename T, std::size_t N>
-        void sort(std::array<std::pair<float, T>, N> &moves, unsigned int numMoves) {
-            std::sort(moves.begin(), moves.begin() + numMoves,
-                  [](const std::pair<float, T>& a, const std::pair<float, T>& b) { return a.first > b.first; }
-            );
-        }
-
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        int moveHeuristic(const Board &board, BB from, BB to, const PinData& pd, int depth) {
+        [[nodiscard]] int moveHeuristic(const Board &board, BB from, BB to, const PinData& pd, int depth) const {
             if (priorityMove.is<piece, flags>(from, to)) {
                 return INF;
             }
