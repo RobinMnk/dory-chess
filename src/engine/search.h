@@ -132,10 +132,10 @@ namespace Dory {
 //        template<size_t stacksize, size_t maxdepth>
         class MoveContainer {
         public:
-            std::array<WeightedMove, 1024> moves{};
-            std::array<size_t, 64> starts{}, currents{};
+            std::array<WeightedMove, 2048> moves{};
+            std::array<size_t, 128> starts{};
             const MoveOrderer* moveOrderer;
-            size_t currentDepth{};
+            size_t currentDepth{}, ix{};
             PinData pd;
 
             explicit MoveContainer(const MoveOrderer* mO) : moveOrderer{mO} {}
@@ -152,18 +152,17 @@ namespace Dory {
                     CheckLogicHandler::reload<whiteToMove>(board, pd);
                 }
                 currentDepth = depth;
-                currents[depth] = starts[depth];
-                starts[depth+1] = starts[depth];
+                ix = starts[depth];
                 MoveCollectors::template generateMoves<MoveContainer, whiteToMove, config>(this, board, pd);
+                starts[depth+1] = ix;
             }
 
             template<bool whiteToMove,  Piece_t piece, Flag_t flags>
             void nextMove(const Board& board, BB from, BB to) {
-                moves.at(currents[currentDepth]++) = {
+                moves.at(ix++) = {
                     createMoveFromBB(from, to, piece, flags),
                     moveOrderer->moveHeuristic<whiteToMove, piece, flags>(board, from, to, pd, currentDepth)
                 };
-                starts[currentDepth+1]++;
             }
 
             [[nodiscard]] auto begin(size_t depth) const { return moves.begin() + starts[depth]; }
@@ -172,10 +171,7 @@ namespace Dory {
 
             // Modifiers
             void sort(size_t depth) { std::sort(moves.begin() + starts[depth], moves.begin() + starts[depth+1], std::greater<>()); }
-            void reset() {
-                starts.fill(0);
-                currents.fill(0);
-            }
+            void reset() { starts.fill(0); }
         };
 
 
