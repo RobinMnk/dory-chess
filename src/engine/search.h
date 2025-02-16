@@ -185,13 +185,13 @@ namespace Dory {
             TranspositionTable trTable{};
             RepetitionTable repTable{};
             MoveOrderer moveOrderer{};
-            MoveContainer moveContainer;
+            MoveContainer moveContainer{&moveOrderer};
 
         public:
             BB nodesSearched{0}, tableLookups{0};
             Move bestMove;
 
-            Searcher() : moveContainer{&moveOrderer} {}
+//            Searcher() : moveContainer{&moveOrderer} {}
 
             template<bool whiteToMove>
             Result iterativeDeepening(const Board &board, int maxDepth = MAX_ITER_DEPTH);
@@ -227,7 +227,7 @@ namespace Dory {
             int alpha = -INF, beta = INF;
 
             for (int depth = 1; depth <= maxDepth;) {
-                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+//                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
                 auto [eval, line] = negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
 
                 /// Aspiration Window
@@ -252,7 +252,7 @@ namespace Dory {
 
 //                std::cout << "Line for depth " << depth << std::endl;
 //                std::cout << "Depth " << depth << " -> ";
-                Utils::printLine(bestLine, bestEval);
+//                Utils::printLine(bestLine, bestEval);
 
                 depth++;
             }

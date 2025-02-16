@@ -232,6 +232,8 @@ namespace Dory {
 
         template<Piece_t pc, Flag_t fl>
         [[nodiscard]] bool is(BB fromBB, BB toBB) const {
+//            constexpr uint32_t lowerMask = fl | (pc << 8);
+//            uint32_t mask = (singleBitOf(fromBB) << 24) | (singleBitOf(toBB) << 16) | lowerMask;
             return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
         }
     };
