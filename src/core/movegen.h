@@ -65,19 +65,19 @@ namespace Dory {
         static void knightMoves(const Board &board, PinData& pd);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void bishopMoves(const Board &board, PinData& pd);
+        static void bishopMoves(const Board &board, PinData& pd, BB occ);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void rookMoves(const Board &board, PinData& pd);
+        static void rookMoves(const Board &board, PinData& pd, BB occ);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void queenMoves(const Board &board, PinData& pd);
+        static void queenMoves(const Board &board, PinData& pd, BB occ);
 
         template<bool whiteToMove, GenerationConfig config>
         static void kingMoves(const Board &board, PinData& pd);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void castles(const Board &board, PinData& pd);
+        static void castles(const Board &board, PinData& pd, BB occ);
     };
 
     template<typename Collector>
@@ -91,14 +91,15 @@ namespace Dory {
         }
 
         if (!pd.isDoubleCheck) {
+            BB occ = board.occ();
             pawnMoves<whiteToMove, config>(board, pd);
             knightMoves<whiteToMove, config>(board, pd);
-            bishopMoves<whiteToMove, config>(board, pd);
-            rookMoves<whiteToMove, config>(board, pd);
-            queenMoves<whiteToMove, config>(board, pd);
+            bishopMoves<whiteToMove, config>(board, pd, occ);
+            rookMoves<whiteToMove, config>(board, pd, occ);
+            queenMoves<whiteToMove, config>(board, pd, occ);
 
             if (board.canCastle<whiteToMove>())
-                castles<whiteToMove, config>(board, pd);
+                castles<whiteToMove, config>(board, pd, occ);
         }
 
         kingMoves<whiteToMove, config>(board, pd);
@@ -113,7 +114,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config, Piece_t piece, Flag_t flags>
-    void MoveGenerator<Collector>::generateSuccessorBoard(const Board &board, BB from, BB to)
+    inline void MoveGenerator<Collector>::generateSuccessorBoard(const Board &board, BB from, BB to)
     requires ValidMoveCollector<Collector, whiteToMove, piece, flags>
     {
         if constexpr (config.quiescence) {
@@ -133,7 +134,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config, Piece_t piece, Flag_t flags>
-    void MoveGenerator<Collector>::addToList(const Board &board, int fromIndex, BB targets) {
+    inline void MoveGenerator<Collector>::addToList(const Board &board, int fromIndex, BB targets) {
         BB fromBB = newMask(fromIndex);
         Bitloop(targets) {
             BB toBB = isolateLowestBit(targets);
@@ -143,7 +144,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::handlePromotions(const Board &board, BB from, BB to) {
+    inline void MoveGenerator<Collector>::handlePromotions(const Board &board, BB from, BB to) {
         generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_PromoteQueen>(board, from, to);
         generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_PromoteRook>(board, from, to);
         generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_PromoteBishop>(board, from, to);
@@ -177,8 +178,9 @@ namespace Dory {
         pawnCapR &= pawnInvAtkRight<white>(pd.pinsDiag & pawnCanGoLeft<white>()) | ~pd.pinsDiag;
 
         // handle en passant pawns
-        BB epPawnL{0}, epPawnR{0};
+        BB from;
         if (board.hasEnPassant() != 0 && !pd.blockEP) {
+            BB epPawnL{0}, epPawnR{0};
             BB enPassant = board.enPassantBB();
             // left capture is ep square and is on checkmask
             epPawnL = pawnCapt & pawnCanGoLeft<white>() &
@@ -191,6 +193,15 @@ namespace Dory {
                       pawnInvAtkRight<white>(enPassant & forward<white>(pd.checkMask));
             // remove pinned ep pawns
             epPawnR &= pawnInvAtkRight<white>(pd.pinsDiag & pawnCanGoRight<white>()) | ~pd.pinsDiag;
+
+            Bitloop(epPawnL) {    // en passant left
+                from = isolateLowestBit(epPawnL);
+                generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkLeft<white>(from));
+            }
+            Bitloop(epPawnR) {    // en passant right
+                from = isolateLowestBit(epPawnR);
+                generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkRight<white>(from));
+            }
         }
 
         // collect all promoting pawns in separate variables
@@ -204,7 +215,6 @@ namespace Dory {
         pawnCapL &= ~lastRowMask;
         pawnCapR &= ~lastRowMask;
 
-        BB from;
         // non-promoting pawn moves
         Bitloop(pwnMov) {   // straight push, 1 square
             from = isolateLowestBit(pwnMov);
@@ -238,14 +248,6 @@ namespace Dory {
             from = isolateLowestBit(pwnMov2);
             generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_PawnDoublePush>(board, from,  forward2<white>(from));
         }
-        Bitloop(epPawnL) {    // en passant left
-            from = isolateLowestBit(epPawnL);
-            generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkLeft<white>(from));
-        }
-        Bitloop(epPawnR) {    // en passant right
-            from = isolateLowestBit(epPawnR);
-            generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkRight<white>(from));
-        }
     }
 
     template<typename Collector>
@@ -263,12 +265,12 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::bishopMoves(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::bishopMoves(const Board &board, PinData& pd, BB occ) {
         BB bishops = board.bishops<whiteToMove>() & ~pd.pinsStr;
 
         Bitloop(bishops) {
             int ix = firstBitOf(bishops);
-            BB targets = PieceSteps::slideMask<true>(board.occ(), ix) & pd.targetSquares;
+            BB targets = PieceSteps::slideMask<true>(occ, ix) & pd.targetSquares;
             if (hasBitAt(pd.pinsDiag, ix)) targets &= pd.pinsDiag;
             addToList<whiteToMove, config, PIECE_Bishop>(board, ix, targets);
         }
@@ -276,13 +278,13 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::rookMoves(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::rookMoves(const Board &board, PinData& pd, BB occ) {
         BB rooks = board.rooks<whiteToMove>() & ~pd.pinsDiag;
 
         Bitloop(rooks) {
             int ix = firstBitOf(rooks);
 
-            BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd.targetSquares;
+            BB targets = PieceSteps::slideMask<false>(occ, ix) & pd.targetSquares;
             if (hasBitAt(pd.pinsStr, ix)) targets &= pd.pinsStr;
 
             if (board.canCastleShort<whiteToMove>() && hasBitAt(startingKingsideRook<whiteToMove>(), ix)) {
@@ -300,7 +302,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::queenMoves(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::queenMoves(const Board &board, PinData& pd, BB occ) {
         BB queens = board.queens<whiteToMove>();
         BB queensPinStr = queens & pd.pinsStr & ~pd.pinsDiag;
         BB queensPinDiag = queens & pd.pinsDiag & ~pd.pinsStr;
@@ -308,20 +310,20 @@ namespace Dory {
 
         Bitloop(queensPinStr) {
             int ix = firstBitOf(queensPinStr);
-            BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd.targetSquares & pd.pinsStr;
+            BB targets = PieceSteps::slideMask<false>(occ, ix) & pd.targetSquares & pd.pinsStr;
             addToList<whiteToMove, config, PIECE_Queen>(board, ix, targets);
         }
 
         Bitloop(queensPinDiag) {
             int ix = firstBitOf(queensPinDiag);
-            BB targets = PieceSteps::slideMask<true>(board.occ(), ix) & pd.targetSquares & pd.pinsDiag;
+            BB targets = PieceSteps::slideMask<true>(occ, ix) & pd.targetSquares & pd.pinsDiag;
             addToList<whiteToMove, config, PIECE_Queen>(board, ix, targets);
         }
 
         Bitloop(queensNoPin) {
             int ix = firstBitOf(queensNoPin);
-            BB targets = PieceSteps::slideMask<false>(board.occ(), ix) & pd.targetSquares;
-            targets |= PieceSteps::slideMask<true>(board.occ(), ix) & pd.targetSquares;
+            BB targets = PieceSteps::slideMask<false>(occ, ix) & pd.targetSquares;
+            targets |= PieceSteps::slideMask<true>(occ, ix) & pd.targetSquares;
             addToList<whiteToMove, config, PIECE_Queen>(board, ix, targets);
         }
     }
@@ -336,29 +338,32 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::castles(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::castles(const Board &board, PinData& pd, BB occ) {
         constexpr bool white = whiteToMove;
         constexpr BB startKing = STARTBOARD.king<white>();
+        constexpr BB kingCastledKingside = startKing << 2;
+        constexpr BB kingCastledQueenside = startKing >> 2;
+        constexpr BB rookPosKingside = startingKingsideRook<white>();
+        constexpr BB rookPosQueenside = startingQueensideRook<white>();
+        constexpr BB knightPosQueenside = startingQueensideRook<white>() << 1;
         constexpr BB csMask = castleShortMask<white>();
         constexpr BB clMask = castleLongMask<white>();
         BB kingBB = board.king<white>();
 
         if (board.canCastleShort<whiteToMove>()
             && kingBB == startKing
-            && board.rooks<white>() & startingKingsideRook<white>()
+            && board.rooks<white>() & rookPosKingside
             && (csMask & pd.attacked) == 0
-            && (csMask & board.occ()) == kingBB
-        )
-            generateSuccessorBoard<whiteToMove, config, PIECE_King, MOVEFLAG_ShortCastling>(board, kingBB, startKing << 2);
+            && (csMask & occ) == kingBB
+        ) generateSuccessorBoard<whiteToMove, config, PIECE_King, MOVEFLAG_ShortCastling>(board, startKing, kingCastledKingside);
 
         if (board.canCastleLong<whiteToMove>()
             && kingBB == startKing
-            && board.rooks<white>() & startingQueensideRook<white>()
+            && board.rooks<white>() & rookPosQueenside
             && (clMask & pd.attacked) == 0
-            && (clMask & board.occ()) == kingBB
-            && board.free() & (startingQueensideRook<white>() << 1)
-        )
-            generateSuccessorBoard<whiteToMove, config, PIECE_King, MOVEFLAG_LongCastling>(board, kingBB, startKing >> 2);
+            && (clMask & occ) == kingBB
+            && board.free() & knightPosQueenside
+        ) generateSuccessorBoard<whiteToMove, config, PIECE_King, MOVEFLAG_LongCastling>(board, startKing, kingCastledQueenside);
     }
 
     template<typename MC>

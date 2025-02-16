@@ -35,7 +35,7 @@ namespace Dory {
     };
 
     template<bool whiteToMove, int dir>
-    void CheckLogicHandler::handlePin(const Board &board, BB line, BB pieces, int kingSquare, BB &mask, bool &blockEP) {
+    void CheckLogicHandler::handlePin(const Board &board, const BB line, const BB pieces, const int kingSquare, BB &mask, bool &blockEP) {
         constexpr int dir_off = PieceSteps::directions[dir];
         BB sol = line & pieces;
         if (sol) {
@@ -44,15 +44,12 @@ namespace Dory {
             else ix = lastBitOf(sol);
 
             BB kl = line & PieceSteps::FROM_TO[kingSquare][ix];
-            if (bitCount(kl & board.enemyPieces<whiteToMove>()) ==
-                1             // only enemyPieces piece on line is the slider
-                && bitCount(kl & board.myPieces<whiteToMove>()) ==
-                   1            // I only have one piece on line (excluding king)
-                    )
-                mask |= kl;
+            if (bitCount(kl & board.enemyPieces<whiteToMove>()) == 1             // only enemyPieces piece on line is the slider
+                && bitCount(kl & board.myPieces<whiteToMove>()) == 1            // I only have one piece on line (excluding king)
+            ) mask |= kl;
 
-                // handle very special case of two sideways pinned epPawns
-                // add pin line through two pawns to prevent pinned en passant
+            // handle very special case of two sideways pinned epPawns
+            // add pin line through two pawns to prevent pinned en passant
             else {
                 if constexpr (dir == PieceSteps::DIR_LEFT || dir == PieceSteps::DIR_RIGHT) {
                     if (board.hasEnPassant()
@@ -60,8 +57,7 @@ namespace Dory {
                         && bitCount(kl & board.pawns<whiteToMove>()) == 1         // one own pawn
                         && bitCount(kl & board.enemyPawns<whiteToMove>()) == 1    // one enemy pawn
                         && bitCount(kl & board.occ()) == 3  // 2 pawns + 1 king = 3 total pieces on line
-                    )
-                        blockEP = true;
+                    ) blockEP = true;
                 }
             }
         }
@@ -70,8 +66,8 @@ namespace Dory {
 
     template<bool whiteToMove, bool diag>
     BB CheckLogicHandler::addPins(const Board &board, int kingSquare, bool &blockEP) {
-        std::array<BB, 8> kingLines = PieceSteps::LINES[kingSquare];
-        BB pieces = board.enemySliders<whiteToMove, diag>();
+        const std::array<BB, 8>& kingLines = PieceSteps::LINES[kingSquare];
+        const BB pieces = board.enemySliders<whiteToMove, diag>();
         BB mask = 0;
 
         if constexpr (diag) {
@@ -91,7 +87,6 @@ namespace Dory {
 
     template<bool whiteToMove>
     void CheckLogicHandler::reload(const Board &board, PinData& pd) {
-        BB attacked{0}, checkMask{0}, mask, pawnAtk{0};
         int numChecks = 0;
         int kingSquare = board.kingSquare<whiteToMove>();
 
@@ -103,47 +98,53 @@ namespace Dory {
 
         BB myKing = board.king<whiteToMove>();
 
+        BB mask{0};
+        pd.attacked = pd.checkMask = pd.pawnAtk = 0;
+
         // IS THE KING IN CHECK
 
-        attacked |= PieceSteps::KING_MOVES[board.kingSquare<!whiteToMove>()];
+        pd.attacked |= PieceSteps::KING_MOVES[board.kingSquare<!whiteToMove>()];
 
         // Pawns
         mask = pawnAtkLeft<!whiteToMove>(pawnBB & pawnCanGoLeft<!whiteToMove>());     // pawn attack to the left
-        attacked |= mask;
-        pawnAtk |= mask;
+        pd.attacked |= mask;
+        pd.pawnAtk |= mask;
         if (mask & myKing) {
             numChecks++;
-            checkMask |= pawnInvAtkLeft<!whiteToMove>(myKing);
+            pd.checkMask |= pawnInvAtkLeft<!whiteToMove>(myKing);
         }
 
         mask = pawnAtkRight<!whiteToMove>(pawnBB & pawnCanGoRight<!whiteToMove>());    // pawn attack to the right
-        attacked |= mask;
-        pawnAtk |= mask;
+        pd.attacked |= mask;
+        pd.pawnAtk |= mask;
         if (mask & myKing) {
             numChecks++;
-            checkMask |= pawnInvAtkRight<!whiteToMove>(myKing);
+            pd.checkMask |= pawnInvAtkRight<!whiteToMove>(myKing);
         }
 
         // Knights
         Bitloop(knightBB) {
             int ix = firstBitOf(knightBB);
             mask = PieceSteps::KNIGHT_MOVES[ix];
-            attacked |= mask;
+            pd.attacked |= mask;
             if (mask & myKing) {
                 numChecks++;
-                setBit(checkMask, ix);
+                setBit(pd.checkMask, ix);
             }
         }
+
+        // Sliders
+        BB occ = board.occ() ^ myKing;
 
         // Bishops & (diagonal) Queens
         BB pieces = bishopBB | queenBB;
         Bitloop(pieces) {
             int ix = firstBitOf(pieces);
-            mask = PieceSteps::slideMask<true>(board.occ() ^ myKing, ix);
-            attacked |= mask;
+            mask = PieceSteps::slideMask<true>(occ, ix);
+            pd.attacked |= mask;
             if (mask & myKing) {
                 numChecks++;
-                checkMask |= PieceSteps::FROM_TO[kingSquare][ix];
+                pd.checkMask |= PieceSteps::FROM_TO[kingSquare][ix];
             }
         }
 
@@ -151,26 +152,22 @@ namespace Dory {
         pieces = rookBB | queenBB;
         Bitloop(pieces) {
             int ix = firstBitOf(pieces);
-            mask = PieceSteps::slideMask<false>(board.occ() ^ myKing, ix);
-            attacked |= mask;
+            mask = PieceSteps::slideMask<false>(occ, ix);
+            pd.attacked |= mask;
             if (mask & myKing) {
                 numChecks++;
-                checkMask |= PieceSteps::FROM_TO[kingSquare][ix];
+                pd.checkMask |= PieceSteps::FROM_TO[kingSquare][ix];
             }
         }
 
         pd.isDoubleCheck = numChecks > 1;
-        if (pd.isDoubleCheck) checkMask = 0;
-        if (numChecks == 0) checkMask = FULL_BB;
+        if (pd.isDoubleCheck) pd.checkMask = 0;
+        if (numChecks == 0) pd.checkMask = FULL_BB;
 
-        bool blockEP = false;
-        pd.pinsDiag = addPins<whiteToMove, true>(board, kingSquare, blockEP);
-        pd.pinsStr = addPins<whiteToMove, false>(board, kingSquare, blockEP);
-        pd.targetSquares = board.enemyOrEmpty<whiteToMove>() & checkMask;
-        pd.attacked = attacked;
-        pd.checkMask = checkMask;
-        pd.blockEP = blockEP;
-        pd.pawnAtk = pawnAtk;
+        pd.blockEP = false;
+        pd.pinsDiag = addPins<whiteToMove, true>(board, kingSquare, pd.blockEP);
+        pd.pinsStr = addPins<whiteToMove, false>(board, kingSquare, pd.blockEP);
+        pd.targetSquares = board.enemyOrEmpty<whiteToMove>() & pd.checkMask;
     }
 
 } // namespace Dory

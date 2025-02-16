@@ -136,11 +136,11 @@ namespace Dory::PieceSteps {
     BB inside = ~(fileA | fileH | rank1 | rank8);
 
     template<bool diag>
-    BB slideMask(BB occ, int sq) {
+    inline BB slideMask(BB occ, int sq) {
         if constexpr (diag) {
-            return sliderAttackBB.at(arrBishopBase[sq] + _pext_u64(occ, arrMask<diag>[sq]));
+            return sliderAttackBB[arrBishopBase[sq] + _pext_u64(occ, arrMask<diag>[sq])];
         } else {
-            return sliderAttackBB.at(arrRookBase[sq] + _pext_u64(occ, arrMask<diag>[sq]));
+            return sliderAttackBB[arrRookBase[sq] + _pext_u64(occ, arrMask<diag>[sq])];
         }
     }
 
