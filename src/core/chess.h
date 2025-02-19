@@ -27,6 +27,7 @@ namespace Dory {
     const Piece_t PIECE_Knight = 3;
     const Piece_t PIECE_Pawn = 4;
     const Piece_t PIECE_King = 5;
+    const Piece_t PIECE_None = 6;
 
     using Flag_t = uint8_t;
     const Flag_t MOVEFLAG_Silent = 0;

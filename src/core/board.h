@@ -116,7 +116,7 @@ namespace Dory {
         }
 
         template<Piece_t piece, bool whiteToMove>
-        [[nodiscard]] BB getPieceBB() const {
+        [[nodiscard]] constexpr BB getPieceBB() const {
             if constexpr (piece == PIECE_Pawn)
                 return pawns<whiteToMove>();
             else if constexpr (piece == PIECE_Knight)
@@ -590,6 +590,34 @@ namespace Dory {
             throw std::exception();
         }
 
+        template<bool white, Piece_t captured>
+        void restorePiece(BB sq) {
+            if constexpr (white) {
+                if constexpr (captured == PIECE_Knight) {
+                    wKnights |= sq;
+                } else if constexpr (captured == PIECE_Bishop) {
+                    wBishops |= sq;
+                } else if constexpr (captured == PIECE_Rook) {
+                    wRooks |= sq;
+                } else if constexpr (captured == PIECE_Queen) {
+                    wQueens |= sq;
+                }
+            } else {
+                if constexpr (captured == PIECE_Knight) {
+                    bKnights |= sq;
+                } else if constexpr (captured == PIECE_Bishop) {
+                    bBishops |= sq;
+                } else if constexpr (captured == PIECE_Rook) {
+                    bRooks |= sq;
+                } else if constexpr (captured == PIECE_Queen) {
+                    bQueens |= sq;
+                }
+            }
+        }
+
+        template<bool whiteMoved, Piece_t piece, Flag_t flags=MOVEFLAG_Silent, Piece_t captured=PIECE_None>
+        void unmakeMove(BB from, BB to) ;
+
         template<bool whiteToMove>
         void makeMove(Move move) {
             switch (move.piece) {
@@ -715,6 +743,160 @@ namespace Dory {
     constexpr BB castleLongRookMove() {
         if constexpr (isWhite) return 0b1001ull;
         else return 0b1001ull << (STARTBOARD.bKingSq - 4);
+    }
+
+    template<bool whiteMoved, Piece_t piece, Flag_t flags, Piece_t captured>
+    void Board::unmakeMove(BB from, BB to) {
+        BB change = from | to;
+
+        if constexpr (flags == MOVEFLAG_EnPassantCapture) {
+            enPassantSq = singleBitOf(forward<!whiteMoved>(to));
+        }
+
+        if constexpr (flags == MOVEFLAG_RemoveShortCastling) {
+            if constexpr (whiteMoved) { castling |= wCastleShortMask; }
+            else { castling |= bCastleShortMask; }
+        } else if constexpr (flags == MOVEFLAG_RemoveLongCastling) {
+            if constexpr (whiteMoved) { castling |= wCastleLongMask; }
+            else { castling |= bCastleLongMask; }
+        } else if constexpr (flags == MOVEFLAG_RemoveAllCastling || flags == MOVEFLAG_ShortCastling ||
+                             flags == MOVEFLAG_LongCastling) {
+            if constexpr (whiteMoved) { castling |= wCastleMask; }
+            else { castling |= bCastleMask; }
+        }
+
+        // Promotions
+        if constexpr (flags == MOVEFLAG_PromoteQueen) {
+            if constexpr (whiteMoved) {
+                wPawns |= from;
+                wQueens &= ~to;
+            } else {
+                bPawns |= from;
+                bQueens &= ~to;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        if constexpr (flags == MOVEFLAG_PromoteRook) {
+            if constexpr (whiteMoved) {
+                wPawns |= from;
+                wRooks &= ~to;
+            } else {
+                bPawns |= from;
+                bRooks &= ~to;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        if constexpr (flags == MOVEFLAG_PromoteBishop) {
+            if constexpr (whiteMoved) {
+                wPawns |= from;
+                wBishops &= ~to;
+            } else {
+                bPawns |= from;
+                bBishops &= ~to;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        if constexpr (flags == MOVEFLAG_PromoteKnight) {
+            if constexpr (whiteMoved) {
+                wPawns |= from;
+                wKnights &= ~to;
+            } else {
+                bPawns |= from;
+                wKnights &= ~to;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+
+        // Castles
+        if constexpr (flags == MOVEFLAG_ShortCastling) {
+            constexpr BB startKing = STARTBOARD.kingSquare<whiteMoved>();
+            constexpr BB startRook = startingKingsideRook<whiteMoved>();
+            wKingSq = startKing;
+            wRooks = startRook;
+            return;
+        }
+        if constexpr (flags == MOVEFLAG_LongCastling) {
+            constexpr BB startKing = STARTBOARD.kingSquare<whiteMoved>();
+            constexpr BB startRook = startingQueensideRook<whiteMoved>();
+            wKingSq = startKing;
+            wRooks = startRook;
+            return;
+        }
+
+        // Silent Moves
+        if constexpr (piece == PIECE_Pawn) {
+            if constexpr (whiteMoved) {
+                wPawns ^= change;
+            } else {
+                bPawns ^= change;
+            }
+            if constexpr (flags == MOVEFLAG_EnPassantCapture) {
+                if constexpr (whiteMoved) {
+                    bPawns |= forward<!whiteMoved>(enPassantSq);
+                } else {
+                    wPawns |= forward<whiteMoved>(enPassantSq);
+                }
+            } else {
+                restorePiece<!whiteMoved, captured>(to);
+            }
+            return;
+        }
+
+//            constexpr BB pcc = getPieceBB<piece, whiteMoved>();
+
+//            getPieceBB<piece, whiteMoved>() ^= change;
+//            restorePiece<!whiteMoved, captured>(to);
+
+        if constexpr (piece == PIECE_Knight) {
+            if constexpr (whiteMoved) {
+                wKnights ^= change;
+            } else {
+                bKnights ^= change;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        if constexpr (piece == PIECE_Bishop) {
+            if constexpr (whiteMoved) {
+                wBishops ^= change;
+            } else {
+                bBishops ^= change;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        if constexpr (piece == PIECE_Rook) {
+            if constexpr (whiteMoved) {
+                wRooks ^= change;
+            } else {
+                bRooks ^= change;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        if constexpr (piece == PIECE_Queen) {
+            if constexpr (whiteMoved) {
+                wQueens ^= change;
+            } else {
+                bQueens ^= change;
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        if constexpr (piece == PIECE_King) {
+            if constexpr (whiteMoved) {
+                wKingSq = static_cast<uint8_t>(singleBitOf(to));
+            } else {
+                bKingSq = static_cast<uint8_t>(singleBitOf(to));
+            }
+            restorePiece<!whiteMoved, captured>(to);
+            return;
+        }
+        throw std::exception();
     }
 
 } // namespace Dory
