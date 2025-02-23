@@ -23,7 +23,8 @@ namespace Dory {
         };
 
         const int maxDepth = 7;
-        std::vector<uLong> result = DoryUtils::perft<true, maxDepth>(STARTBOARD);
+        Board board = STARTBOARD;
+        std::vector<uLong> result = DoryUtils::perft<true, maxDepth>(board);
 
         for (int i{1}; i <= maxDepth; i++) {
             uLong expected = ground_truth.at(i);
@@ -35,7 +36,7 @@ namespace Dory {
     template<int depth>
     void runNodeCountTest(std::string_view fen, std::vector<uLong> ground_truth) {
         initialize();
-        const auto [board, whiteToMove] = Utils::parseFEN(fen);
+        auto [board, whiteToMove] = Utils::parseFEN(fen);
         std::vector<uLong> result = DoryUtils::perft<depth>(board, whiteToMove);
 
         for (int i{1}; i <= depth; i++) {
@@ -102,7 +103,7 @@ namespace Dory {
     template<int depth>
     void checkSingleDepth(std::string_view fen, uLong expected) {
         initialize();
-        const auto [board, whiteToMove] = Utils::parseFEN(fen);
+        auto [board, whiteToMove] = Utils::parseFEN(fen);
         uLong output = DoryUtils::perftSingleDepth<depth>(board, whiteToMove);
         ASSERT_EQ(output, expected);
     }

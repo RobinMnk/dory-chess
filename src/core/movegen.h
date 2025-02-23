@@ -10,12 +10,12 @@
 namespace Dory {
 
     template<typename MC, bool whiteToMove, Piece_t piece, Flag_t flags>
-    concept ValidMoveCollector = requires(MC mc, const Board &board, BB from, BB to) {
+    concept ValidMoveCollector = requires(MC mc, Board &board, BB from, BB to) {
         MC::template nextMove<whiteToMove, piece, flags>(board, from, to);
     };
 
     template<typename MC, bool whiteToMove, Piece_t piece, Flag_t flags>
-    concept ValidMoveCollectorObj = requires(MC* mc, const Board &board, BB from, BB to) {
+    concept ValidMoveCollectorObj = requires(MC* mc, Board &board, BB from, BB to) {
         mc->template nextMove<whiteToMove, piece, flags>(board, from, to);
     };
 
@@ -38,51 +38,51 @@ namespace Dory {
         MoveGenerator() = delete;
 
         template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-        static void generate(const Board &board, PinData& pd);
+        static void generate(Board &board, PinData& pd);
 
         template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-        static void generate(const Board &board);
+        static void generate(Board &board);
 
     private:
         template<bool whiteToMove, GenerationConfig config, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void generateSuccessorBoard(const Board &board, BB from, BB to)
+        static void generateSuccessorBoard(Board &board, BB from, BB to)
         requires ValidMoveCollector<Collector, whiteToMove, piece, flags>;
 
         // - - - - - - Helper Functions - - - - - -
 
         template<bool whiteToMove, GenerationConfig config, Piece_t, Flag_t=MOVEFLAG_Silent>
-        static void addToList(const Board &board, int fromIndex, BB targets);
+        static void addToList(Board &board, int fromIndex, BB targets);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void handlePromotions(const Board &board, BB from, BB to);
+        static void handlePromotions(Board &board, BB from, BB to);
 
         // - - - - - - Individual Piece Moves - - - - - -
 
         template<bool whiteToMove, GenerationConfig config>
-        static void pawnMoves(const Board &board, PinData& pd);
+        static void pawnMoves(Board &board, PinData& pd);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void knightMoves(const Board &board, PinData& pd);
+        static void knightMoves(Board &board, PinData& pd);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void bishopMoves(const Board &board, PinData& pd, BB occ);
+        static void bishopMoves(Board &board, PinData& pd, BB occ);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void rookMoves(const Board &board, PinData& pd, BB occ);
+        static void rookMoves(Board &board, PinData& pd, BB occ);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void queenMoves(const Board &board, PinData& pd, BB occ);
+        static void queenMoves(Board &board, PinData& pd, BB occ);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void kingMoves(const Board &board, PinData& pd);
+        static void kingMoves(Board &board, PinData& pd);
 
         template<bool whiteToMove, GenerationConfig config>
-        static void castles(const Board &board, PinData& pd, BB occ);
+        static void castles(Board &board, PinData& pd, BB occ);
     };
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::generate(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::generate(Board &board, PinData& pd) {
         if constexpr (config.reloadClh)
             CheckLogicHandler::reload<whiteToMove>(board, pd);
 
@@ -108,13 +108,13 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::generate(const Board &board) {
+    void MoveGenerator<Collector>::generate(Board &board) {
         generate<whiteToMove, config>(board, m_pd);
     }
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config, Piece_t piece, Flag_t flags>
-    inline void MoveGenerator<Collector>::generateSuccessorBoard(const Board &board, BB from, BB to)
+    inline void MoveGenerator<Collector>::generateSuccessorBoard(Board &board, BB from, BB to)
     requires ValidMoveCollector<Collector, whiteToMove, piece, flags>
     {
         if constexpr (config.quiescence) {
@@ -134,7 +134,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config, Piece_t piece, Flag_t flags>
-    inline void MoveGenerator<Collector>::addToList(const Board &board, int fromIndex, BB targets) {
+    inline void MoveGenerator<Collector>::addToList(Board &board, int fromIndex, BB targets) {
         BB fromBB = newMask(fromIndex);
         Bitloop(targets) {
             BB toBB = isolateLowestBit(targets);
@@ -144,7 +144,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    inline void MoveGenerator<Collector>::handlePromotions(const Board &board, BB from, BB to) {
+    inline void MoveGenerator<Collector>::handlePromotions(Board &board, BB from, BB to) {
         generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_PromoteQueen>(board, from, to);
         generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_PromoteRook>(board, from, to);
         generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_PromoteBishop>(board, from, to);
@@ -155,7 +155,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::pawnMoves(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::pawnMoves(Board &board, PinData& pd) {
         constexpr bool white = whiteToMove;
         BB free = board.free();
         BB enemy = board.enemyPieces<white>();
@@ -252,7 +252,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::knightMoves(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::knightMoves(Board &board, PinData& pd) {
         BB allPins = pd.pinsStr | pd.pinsDiag;
         BB movKnights = board.knights<whiteToMove>() & ~allPins;
 
@@ -265,7 +265,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::bishopMoves(const Board &board, PinData& pd, BB occ) {
+    void MoveGenerator<Collector>::bishopMoves(Board &board, PinData& pd, BB occ) {
         BB bishops = board.bishops<whiteToMove>() & ~pd.pinsStr;
 
         Bitloop(bishops) {
@@ -278,7 +278,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::rookMoves(const Board &board, PinData& pd, BB occ) {
+    void MoveGenerator<Collector>::rookMoves(Board &board, PinData& pd, BB occ) {
         BB rooks = board.rooks<whiteToMove>() & ~pd.pinsDiag;
 
         Bitloop(rooks) {
@@ -302,7 +302,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::queenMoves(const Board &board, PinData& pd, BB occ) {
+    void MoveGenerator<Collector>::queenMoves(Board &board, PinData& pd, BB occ) {
         BB queens = board.queens<whiteToMove>();
         BB queensPinStr = queens & pd.pinsStr & ~pd.pinsDiag;
         BB queensPinDiag = queens & pd.pinsDiag & ~pd.pinsStr;
@@ -330,7 +330,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::kingMoves(const Board &board, PinData& pd) {
+    void MoveGenerator<Collector>::kingMoves(Board &board, PinData& pd) {
         int ix = board.kingSquare<whiteToMove>();
         BB targets = PieceSteps::KING_MOVES[ix] & ~pd.attacked & board.enemyOrEmpty<whiteToMove>();
         addToList<whiteToMove, config, PIECE_King, MOVEFLAG_RemoveAllCastling>(board, ix, targets);
@@ -338,7 +338,7 @@ namespace Dory {
 
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config>
-    void MoveGenerator<Collector>::castles(const Board &board, PinData& pd, BB occ) {
+    void MoveGenerator<Collector>::castles(Board &board, PinData& pd, BB occ) {
         constexpr bool white = whiteToMove;
         constexpr BB startKing = STARTBOARD.king<white>();
         constexpr BB kingCastledKingside = startKing << 2;

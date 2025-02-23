@@ -25,36 +25,36 @@ namespace Dory::MoveCollectors {
      */
     template<int depth>
     class LimitedDFS {
+        using Generator = MoveGenerator<LimitedDFS<depth>>;
+        friend Generator;
     public:
         static unsigned long long totalNodes;
 
         template<bool whiteToMove>
-        static void generateGameTree(const Board& board) {
-//            if constexpr (depth == 1) {
-//                MoveGenerator<LimitedDFS<depth>, false, true>::template generate<state>(board);
-//                totalNodes += MoveGenerator<LimitedDFS<depth>, false, true>::numberOfMoves;
-////                for (int num_moves: MoveGenerator<LimitedDFS<depth>, false, true>::numberOfMovesByPiece) {
-////                    totalNodes += num_moves;
-////                }
-//            }
-//            else
+        static inline void generateGameTree(Board& board) {
+            if constexpr (depth == 1) {
+                Generator::template generate<whiteToMove, GC_COUNT_ONLY>(board);
+                totalNodes += Generator::numberOfMoves;
+            } else
             if constexpr (depth > 0) {
-                MoveGenerator<LimitedDFS<depth>>::template generate<whiteToMove>(board);
+                Generator::template generate<whiteToMove>(board);
             }
         }
 
     private:
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(const Board& board, BB from, BB to) {
+        static void nextMove(Board& board, BB from, BB to) {
             if constexpr (depth == 1) {
                 totalNodes++;
             }
 
-            Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
-            LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
-        }
+            RestoreInfo ri = board.makeMove<whiteToMove, piece, flags>(from, to);
+            LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(board);
+            board.unmakeMove<whiteToMove, piece, flags>(from, to, ri);
 
-        friend class MoveGenerator<LimitedDFS<depth>>;
+//            Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
+//            LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
+        }
     };
 
     template<int depth>
@@ -65,7 +65,7 @@ namespace Dory::MoveCollectors {
         static BB targets;
 
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(const Board &board, BB from, BB to) {
+        static void nextMove(Board &board, BB from, BB to) {
             targets |= to;
         }
     };
@@ -76,7 +76,7 @@ namespace Dory::MoveCollectors {
      */
     template<typename T, bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
     requires ValidMoveCollectorObj<T, whiteToMove, piece, flags>
-    void forward(T* obj, const Board& board, BB from, BB to) {
+    void forward(T* obj, Board& board, BB from, BB to) {
         obj->template nextMove<whiteToMove, piece, flags>(board, from, to);
     }
 
@@ -85,20 +85,20 @@ namespace Dory::MoveCollectors {
         static T* _ref;
 
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(const Board& board, BB from, BB to) {
+        static void nextMove(Board& board, BB from, BB to) {
             forward<T, whiteToMove, piece, flags>(_ref, board, from, to);
         }
         friend class MoveGenerator<ObjectCollector>;
 
     public:
         template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-        static void generate(T* ref, const Board& board) {
+        static void generate(T* ref, Board& board) {
             _ref = ref;
             MoveGenerator<ObjectCollector<T>>::template generate<whiteToMove, config>(board);
         }
 
         template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-        static void generate(T* ref, const Board& board, PinData& pd) {
+        static void generate(T* ref, Board& board, PinData& pd) {
             _ref = ref;
             MoveGenerator<ObjectCollector<T>>::template generate<whiteToMove, config>(board, pd);
         }
@@ -108,24 +108,24 @@ namespace Dory::MoveCollectors {
     T* ObjectCollector<T>::_ref = nullptr;
 
     template<typename T, bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-    void generateMoves(T* ref, const Board& board) {
+    void generateMoves(T* ref, Board& board) {
         ObjectCollector<T>::template generate<whiteToMove, config>(ref, board);
     }
 
     template<typename T, bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-    void generateMoves(T* ref, const Board& board, PinData& pd) {
+    void generateMoves(T* ref, Board& board, PinData& pd) {
         ObjectCollector<T>::template generate<whiteToMove, config>(ref, board, pd);
     }
 
     // Example for using class as MoveCollector
     struct A {
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        void nextMove(const Board& board, BB from, BB to) const {
+        void nextMove(Board& board, BB from, BB to) const {
 
         }
 
         template<bool whiteToMove>
-        void generate(const Board& board) {
+        void generate(Board& board) {
             generateMoves<A, whiteToMove>(this, board);
         }
     };
@@ -139,9 +139,8 @@ namespace Dory::MoveCollectors {
         friend Generator;
     public:
         template<bool whiteToMove>
-        static void generateGameTree(const Board& board) {
+        static inline void generateGameTree(Board& board) {
             if constexpr (depth == 1) {
-                Generator::numberOfMoves = 0;
                 Generator::template generate<whiteToMove, GC_COUNT_ONLY>(board);
                 nodes.at(depth) += Generator::numberOfMoves;
             } else if constexpr (depth > 0) {
@@ -151,10 +150,12 @@ namespace Dory::MoveCollectors {
 
     private:
         template<bool whiteToMove,  Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(const Board& board, BB from, BB to) {
+        static void nextMove(Board& board, BB from, BB to) {
             nodes.at(depth)++;
-            Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
-            PerftCollector<depth-1>::template generateGameTree<!whiteToMove>(nextBoard);
+
+            RestoreInfo ri = board.makeMove<whiteToMove, piece, flags>(from, to);
+            PerftCollector<depth-1>::template generateGameTree<!whiteToMove>(board);
+            board.unmakeMove<whiteToMove, piece, flags>(from, to, ri);
         }
     };
 
@@ -163,66 +164,74 @@ namespace Dory::MoveCollectors {
      * For every legal move the number of resulting follow-up positions at the given depth is calculated.
      * Used mainly for debugging purposes.
      */
+    template<int depth>
     class Divide {
     public:
         static std::vector<std::string> moves;
         static std::vector<uint64_t> nodes;
-        static unsigned long long curr, totalNodes;
-        static int maxDepth;
+        static unsigned long long totalNodes;
 
-        template<bool whiteToMove, int depth>
+        template<bool whiteToMove>
         static void generateGameTree(Board& board) {
-            maxDepth = depth;
-            build<whiteToMove, depth>(board);
+            if constexpr (depth == 0) {
+                Generator::template generate<whiteToMove, GC_COUNT_ONLY>(board);
+                totalNodes += Generator::numberOfMoves;
+            } else if constexpr (depth > 0) {
+                Generator::template generate<whiteToMove>(board);
+            }
         }
 
         static void print() {
-            for(unsigned int i{0}; i < curr; i++) {
+            for(unsigned int i{0}; i < nodes.size(); i++) {
                 std::cout << moves.at(i) << ": " << nodes.at(i) << std::endl;
             }
 
-            std::cout << "\nTotal nodes searched: " << totalNodes << std::endl;
+            std::cout << "\n" << nodes.size() << " legal moves. Total nodes searched: " << totalNodes << std::endl;
         }
 
     private:
-        template<bool whiteToMove, int depth>
-        static void build(Board& board) {
-            if constexpr (depth > 0) {
-                MoveGenerator<Divide>::template generate<whiteToMove, depth>(board);
-            }
+        using Generator = MoveGenerator<Divide>;
+        friend Generator;
+
+        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
+        static void nextMove(Board &board, BB from, BB to) {
+            Move m = createMoveFromBB(from, to, piece, flags);
+            moves.push_back(Utils::moveNameShort(m));
+
+//            Board copy = board;
+//
+//            Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
+            RestoreInfo ri = board.makeMove<whiteToMove, piece, flags>(from, to);
+
+            LimitedDFS<1>::totalNodes = 0;
+            LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(board);
+            nodes.push_back(LimitedDFS<1>::totalNodes);
+            totalNodes += LimitedDFS<1>::totalNodes;
+
+//            if(board != nextBoard) {
+//                Utils::print_board(board);
+//                std::cout << std::endl;
+//                Utils::print_board(nextBoard);
+//            }
+
+            board.unmakeMove<whiteToMove, piece, flags>(from, to, ri);
+
+//            if (board != copy) {
+//                Utils::print_board(board);
+//                std::cout << std::endl;
+//                Utils::print_board(nextBoard);
+//            }
         }
-
-        template<bool whiteToMove, int depth, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove([[maybe_unused]] const Board &board, BB from, BB to) {
-            if (depth == maxDepth) {
-                Move m = createMoveFromBB(from, to, piece, flags);
-                moves.push_back(Utils::moveNameShort(m));
-                nodes.push_back(0);
-                curr++;
-            }
-
-            if constexpr(depth == 1) {
-                nodes.back()++;
-                totalNodes++;
-            }
-        }
-
-        template<bool whiteToMove, int depth>
-        static void next(Board& nextBoard) {
-            build<!whiteToMove, depth-1>(nextBoard);
-        }
-
-        static void done() {
-        }
-
-        friend class MoveGenerator<Divide>;
     };
 
-    std::vector<std::string> Divide::moves{};
-    std::vector<uint64_t> Divide::nodes{};
-    unsigned long long Divide::curr{0};
-    unsigned long long Divide::totalNodes{0};
-    int Divide::maxDepth{1};
+    template<int depth>
+    std::vector<std::string> Divide<depth>::moves{};
+
+    template<int depth>
+    std::vector<uint64_t> Divide<depth>::nodes{};
+
+    template<int depth>
+    unsigned long long Divide<depth>::totalNodes{0};
 
 } // namespace Dory::MoveCollectors
 

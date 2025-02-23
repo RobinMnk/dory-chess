@@ -20,11 +20,11 @@ namespace Dory {
         }
 
         template<bool whiteToMove>
-        Result searchDepth(const Board& board, int depth) {
+        Result searchDepth(Board& board, int depth) {
             return searcher.iterativeDeepening<whiteToMove>(board, depth);
         }
 
-        Result searchDepth(const Board& board, int depth, bool whiteToMove) {
+        Result searchDepth(Board& board, int depth, bool whiteToMove) {
             if(whiteToMove) return searchDepth<true>(board, depth);
             return searchDepth<false>(board, depth);
         }
@@ -43,11 +43,11 @@ namespace Dory {
     }
 
     template<bool whiteToMove>
-    int staticEvaluation(const Board& board) {
+    int staticEvaluation(Board& board) {
         return evaluation::evaluatePosition<whiteToMove>(board);
     }
 
-    int staticEvaluation(const Board& board, bool whiteToMove) {
+    int staticEvaluation(Board& board, bool whiteToMove) {
         if(whiteToMove) return staticEvaluation<true>(board);
         return -staticEvaluation<false>(board);
     }

@@ -10,7 +10,7 @@
 namespace DoryUtils {
 
     template<bool whiteToMove, int depth>
-    std::vector<unsigned long long> perft(const Dory::Board& board) {
+    std::vector<unsigned long long> perft(Dory::Board& board) {
         using namespace Dory::MoveCollectors;
         nodes.clear();
         nodes.resize(depth + 1);
@@ -19,12 +19,12 @@ namespace DoryUtils {
     }
 
     template<int depth>
-    std::vector<unsigned long long> perft(const Dory::Board& board, bool whiteToMove) {
+    std::vector<unsigned long long> perft(Dory::Board& board, bool whiteToMove) {
         if(whiteToMove) return perft<true, depth>(board);
         else return perft<false, depth>(board);
     }
 
-    std::vector<unsigned long long> perft(const Dory::Board& board, bool whiteToMove, int depth) {
+    std::vector<unsigned long long> perft(Dory::Board& board, bool whiteToMove, int depth) {
         switch (depth) {
             case 1: return perft<1>(board, whiteToMove);
             case 2: return perft<2>(board, whiteToMove);
@@ -39,8 +39,10 @@ namespace DoryUtils {
         }
     }
 
+     // - - - - - - - - PERFT - - - - - - - -
+
     template<bool whiteToMove, int depth>
-    unsigned long long perftSingleDepth(const Dory::Board& board) {
+    unsigned long long perftSingleDepth(Dory::Board& board) {
         using namespace Dory::MoveCollectors;
         LimitedDFS<1>::totalNodes = 0;
         LimitedDFS<depth>::template generateGameTree<whiteToMove>(board);
@@ -48,12 +50,12 @@ namespace DoryUtils {
     }
 
     template<int depth>
-    unsigned long long perftSingleDepth(const Dory::Board& board, bool whiteToMove) {
+    unsigned long long perftSingleDepth(Dory::Board& board, bool whiteToMove) {
         if(whiteToMove) return perftSingleDepth<true, depth>(board);
         else return perftSingleDepth<false, depth>(board);
     }
 
-    unsigned long long perftSingleDepth(const Dory::Board& board, bool whiteToMove, int depth) {
+    unsigned long long perftSingleDepth(Dory::Board& board, bool whiteToMove, int depth) {
         switch (depth) {
             case 1: return perftSingleDepth<1>(board, whiteToMove);
             case 2: return perftSingleDepth<2>(board, whiteToMove);
@@ -65,6 +67,36 @@ namespace DoryUtils {
             case 8: return perftSingleDepth<8>(board, whiteToMove);
             case 9: return perftSingleDepth<9>(board, whiteToMove);
             default: throw std::runtime_error("Perft Depth not implemented!");
+        }
+    }
+
+    // - - - - - - - - DIVIDE - - - - - - - -
+
+    template<bool whiteToMove, int depth>
+    void printDivide(Dory::Board& board) {
+        using namespace Dory::MoveCollectors;
+        Divide<depth>::template generateGameTree<whiteToMove>(board);
+        Divide<depth>::print();
+    }
+
+    template<int depth>
+    void printDivide(Dory::Board& board, bool whiteToMove) {
+        if(whiteToMove) printDivide<true, depth>(board);
+        else printDivide<false, depth>(board);
+    }
+
+    void printDivide(Dory::Board& board, bool whiteToMove, int depth) {
+        switch (depth) {
+            case 1: printDivide<1>(board, whiteToMove); break;
+            case 2: printDivide<2>(board, whiteToMove); break;
+            case 3: printDivide<3>(board, whiteToMove); break;
+            case 4: printDivide<4>(board, whiteToMove); break;
+            case 5: printDivide<5>(board, whiteToMove); break;
+            case 6: printDivide<6>(board, whiteToMove); break;
+            case 7: printDivide<7>(board, whiteToMove); break;
+            case 8: printDivide<8>(board, whiteToMove); break;
+            case 9: printDivide<9>(board, whiteToMove); break;
+            default: throw std::runtime_error("Divide Depth not implemented!");
         }
     }
 

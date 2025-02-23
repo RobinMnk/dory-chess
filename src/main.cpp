@@ -4,7 +4,7 @@
 #include "utils/perft.h"
 #include "engine/mc.h"
 
-void timeEvaluation(std::unique_ptr<Dory::Dory>& dory, const Dory::Board& board, int depth, bool whiteToMove) {
+void timeEvaluation(std::unique_ptr<Dory::Dory>& dory, Dory::Board& board, int depth, bool whiteToMove) {
     auto start = std::chrono::high_resolution_clock::now();
     auto [eval, line] = dory->searchDepth(board, depth, whiteToMove);
     auto end = std::chrono::high_resolution_clock::now();
@@ -26,6 +26,24 @@ void timeEvaluation(std::unique_ptr<Dory::Dory>& dory, const Dory::Board& board,
     }
 }
 
+void timePerft(Dory::Board& board, int depth, bool whiteToMove) {
+    auto start = std::chrono::high_resolution_clock::now();
+    auto nodes = DoryUtils::perftSingleDepth(board, whiteToMove, depth);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> seconds = end - start;
+    auto ms_int = duration_cast<std::chrono::milliseconds>(seconds);
+
+    std::cout <<  nodes << " positions at depth " << depth << ". Generated in " << ms_int.count() << "ms";
+
+    double knps = (static_cast<double>(nodes) / 1000) / seconds.count();
+    if (knps < 1000) {
+        std::cout << " (" << knps << " k nps)\n";
+    } else {
+        std::cout << " (" << (knps / 1000) << " M nps)\n";
+    }
+}
+
 int main() {
     std::string command, fen, depth_str, num_lines_str;
     std::getline(std::cin, command);
@@ -33,11 +51,16 @@ int main() {
     std::getline(std::cin, depth_str);
     int depth = static_cast<int>(std::strtol(depth_str.c_str(), nullptr, 10));
 
-    const auto [board, whiteToMove] = DoryUtils::parseFEN(fen);
+    auto [board, whiteToMove] = DoryUtils::parseFEN(fen);
 
     if(command == "perft") {
-        auto res = DoryUtils::perftSingleDepth(board, whiteToMove, depth);
-        printf("%llu\n", res);
+        Dory::initialize();
+        timePerft(board, depth, whiteToMove);
+        return 0;
+    }
+    if(command == "divide") {
+        Dory::initialize();
+        DoryUtils::printDivide(board, whiteToMove, depth);
         return 0;
     }
     if(command == "eval") {
@@ -56,7 +79,7 @@ int main() {
 //    }
 
 //    Dory::Dory dory{};
-        auto dory = std::make_unique<Dory::Dory>();
+    auto dory = std::make_unique<Dory::Dory>();
 
     timeEvaluation(dory, board, depth, whiteToMove);
 

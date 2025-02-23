@@ -63,7 +63,7 @@ namespace Dory {
 //            }
 //
 //            template<bool whiteToMove,  Piece_t piece, Flag_t flags>
-//            void nextMove(const Board& board, BB from, BB to) {
+//            void nextMove(Board& board, BB from, BB to) {
 //                moves.at(ix++) = {
 //                    createMoveFromBB(from, to, piece, flags),
 //                    moveOrderer->moveHeuristic<whiteToMove, piece, flags>(board, from, to, pd, depth)
@@ -86,14 +86,14 @@ namespace Dory {
 //            explicit MoveStorage(const MoveOrderer* moveOrderer) : container{buildCollectors<maxDepth>(moveOrderer)} {}
 //
 //            template<bool whiteToMove>
-//            const PinData& loadClh(const Board& board, size_t depth) {
+//            const PinData& loadClh(Board& board, size_t depth) {
 //                container.at(depth).reset();
 //                CheckLogicHandler::reload<whiteToMove>(board, container.at(depth).getPinData());
 //                return container.at(depth).getPinData();
 //            }
 //
 //            template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-//            void generate(const Board& board, size_t depth) {
+//            void generate(Board& board, size_t depth) {
 //                if constexpr (config.reloadClh) {
 //                    loadClh<whiteToMove>(board, depth);
 //                }
@@ -141,13 +141,13 @@ namespace Dory {
             explicit MoveContainer(const MoveOrderer* mO) : moveOrderer{mO} {}
 
             template<bool whiteToMove>
-            const PinData& loadClh(const Board& board) {
+            const PinData& loadClh(Board& board) {
                 CheckLogicHandler::reload<whiteToMove>(board, pd);
                 return pd;
             }
 
             template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-            void generate(const Board& board, size_t depth) {
+            void generate(Board& board, size_t depth) {
                 if constexpr (config.reloadClh) {
                     CheckLogicHandler::reload<whiteToMove>(board, pd);
                 }
@@ -158,7 +158,7 @@ namespace Dory {
             }
 
             template<bool whiteToMove,  Piece_t piece, Flag_t flags>
-            void nextMove(const Board& board, BB from, BB to) {
+            void nextMove(Board& board, BB from, BB to) {
                 moves.at(ix++) = {
                     createMoveFromBB(from, to, piece, flags),
                     moveOrderer->moveHeuristic<whiteToMove, piece, flags>(board, from, to, pd, currentDepth)
@@ -194,7 +194,7 @@ namespace Dory {
 //            Searcher() : moveContainer{&moveOrderer} {}
 
             template<bool whiteToMove>
-            Result iterativeDeepening(const Board &board, int maxDepth = MAX_ITER_DEPTH);
+            Result iterativeDeepening(Board &board, int maxDepth = MAX_ITER_DEPTH);
 
             void reset() {
                 trTable.reset();
@@ -211,15 +211,15 @@ namespace Dory {
         private:
 
             template<bool whiteToMove, bool topLevel>
-            Result negamax(const Board &board, int depth, int alpha, int beta, int maxDepth);
+            Result negamax(Board &board, int depth, int alpha, int beta, int maxDepth);
 
             template<bool whiteToMove>
-            Result quiescenceSearch(const Board &board, int depth, int alpha, int beta);
+            Result quiescenceSearch(Board &board, int depth, int alpha, int beta);
 
         }; // class Searcher
 
         template<bool whiteToMove>
-        Result Searcher::iterativeDeepening(const Board &board, int maxDepth) {
+        Result Searcher::iterativeDeepening(Board &board, int maxDepth) {
 //            reset();
 //        repTable.reset();
             Line bestLine;
@@ -260,7 +260,7 @@ namespace Dory {
         }
 
         template<bool whiteToMove, bool topLevel>
-        Result Searcher::negamax(const Board &board, int depth, int alpha, int beta, int maxDepth) {
+        Result Searcher::negamax(Board &board, int depth, int alpha, int beta, int maxDepth) {
 
             size_t boardHash = Zobrist::hash<whiteToMove>(board);
 
@@ -436,7 +436,7 @@ namespace Dory {
         }
 
         template<bool whiteToMove>
-        Result Searcher::quiescenceSearch(const Board &board, int depth, int alpha, int beta) {
+        Result Searcher::quiescenceSearch(Board &board, int depth, int alpha, int beta) {
             /// Recursion Base Case: Max Depth reached -> return heuristic position eval
             int standPat = evaluation::evaluatePosition<whiteToMove>(board);
 
