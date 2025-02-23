@@ -136,6 +136,9 @@ namespace Dory {
     template<bool whiteToMove, GenerationConfig config, Piece_t piece, Flag_t flags>
     inline void MoveGenerator<Collector>::addToList(Board &board, int fromIndex, BB targets) {
         if constexpr (config.countOnly) {
+            if constexpr (config.quiescence) {
+                targets &= board.enemyPieces<whiteToMove>();
+            }
             numberOfMoves += bitCount(targets);
             return;
         }
@@ -215,7 +218,7 @@ namespace Dory {
 
         // collect all promoting pawns in separate variables
         constexpr BB lastRowMask = pawnOnLastRow<white>();
-        if(lastRowMask & board.pawns<white>()) {
+        if(lastRowMask & (pwnMov | pawnCapL | pawnCapR)) {
             BB pwnPromoteFwd = pwnMov & lastRowMask;
             BB pwnPromoteL = pawnCapL & lastRowMask;
             BB pwnPromoteR = pawnCapR & lastRowMask;
@@ -226,7 +229,10 @@ namespace Dory {
             pawnCapR &= ~lastRowMask;
 
             if constexpr (config.countOnly) {
-                numberOfMoves += 4 * (bitCount(pwnPromoteFwd) + bitCount(pwnPromoteL) + bitCount(pwnPromoteR));
+                if constexpr (config.quiescence)
+                    numberOfMoves += 4 * (bitCount(pwnPromoteL) + bitCount(pwnPromoteR));
+                else
+                    numberOfMoves += 4 * (bitCount(pwnPromoteFwd) + bitCount(pwnPromoteL) + bitCount(pwnPromoteR));
             } else {
                 // promoting pawn moves
                 Bitloop(pwnPromoteFwd) {    // single push + promotion
@@ -245,7 +251,10 @@ namespace Dory {
         }
 
         if constexpr (config.countOnly) {
-            numberOfMoves += bitCount(pwnMov) + bitCount(pawnCapL) + bitCount(pawnCapR) + bitCount(pwnMov2);
+            if constexpr (config.quiescence)
+                numberOfMoves += bitCount(pawnCapL) + bitCount(pawnCapR);
+            else
+                numberOfMoves += bitCount(pwnMov) + bitCount(pawnCapL) + bitCount(pawnCapR) + bitCount(pwnMov2);
             return;
         }
 
@@ -308,10 +317,12 @@ namespace Dory {
             if (hasBitAt(pd.pinsStr, ix)) targets &= pd.pinsStr;
 
             if (board.canCastleShort<whiteToMove>() && hasBitAt(startingKingsideRook<whiteToMove>(), ix)) {
+                // moved the Kingside Rook for the first time
                 addToList<whiteToMove, config, PIECE_Rook, MOVEFLAG_RemoveShortCastling>(board, ix, targets);
                 continue;
             }
             if (board.canCastleLong<whiteToMove>() && hasBitAt(startingQueensideRook<whiteToMove>(), ix)) {
+                // moved the Queenside Rook for the first time
                 addToList<whiteToMove, config, PIECE_Rook, MOVEFLAG_RemoveLongCastling>(board, ix, targets);
                 continue;
             }
