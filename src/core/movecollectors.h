@@ -44,10 +44,6 @@ namespace Dory::MoveCollectors {
     private:
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
         static void nextMove(Board& board, BB from, BB to) {
-            if constexpr (depth == 1) {
-                totalNodes++;
-            }
-
             RestoreInfo ri = board.makeMove<whiteToMove, piece, flags>(from, to);
             LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(board);
             board.unmakeMove<whiteToMove, piece, flags>(from, to, ri);
@@ -198,9 +194,6 @@ namespace Dory::MoveCollectors {
             Move m = createMoveFromBB(from, to, piece, flags);
             moves.push_back(Utils::moveNameShort(m));
 
-//            Board copy = board;
-//
-//            Board nextBoard = board.fork<whiteToMove, piece, flags>(from, to);
             RestoreInfo ri = board.makeMove<whiteToMove, piece, flags>(from, to);
 
             LimitedDFS<1>::totalNodes = 0;
@@ -208,19 +201,7 @@ namespace Dory::MoveCollectors {
             nodes.push_back(LimitedDFS<1>::totalNodes);
             totalNodes += LimitedDFS<1>::totalNodes;
 
-//            if(board != nextBoard) {
-//                Utils::print_board(board);
-//                std::cout << std::endl;
-//                Utils::print_board(nextBoard);
-//            }
-
             board.unmakeMove<whiteToMove, piece, flags>(from, to, ri);
-
-//            if (board != copy) {
-//                Utils::print_board(board);
-//                std::cout << std::endl;
-//                Utils::print_board(nextBoard);
-//            }
         }
     };
 
