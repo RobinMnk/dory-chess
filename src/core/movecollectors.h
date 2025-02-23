@@ -113,18 +113,18 @@ namespace Dory::MoveCollectors {
         ObjectCollector<T>::template generate<whiteToMove, config>(ref, board, pd);
     }
 
-    // Example for using class as MoveCollector
-    struct A {
-        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        void nextMove(Board& board, BB from, BB to) const {
-
-        }
-
-        template<bool whiteToMove>
-        void generate(Board& board) {
-            generateMoves<A, whiteToMove>(this, board);
-        }
-    };
+//    Example for using class as MoveCollector
+//    struct A {
+//        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
+//        void nextMove(Board& board, BB from, BB to) const {
+//
+//        }
+//
+//        template<bool whiteToMove>
+//        void generate(Board& board) {
+//            generateMoves<A, whiteToMove>(this, board);
+//        }
+//    };
 
 
     static std::vector<unsigned long long> nodes;

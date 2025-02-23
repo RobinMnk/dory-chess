@@ -135,6 +135,11 @@ namespace Dory {
     template<typename Collector>
     template<bool whiteToMove, GenerationConfig config, Piece_t piece, Flag_t flags>
     inline void MoveGenerator<Collector>::addToList(Board &board, int fromIndex, BB targets) {
+        if constexpr (config.countOnly) {
+            numberOfMoves += bitCount(targets);
+            return;
+        }
+
         BB fromBB = newMask(fromIndex);
         Bitloop(targets) {
             BB toBB = isolateLowestBit(targets);
@@ -194,26 +199,55 @@ namespace Dory {
             // remove pinned ep pawns
             epPawnR &= pawnInvAtkRight<white>(pd.pinsDiag & pawnCanGoRight<white>()) | ~pd.pinsDiag;
 
-            Bitloop(epPawnL) {    // en passant left
-                from = isolateLowestBit(epPawnL);
-                generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkLeft<white>(from));
-            }
-            Bitloop(epPawnR) {    // en passant right
-                from = isolateLowestBit(epPawnR);
-                generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkRight<white>(from));
+            if constexpr (config.countOnly) {
+                numberOfMoves += bitCount(epPawnL) + bitCount(epPawnR);
+            } else {
+                Bitloop(epPawnL) {    // en passant left
+                    from = isolateLowestBit(epPawnL);
+                    generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkLeft<white>(from));
+                }
+                Bitloop(epPawnR) {    // en passant right
+                    from = isolateLowestBit(epPawnR);
+                    generateSuccessorBoard<whiteToMove, config, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(board, from, pawnAtkRight<white>(from));
+                }
             }
         }
 
         // collect all promoting pawns in separate variables
         constexpr BB lastRowMask = pawnOnLastRow<white>();
-        BB pwnPromoteFwd = pwnMov & lastRowMask;
-        BB pwnPromoteL = pawnCapL & lastRowMask;
-        BB pwnPromoteR = pawnCapR & lastRowMask;
+        if(lastRowMask & board.pawns<white>()) {
+            BB pwnPromoteFwd = pwnMov & lastRowMask;
+            BB pwnPromoteL = pawnCapL & lastRowMask;
+            BB pwnPromoteR = pawnCapR & lastRowMask;
 
-        // remove all promoting pawns from these collections
-        pwnMov &= ~lastRowMask;
-        pawnCapL &= ~lastRowMask;
-        pawnCapR &= ~lastRowMask;
+            // remove all promoting pawns from these collections
+            pwnMov &= ~lastRowMask;
+            pawnCapL &= ~lastRowMask;
+            pawnCapR &= ~lastRowMask;
+
+            if constexpr (config.countOnly) {
+                numberOfMoves += 4 * (bitCount(pwnPromoteFwd) + bitCount(pwnPromoteL) + bitCount(pwnPromoteR));
+            } else {
+                // promoting pawn moves
+                Bitloop(pwnPromoteFwd) {    // single push + promotion
+                    from = isolateLowestBit(pwnPromoteFwd);
+                    handlePromotions<whiteToMove, config>(board, from, forward<white>(from));
+                }
+                Bitloop(pwnPromoteL) {    // capture left + promotion
+                    from = isolateLowestBit(pwnPromoteL);
+                    handlePromotions<whiteToMove, config>(board, from, pawnAtkLeft<white>(from));
+                }
+                Bitloop(pwnPromoteR) {    // capture right + promotion
+                    from = isolateLowestBit(pwnPromoteR);
+                    handlePromotions<whiteToMove, config>(board, from, pawnAtkRight<white>(from));
+                }
+            }
+        }
+
+        if constexpr (config.countOnly) {
+            numberOfMoves += bitCount(pwnMov) + bitCount(pawnCapL) + bitCount(pawnCapR) + bitCount(pwnMov2);
+            return;
+        }
 
         // non-promoting pawn moves
         Bitloop(pwnMov) {   // straight push, 1 square
@@ -227,20 +261,6 @@ namespace Dory {
         Bitloop(pawnCapR) { // capture towards right
             from = isolateLowestBit(pawnCapR);
             generateSuccessorBoard<whiteToMove, config, PIECE_Pawn>(board, from, pawnAtkRight<white>(from));
-        }
-
-        // promoting pawn moves
-        Bitloop(pwnPromoteFwd) {    // single push + promotion
-            from = isolateLowestBit(pwnPromoteFwd);
-            handlePromotions<whiteToMove, config>(board, from, forward<white>(from));
-        }
-        Bitloop(pwnPromoteL) {    // capture left + promotion
-            from = isolateLowestBit(pwnPromoteL);
-            handlePromotions<whiteToMove, config>(board, from, pawnAtkLeft<white>(from));
-        }
-        Bitloop(pwnPromoteR) {    // capture right + promotion
-            from = isolateLowestBit(pwnPromoteR);
-            handlePromotions<whiteToMove, config>(board, from, pawnAtkRight<white>(from));
         }
 
         // pawn moves that cannot be promotions
