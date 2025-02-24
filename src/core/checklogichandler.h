@@ -5,7 +5,6 @@
 #ifndef DORY_CHECKLOGICHANDLER_H
 #define DORY_CHECKLOGICHANDLER_H
 
-#include <memory>
 #include "board.h"
 #include "piecesteps.h"
 

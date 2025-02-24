@@ -57,14 +57,14 @@ namespace Dory::MoveCollectors {
     unsigned long long LimitedDFS<depth>::totalNodes{0};
 
 
-    struct QuickCollector {
-        static BB targets;
-
-        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(Board &board, BB from, BB to) {
-            targets |= to;
-        }
-    };
+//    struct QuickCollector {
+//        static BB targets;
+//
+//        template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
+//        static void nextMove(Board &board, BB from, BB to) {
+//            targets |= to;
+//        }
+//    };
 
     /**
      * Forwards nextMove call to given object. If template deduction fails here, make sure the function

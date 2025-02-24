@@ -2,12 +2,11 @@
 // Created by Robin on 29.06.2022.
 //
 
-#include <array>
-#include "../core/chess.h"
-
 #ifndef DORY_PIECESTEPS_H
 #define DORY_PIECESTEPS_H
 
+#include <array>
+#include "chess.h"
 
 namespace Dory::PieceSteps {
 

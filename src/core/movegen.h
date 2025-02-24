@@ -98,7 +98,7 @@ namespace Dory {
             rookMoves<whiteToMove, config>(board, pd, occ);
             queenMoves<whiteToMove, config>(board, pd, occ);
 
-            if (board.canCastle<whiteToMove>())
+            if (board.canCastle<whiteToMove>() && !pd.inCheck())
                 castles<whiteToMove, config>(board, pd, occ);
         }
 

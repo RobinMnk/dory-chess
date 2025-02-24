@@ -471,6 +471,7 @@ namespace Dory {
                                                                                     newMask(move.toIndex));
                 }
                 return fork<whiteToMove, PIECE_King>(newMask(move.fromIndex), newMask(move.toIndex));
+            default: __builtin_unreachable();
         }
     }
 

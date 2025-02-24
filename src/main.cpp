@@ -4,9 +4,9 @@
 #include "utils/perft.h"
 #include "engine/mc.h"
 
-void timeEvaluation(std::unique_ptr<Dory::Dory>& dory, Dory::Board& board, int depth, bool whiteToMove) {
+void timeEvaluation(Dory::Dory& dory, Dory::Board& board, int depth, bool whiteToMove) {
     auto start = std::chrono::high_resolution_clock::now();
-    auto [eval, line] = dory->searchDepth(board, depth, whiteToMove);
+    auto [eval, line] = dory.searchDepth(board, depth, whiteToMove);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> seconds = end - start;
@@ -14,7 +14,7 @@ void timeEvaluation(std::unique_ptr<Dory::Dory>& dory, Dory::Board& board, int d
 
     DoryUtils::printLine(line, eval);
 
-    unsigned long long nodes = dory->nodesSearched();
+    unsigned long long nodes = dory.nodesSearched();
 
     std::cout << "\n\nGenerated " <<  nodes << " nodes in " << ms_int.count() << "ms";
 
@@ -78,12 +78,12 @@ int main() {
 //        return 0;
 //    }
 
-//    Dory::Dory dory{};
-    auto dory = std::make_unique<Dory::Dory>();
+    Dory::Dory dory{};
+//    auto dory = std::make_unique<Dory::Dory>();
 
     timeEvaluation(dory, board, depth, whiteToMove);
 
-    std::cout << "Table lookups:\t" << dory->tableLookups() << std::endl;
-    std::cout << "Table size:\t" << dory->trTableSizeKb() << " kB" << std::endl;
-    std::cout << "Searched " << dory->nodesSearched() << " nodes";
+    std::cout << "Table lookups:\t" << dory.tableLookups() << std::endl;
+    std::cout << "Table size:\t" << dory.trTableSizeKb() << " kB" << std::endl;
+    std::cout << "Searched " << dory.nodesSearched() << " nodes";
 }
