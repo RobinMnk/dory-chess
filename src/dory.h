@@ -6,6 +6,7 @@
 #define DORY_DORY_H
 
 #include "engine/search.h"
+#include "utils/perft.h"
 #include "utils/fenreader.h"
 
 namespace Dory {

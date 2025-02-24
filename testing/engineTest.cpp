@@ -21,12 +21,12 @@ namespace Dory::Testing {
 
     class EngineTest : public ::testing::TestWithParam<TestParam> {
     protected:
-        static Dory* dory;
+        static Engine* dory;
         static TestCaseInput testCaseInput;
 
         // Set up the object once for the whole suite
         static void SetUpTestSuite() {
-           dory = new Dory();
+           dory = new Engine();
         }
 
         // Clean up after all tests are done
@@ -35,7 +35,7 @@ namespace Dory::Testing {
             dory = nullptr;
         }
     };
-    Dory* EngineTest::dory = nullptr;
+    Engine* EngineTest::dory = nullptr;
 
     TestCaseInput loadTestCases(int index, int limit) {
         std::vector<std::pair<std::string, std::string>> testCases;

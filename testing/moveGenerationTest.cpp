@@ -4,19 +4,18 @@
 
 #include <gtest/gtest.h>
 #include "../src/dory.h"
-#include "../src/utils/perft.h"
 
 /**
  * Best Move found at depth 2
  * k7/p7/6b1/8/2K5/8/n3R1p1/8 w - - 0 1
  */
 
-namespace Dory {
+namespace Dory::Testing {
 
     using uLong = unsigned long long;
 
     TEST(NodeCounts, StartingPosition) {
-        initialize();
+        DoryUtils::initialize();
 
         std::vector<uLong> ground_truth{
             1, 20, 400, 8'902, 197'281, 4'865'609, 119'060'324, 3'195'901'860, 84'998'978'956
@@ -35,7 +34,7 @@ namespace Dory {
 
     template<int depth>
     void runNodeCountTest(std::string_view fen, std::vector<uLong> ground_truth) {
-        initialize();
+        DoryUtils::initialize();
         auto [board, whiteToMove] = Utils::parseFEN(fen);
         std::vector<uLong> result = DoryUtils::perft<depth>(board, whiteToMove);
 
@@ -102,7 +101,7 @@ namespace Dory {
 
     template<int depth>
     void checkSingleDepth(std::string_view fen, uLong expected) {
-        initialize();
+        DoryUtils::initialize();
         auto [board, whiteToMove] = Utils::parseFEN(fen);
         uLong output = DoryUtils::perftSingleDepth<depth>(board, whiteToMove);
         ASSERT_EQ(output, expected);

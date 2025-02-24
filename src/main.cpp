@@ -1,8 +1,6 @@
 #include <iostream>
 
 #include "dory.h"
-#include "utils/perft.h"
-#include "engine/mc.h"
 
 void printNodesPerSecond(unsigned long long nodes, double seconds) {
     nodes /= 1000;
