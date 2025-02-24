@@ -6,16 +6,38 @@
 #include <fstream>
 #include "../src/dory.h"
 
-namespace Dory {
+namespace Dory::Testing {
+
+    typedef std::pair<std::string, std::string> TestParam;
+    typedef std::vector<TestParam> TestCaseInput;
 
     const std::array<std::string, 2> puzzleFiles{
             "../resources/puzzles2000.txt",
             "../resources/puzzlesSacrifices.txt"
     };
 
-    std::vector<std::pair<std::string, std::string>> loadTestCases(int index, int limit) {
-        initialize();
+    const size_t LIMIT = 50;
+    const int MAX_SEARCH_DEPTH = 6;
 
+    class EngineTest : public ::testing::TestWithParam<TestParam> {
+    protected:
+        static Dory* dory;
+        static TestCaseInput testCaseInput;
+
+        // Set up the object once for the whole suite
+        static void SetUpTestSuite() {
+           dory = new Dory();
+        }
+
+        // Clean up after all tests are done
+        static void TearDownTestSuite() {
+            delete dory;
+            dory = nullptr;
+        }
+    };
+    Dory* EngineTest::dory = nullptr;
+
+    TestCaseInput loadTestCases(int index, int limit) {
         std::vector<std::pair<std::string, std::string>> testCases;
         std::string fen, solution;
         std::ifstream file(puzzleFiles.at(index));
@@ -30,11 +52,6 @@ namespace Dory {
         return testCases;
     }
 
-    typedef std::pair<std::string, std::string> TestParam;
-
-    class EngineTest : public testing::TestWithParam<TestParam> { };
-
-    const int MAX_SEARCH_DEPTH = 6;
 
     TEST_P(EngineTest, NegamaxEngine) {
         auto [fen, solution] = GetParam();
@@ -42,10 +59,10 @@ namespace Dory {
 
         std::string output;
         if (whiteToMove) {
-            auto [_, line] = Search::Searcher::iterativeDeepening<true>(board, MAX_SEARCH_DEPTH);
+            auto [_, line] = dory->searchDepth<true>(board, MAX_SEARCH_DEPTH);
             output = Utils::moveNameShortNotation(line.back());
         } else {
-            auto [_, line] = Search::Searcher::iterativeDeepening<false>(board, MAX_SEARCH_DEPTH);
+            auto [_, line] = dory->searchDepth<false>(board, MAX_SEARCH_DEPTH);
             output = Utils::moveNameShortNotation(line.back());
         }
 
@@ -65,13 +82,13 @@ namespace Dory {
     INSTANTIATE_TEST_SUITE_P(
             Puzzles2000,
             EngineTest,
-            testing::ValuesIn(loadTestCases(0, 50))
+            testing::ValuesIn(loadTestCases(0, LIMIT))
     );
 
     INSTANTIATE_TEST_SUITE_P(
             PuzzlesSacrifices,
             EngineTest,
-            testing::ValuesIn(loadTestCases(1, 50))
+            testing::ValuesIn(loadTestCases(1, LIMIT))
     );
 
 } // namespace Dory

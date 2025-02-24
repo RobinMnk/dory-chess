@@ -10,11 +10,11 @@
 
 namespace Dory {
 
-    class Dory {
+    class Engine {
         Search::Searcher searcher{};
 
     public:
-        Dory() {
+        Engine() {
             PieceSteps::load();
             Zobrist::init(23984729);
         }
@@ -37,23 +37,23 @@ namespace Dory {
 
         [[nodiscard]] size_t trTableSizeMb() const { return searcher.trTableSizeMb(); }
     };
-
-    void initialize() {
-        PieceSteps::load();
-    }
-
-    template<bool whiteToMove>
-    int staticEvaluation(Board& board) {
-        return evaluation::evaluatePosition<whiteToMove>(board);
-    }
-
-    int staticEvaluation(Board& board, bool whiteToMove) {
-        if(whiteToMove) return staticEvaluation<true>(board);
-        return -staticEvaluation<false>(board);
-    }
 }
 
 namespace DoryUtils {
+
+    void initialize() {
+        Dory::PieceSteps::load();
+    }
+
+    template<bool whiteToMove>
+    int staticEvaluation(Dory::Board& board) {
+        return Dory::evaluation::evaluatePosition<whiteToMove>(board);
+    }
+
+    int staticEvaluation(Dory::Board& board, bool whiteToMove) {
+        if(whiteToMove) return staticEvaluation<true>(board);
+        return -staticEvaluation<false>(board);
+    }
 
     std::pair<Dory::Board, bool> parseFEN(const std::string_view& fen) {
         return Dory::Utils::parseFEN(fen);
