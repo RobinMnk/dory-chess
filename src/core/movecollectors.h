@@ -43,7 +43,7 @@ namespace Dory::MoveCollectors {
 
     private:
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(Board& board, BB from, BB to) {
+        static inline void nextMove(Board& board, BB from, BB to) {
             RestoreInfo ri = board.makeMove<whiteToMove, piece, flags>(from, to);
             LimitedDFS<depth-1>::template generateGameTree<!whiteToMove>(board);
             board.unmakeMove<whiteToMove, piece, flags>(from, to, ri);
@@ -146,7 +146,7 @@ namespace Dory::MoveCollectors {
 
     private:
         template<bool whiteToMove,  Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(Board& board, BB from, BB to) {
+        static inline void nextMove(Board& board, BB from, BB to) {
             nodes.at(depth)++;
 
             RestoreInfo ri = board.makeMove<whiteToMove, piece, flags>(from, to);
@@ -168,7 +168,7 @@ namespace Dory::MoveCollectors {
         static unsigned long long totalNodes;
 
         template<bool whiteToMove>
-        static void generateGameTree(Board& board) {
+        static inline void generateGameTree(Board& board) {
             if constexpr (depth == 0) {
                 Generator::template generate<whiteToMove, GC_COUNT_ONLY>(board);
                 totalNodes += Generator::numberOfMoves;

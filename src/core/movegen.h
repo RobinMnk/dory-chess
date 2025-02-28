@@ -90,7 +90,7 @@ namespace Dory {
             numberOfMoves = 0;
         }
 
-        if (!pd.isDoubleCheck) {
+        if (!pd.inDoubleCheck()) {
             BB occ = board.occ();
             pawnMoves<whiteToMove, config>(board, pd);
             knightMoves<whiteToMove, config>(board, pd);

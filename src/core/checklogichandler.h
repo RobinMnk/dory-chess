@@ -12,16 +12,20 @@ namespace Dory {
 
     struct PinData {
         BB attacked{0}, checkMask{0}, targetSquares{0}, pinsStr{0}, pinsDiag{0}, pawnAtk{0};
-        bool isDoubleCheck{false}, blockEP{false};
+        bool blockEP{false};
 
-        [[nodiscard]] bool inCheck() const {
+        [[nodiscard]] bool inline inCheck() const {
             return checkMask != FULL_BB;
+        }
+
+        [[nodiscard]] bool inline inDoubleCheck() const {
+            return checkMask == 0;
         }
     };
 
     class CheckLogicHandler {
         template<bool, bool>
-        static BB addPins(const Board &board, int kingSquare, bool &blockEP);
+        static inline BB addPins(const Board &board, int kingSquare, bool &blockEP);
 
         template<bool, int>
         static void handlePin(const Board &board, BB line, BB pieces, int kingSquare, BB &mask, bool &blockEP);
@@ -64,7 +68,7 @@ namespace Dory {
 
 
     template<bool whiteToMove, bool diag>
-    BB CheckLogicHandler::addPins(const Board &board, int kingSquare, bool &blockEP) {
+    inline BB CheckLogicHandler::addPins(const Board &board, int kingSquare, bool &blockEP) {
         const std::array<BB, 8>& kingLines = PieceSteps::LINES[kingSquare];
         const BB pieces = board.enemySliders<whiteToMove, diag>();
         BB mask = 0;
@@ -86,7 +90,6 @@ namespace Dory {
 
     template<bool whiteToMove>
     void CheckLogicHandler::reload(const Board &board, PinData& pd) {
-        int numChecks = 0;
         int kingSquare = board.kingSquare<whiteToMove>();
 
         BB pawnBB = board.enemyPawns<whiteToMove>();
@@ -98,38 +101,45 @@ namespace Dory {
         BB myKing = board.king<whiteToMove>();
 
         BB mask{0};
-        pd.attacked = pd.checkMask = pd.pawnAtk = 0;
+        pd.attacked = pd.pawnAtk = 0;
 
         // IS THE KING IN CHECK
 
         pd.attacked |= PieceSteps::KING_MOVES[board.kingSquare<!whiteToMove>()];
 
+        pd.checkMask = FULL_BB;
+
         // Pawns
         mask = pawnAtkLeft<!whiteToMove>(pawnBB & pawnCanGoLeft<!whiteToMove>());     // pawn attack to the left
         pd.attacked |= mask;
         pd.pawnAtk |= mask;
-        if (mask & myKing) {
-            numChecks++;
-            pd.checkMask |= pawnInvAtkLeft<!whiteToMove>(myKing);
-        }
+        if(mask & myKing) pd.checkMask &= pawnInvAtkLeft<!whiteToMove>(myKing);
+
+        // Can be made branch-less (but is slower):
+//        flag = - static_cast<BB>((mask & myKing) != 0);  // flag becomes all 1’s if (mask & myKing) != 0, or 0 if (mask & myKing) == 0
+//        pd.checkMask &= pawnInvAtkLeft<!whiteToMove>(myKing) | ~flag;
+
 
         mask = pawnAtkRight<!whiteToMove>(pawnBB & pawnCanGoRight<!whiteToMove>());    // pawn attack to the right
         pd.attacked |= mask;
         pd.pawnAtk |= mask;
-        if (mask & myKing) {
-            numChecks++;
-            pd.checkMask |= pawnInvAtkRight<!whiteToMove>(myKing);
-        }
+        if(mask & myKing) pd.checkMask &= pawnInvAtkRight<!whiteToMove>(myKing);
+
+        // Can be made branch-less (but is slower):
+//        flag = - static_cast<BB>((mask & myKing) != 0);  // flag becomes all 1’s if (mask & myKing) != 0, or 0 if (mask & myKing) == 0
+//        pd.checkMask &= pawnInvAtkRight<!whiteToMove>(myKing) | ~flag;
+
 
         // Knights
         Bitloop(knightBB) {
             int ix = firstBitOf(knightBB);
             mask = PieceSteps::KNIGHT_MOVES[ix];
             pd.attacked |= mask;
-            if (mask & myKing) {
-                numChecks++;
-                setBit(pd.checkMask, ix);
-            }
+            if(mask & myKing) pd.checkMask &= newMask(ix);
+
+            // Can be made branch-less (but is slower):
+//            flag = - static_cast<BB>((mask & myKing) != 0);  // flag becomes all 1’s if (mask & myKing) != 0, or 0 if (mask & myKing) == 0
+//            pd.checkMask &= newMask(ix) | ~flag;
         }
 
         // Sliders
@@ -141,10 +151,11 @@ namespace Dory {
             int ix = firstBitOf(pieces);
             mask = PieceSteps::slideMask<true>(occ, ix);
             pd.attacked |= mask;
-            if (mask & myKing) {
-                numChecks++;
-                pd.checkMask |= PieceSteps::FROM_TO[kingSquare][ix];
-            }
+            if(mask & myKing) pd.checkMask &= PieceSteps::FROM_TO[kingSquare][ix];
+
+            // Can be made branch-less (but is slower):
+//            flag = - static_cast<BB>((mask & myKing) != 0);  // flag becomes all 1’s if (mask & myKing) != 0, or 0 if (mask & myKing) == 0
+//            pd.checkMask &= PieceSteps::FROM_TO[kingSquare][ix] | ~flag;
         }
 
         // Rooks & (straight) Queens
@@ -153,15 +164,12 @@ namespace Dory {
             int ix = firstBitOf(pieces);
             mask = PieceSteps::slideMask<false>(occ, ix);
             pd.attacked |= mask;
-            if (mask & myKing) {
-                numChecks++;
-                pd.checkMask |= PieceSteps::FROM_TO[kingSquare][ix];
-            }
-        }
+            if(mask & myKing) pd.checkMask &= PieceSteps::FROM_TO[kingSquare][ix];
 
-        pd.isDoubleCheck = numChecks > 1;
-        if (pd.isDoubleCheck) pd.checkMask = 0;
-        if (numChecks == 0) pd.checkMask = FULL_BB;
+            // Can be made branch-less (but is slower):
+//            flag = - static_cast<BB>((mask & myKing) != 0);  // flag becomes all 1’s if (mask & myKing) != 0, or 0 if (mask & myKing) == 0
+//            pd.checkMask &= PieceSteps::FROM_TO[kingSquare][ix] | ~flag;
+        }
 
         pd.blockEP = false;
         pd.pinsDiag = addPins<whiteToMove, true>(board, kingSquare, pd.blockEP);
