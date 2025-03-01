@@ -35,8 +35,7 @@ namespace Dory::MoveCollectors {
             if constexpr (depth == 1) {
                 Generator::template generate<whiteToMove, GC_COUNT_ONLY>(board);
                 totalNodes += Generator::numberOfMoves;
-            } else
-            if constexpr (depth > 0) {
+            } else if constexpr (depth > 0) {
                 Generator::template generate<whiteToMove>(board);
             }
         }
@@ -72,7 +71,7 @@ namespace Dory::MoveCollectors {
      */
     template<typename T, bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
     requires ValidMoveCollectorObj<T, whiteToMove, piece, flags>
-    void forward(T* obj, Board& board, BB from, BB to) {
+    inline void forward(T* obj, Board& board, BB from, BB to) {
         obj->template nextMove<whiteToMove, piece, flags>(board, from, to);
     }
 
@@ -81,20 +80,20 @@ namespace Dory::MoveCollectors {
         static T* _ref;
 
         template<bool whiteToMove, Piece_t piece, Flag_t flags = MOVEFLAG_Silent>
-        static void nextMove(Board& board, BB from, BB to) {
+        static inline void nextMove(Board& board, BB from, BB to) {
             forward<T, whiteToMove, piece, flags>(_ref, board, from, to);
         }
         friend class MoveGenerator<ObjectCollector>;
 
     public:
         template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-        static void generate(T* ref, Board& board) {
+        static inline void generate(T* ref, Board& board) {
             _ref = ref;
             MoveGenerator<ObjectCollector<T>>::template generate<whiteToMove, config>(board);
         }
 
         template<bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-        static void generate(T* ref, Board& board, PinData& pd) {
+        static inline void generate(T* ref, Board& board, PinData& pd) {
             _ref = ref;
             MoveGenerator<ObjectCollector<T>>::template generate<whiteToMove, config>(board, pd);
         }
@@ -104,12 +103,12 @@ namespace Dory::MoveCollectors {
     T* ObjectCollector<T>::_ref = nullptr;
 
     template<typename T, bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-    void generateMoves(T* ref, Board& board) {
+    inline void generateMoves(T* ref, Board& board) {
         ObjectCollector<T>::template generate<whiteToMove, config>(ref, board);
     }
 
     template<typename T, bool whiteToMove, GenerationConfig config=GC_DEFAULT>
-    void generateMoves(T* ref, Board& board, PinData& pd) {
+    inline void generateMoves(T* ref, Board& board, PinData& pd) {
         ObjectCollector<T>::template generate<whiteToMove, config>(ref, board, pd);
     }
 

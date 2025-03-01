@@ -29,17 +29,17 @@ namespace Dory {
 
 //        template<size_t stacksize, size_t maxdepth>
         class MoveContainer {
-        public:
             std::array<WeightedMove, 2048> moves{};
             std::array<size_t, 128> starts{};
             const MoveOrderer* moveOrderer;
             size_t currentDepth{}, ix{};
             PinData pd;
 
+        public:
             explicit MoveContainer(const MoveOrderer* mO) : moveOrderer{mO} {}
 
             template<bool whiteToMove>
-            const PinData& loadClh(Board& board) {
+            inline const PinData& loadClh(Board& board) {
                 CheckLogicHandler::reload<whiteToMove>(board, pd);
                 return pd;
             }
@@ -56,7 +56,7 @@ namespace Dory {
             }
 
             template<bool whiteToMove,  Piece_t piece, Flag_t flags>
-            void nextMove(Board& board, BB from, BB to) {
+            inline void nextMove(Board& board, BB from, BB to) {
                 moves.at(ix++) = {
                     createMoveFromBB(from, to, piece, flags),
                     moveOrderer->moveHeuristic<whiteToMove, piece, flags>(board, from, to, pd, currentDepth)
