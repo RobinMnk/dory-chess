@@ -25,7 +25,7 @@ namespace Dory::Search {
         std::array<std::array<Move, 4>, 128> killerMoves;
         std::array<int, 128> kmPositions{};
     public:
-        Move priorityMove;
+        Move priorityMove{NULLMOVE};
 
         void reset() {
             kmPositions.fill(0);

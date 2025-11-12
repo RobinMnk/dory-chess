@@ -44,6 +44,7 @@ namespace DoryUtils {
 
     void initialize() {
         Dory::PieceSteps::load();
+        Dory::Zobrist::init(23984729);
     }
 
     template<bool whiteToMove>

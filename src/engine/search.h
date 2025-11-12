@@ -16,7 +16,10 @@
 namespace Dory {
 
     using Line = std::vector<Move>;
-    using Result = std::pair<int, Line>;
+    struct Result {
+        int eval{};
+        Line line{};
+    };
 
     namespace Search {
 
@@ -76,6 +79,7 @@ namespace Dory {
 
         const int MAX_ITER_DEPTH = 6;
         const int MAX_WINDOW_INCREASES = 2;
+        const int ASP_WINDOW_SIZE = 20;
         const int NUM_PV_NODES = 2;
         const int NUM_FULL_DEPTH_NODES = 4;
 
@@ -114,8 +118,66 @@ namespace Dory {
 
         }; // class Searcher
 
+        bool isMateEval(int eval) {
+            return eval > INF - 50 || eval < -(INF - 50);
+        }
+
         template<bool whiteToMove>
         Result Searcher::iterativeDeepening(Board &board, int maxDepth) {
+//            reset();
+            Result bestResult{};
+            int window, windowIncreases;
+            int alpha = -INF, beta = INF;
+
+            for (int depth = 1; depth <= maxDepth; depth++) {
+                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+
+                /// Aspiration Window
+                Result result;
+                window = ASP_WINDOW_SIZE;
+                windowIncreases = MAX_WINDOW_INCREASES;
+                while(windowIncreases) {
+                    result = negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
+
+                    // Is a Mate found?
+                    if(isMateEval(result.eval)) break;
+
+                    // Check if eval falls within aspiration window
+                    if(result.eval <= alpha) {
+                        alpha -= window;    // fail low
+                    } else if (result.eval >= beta) {
+                        beta += window;     // fail high
+                    } else break; // Search successful
+
+                    window *= 2;
+                    windowIncreases--;
+                }
+
+                if(result.line.empty()) {
+                    // Aspiration Window failed too many times -> retry without window
+                    result = negamax<whiteToMove, true>(board, 1, -INF, INF, depth);
+                }
+
+                // adjust alpha and beta for next search
+//                if(isMateEval(result.eval)) {
+//                    alpha = result.eval; // result cannot get worse than the forced mate we already found
+//                    beta = result.eval;
+//                } else {
+                alpha = result.eval - window;
+                beta  = result.eval + window;
+//                }
+
+                bestResult = std::move(result);
+
+//                std::cout << "Line for depth " << depth << std::endl;
+//                std::cout << "Depth " << depth << " -> ";
+                Utils::printLine(bestResult.line, bestResult.eval);
+            }
+            return bestResult;
+        }
+
+        template<bool whiteToMove>
+        Result iterativeDeepening(Board &board, int maxDepth) {
 //            reset();
 //        repTable.reset();
             Line bestLine;
@@ -123,7 +185,7 @@ namespace Dory {
             int alpha = -INF, beta = INF;
 
             for (int depth = 1; depth <= maxDepth;) {
-//                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
                 auto [eval, line] = negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
 
                 /// Aspiration Window
@@ -148,7 +210,7 @@ namespace Dory {
 
 //                std::cout << "Line for depth " << depth << std::endl;
 //                std::cout << "Depth " << depth << " -> ";
-//                Utils::printLine(bestLine, bestEval);
+                Utils::printLine(bestLine, bestEval);
 
                 depth++;
             }
@@ -157,7 +219,7 @@ namespace Dory {
 
         template<bool whiteToMove, bool topLevel>
         Result Searcher::negamax(Board &board, int depth, int alpha, int beta, int maxDepth) {
-            size_t boardHash = Zobrist::hash<whiteToMove>(board);
+            uint64_t boardHash = Zobrist::hash<whiteToMove>(board);
 
             /// Check for Threefold-Repetition
             if (repTable.check(boardHash)) {
@@ -316,9 +378,12 @@ namespace Dory {
                 moveIx++;
             } // end iterate moves
 
-            if (bestEval == -INF) {
-                std::cout << "ERROR!!!" << std::endl;
-            }
+//            if (bestEval == -INF) {
+//                std::cout << "ERROR!!!" << std::endl;
+//            }
+
+            assert(false);
+
 
             /// Save to lookup table
             trTable.insert(boardHash, bestEval, localBestMove, maxDepth - depth, origAlpha, beta);

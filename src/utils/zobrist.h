@@ -12,23 +12,23 @@
 namespace Dory::Zobrist {
 
     static std::array<std::array<BB, 12>, 64> BITSTRINGS{};
-    static size_t black_to_move_bitstring;
+    static BB black_to_move_bitstring;
     static Utils::Random random;
 
     void init(size_t seed=0) {
         random.setSeed(seed);
         for(int sq = 0; sq < 64; ++sq) {
             for(int p = 0; p < 12; ++p) {
-                BITSTRINGS[sq][p] = random.randomNumberInRange(0, FULL_BB);
+                BITSTRINGS[sq][p] = random.randomBitstring();
             }
         }
-        black_to_move_bitstring = random.randomNumberInRange(0, FULL_BB);
+        black_to_move_bitstring = random.randomBitstring();
     }
 
     template<bool whiteToMove>
-    size_t hash(const Board& board) {
-        size_t h{0};
-        if (!whiteToMove)
+    BB hash(const Board& board) {
+        BB h{0};
+        if constexpr (!whiteToMove)
             h ^= black_to_move_bitstring;
 
         for(int sq = 0; sq < 64; ++sq) {

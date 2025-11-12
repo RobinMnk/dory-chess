@@ -63,6 +63,14 @@ int main() {
         DoryUtils::printDivide(board, whiteToMove, depth);
         return 0;
     }
+    if(command == "zobrist") {
+        DoryUtils::initialize();
+        size_t hash;
+        if (whiteToMove) hash = Dory::Zobrist::hash<true>(board);
+        else hash = Dory::Zobrist::hash<false>(board);
+        std::cout << "Hash: " << hash << std::endl;
+        return 0;
+    }
     if(command == "eval") {
         DoryUtils::initialize();
         int eval = DoryUtils::staticEvaluation(board, whiteToMove);

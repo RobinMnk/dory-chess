@@ -10,11 +10,13 @@
 
 using RNG_INT = std::uniform_int_distribution<std::mt19937::result_type>;
 using RNG_REAL = std::uniform_real_distribution<>;
+using RNG_BB = std::uniform_int_distribution<uint64_t>;
 
 namespace Dory::Utils {
 
     class Random {
         std::mt19937 rng;
+        RNG_BB dist_bb;
 
     public:
         Random() {
@@ -31,6 +33,10 @@ namespace Dory::Utils {
         unsigned int randomNumberInRange(size_t lo, size_t hi) {
             RNG_INT dist(lo, hi);
             return dist(rng);
+        }
+
+        uint64_t randomBitstring() {
+            return dist_bb(rng);
         }
 
         template<typename T>

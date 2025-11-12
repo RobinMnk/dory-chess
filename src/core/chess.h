@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <bit>
 #include <immintrin.h>
+#include <cassert>
 
 namespace Dory {
 
