@@ -85,7 +85,9 @@ namespace Dory::evaluation {
         int gamePhase = 0;
 
         // includes material!
-        int activityScore = activity<whiteToMove>(board, gamePhase) - activity<!whiteToMove>(board, gamePhase);
+        int gamePhaseWhite = 0;
+        int gamePhaseBlack = 0;
+        int activityScore = activity<whiteToMove>(board, gamePhaseWhite) - activity<!whiteToMove>(board, gamePhaseBlack);
 
         int passedPawnsScore = passedPawns<whiteToMove>(board) - passedPawns<!whiteToMove>(board);
 

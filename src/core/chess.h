@@ -44,6 +44,14 @@ namespace Dory {
     const Flag_t MOVEFLAG_ShortCastling = 10;
     const Flag_t MOVEFLAG_LongCastling = 11;
 
+    template<Flag_t flag>
+    constexpr bool isPromotion() {
+        if constexpr ((flag == MOVEFLAG_PromoteKnight) | (flag == MOVEFLAG_PromoteBishop)
+        | (flag == MOVEFLAG_PromoteRook) | (flag == MOVEFLAG_PromoteQueen))
+            return true;
+        return false;
+    }
+
 // ---------- BOARD GEOMETRY ----------
 
     static constexpr BB fileH = 0x8080808080808080;

@@ -21,12 +21,12 @@ namespace Dory {
         };
     private:
         constexpr static const TTEntry NullEntry{0, NULLMOVE, 0, 0};
-        std::unordered_map<BB, TTEntry> lookup_table;
+        std::unordered_map<uint64_t, TTEntry> lookup_table;
     public:
         static const uint8_t TTFlagExact = 0, TTFlagLowerBound = 1, TTFlagUpperBound = 2;
 //        unsigned long long lookups{0};
 
-        void insert(size_t boardHash, int eval, Move move, int depthDiff, int alpha, int beta) {
+        void insert(uint64_t boardHash, int eval, Move move, int depthDiff, int alpha, int beta) {
             uint8_t flag;
             if (eval <= alpha)
                 flag = TTFlagUpperBound;
@@ -38,7 +38,7 @@ namespace Dory {
             lookup_table.insert_or_assign(boardHash, entry);
         }
 
-        std::pair<TTEntry, bool> lookup(size_t boardHash, int &alpha, int &beta, int depthDiff) {
+        std::pair<TTEntry, bool> lookup(uint64_t boardHash, int &alpha, int &beta, int depthDiff) {
             auto res = lookup_table.find(boardHash);
 
             if (res != lookup_table.end()) {
@@ -78,46 +78,33 @@ namespace Dory {
     };
 
     class RepetitionTable {
-        std::unordered_map<size_t, uint8_t> table{};
+        std::vector<uint64_t> stack;
 
     public:
-        /**
-         * Call after pawn move or after capture
-         */
         void reset() {
-            table.clear();
+            stack.clear();
         }
 
-        void insert(size_t boardHash) {
-            auto it = table.find(boardHash);
-            if (it != table.end()) {
-                it->second++;
-            } else {
-                table.emplace(boardHash, 1);
-            }
+        void push(uint64_t boardHash) {
+            stack.push_back(boardHash);
         }
 
-        void remove(size_t boardHash) {
-            auto it = table.find(boardHash);
-            if (it != table.end()) {
-                it->second--;
-//            if (it->second == 0) {
-//                table.erase(it);
-//            }
-            }
+        void pop() {
+            if (!stack.empty())
+                stack.pop_back();
         }
 
-        void print() {
-            for (auto &it: table) {
-                if (it.second) {
-                    std::cout << it.first << ":  " << it.second << std::endl;
+        /// Check for threefold repetition.
+        [[nodiscard]] bool check(uint64_t boardHash) const {
+            int count = 0;
+            for (uint64_t h : stack) {
+                if (h == boardHash) {
+                    count++;
+                    if (count >= 2)
+                        return true; // second occurrence = repetition
                 }
             }
-        }
-
-        bool check(size_t boardHash) {
-            auto it = table.find(boardHash);
-            return it != table.end() && it->second == 2;
+            return false;
         }
     };
 

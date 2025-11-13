@@ -12,6 +12,7 @@
 #include "../core/movecollectors.h"
 #include "moveordering.h"
 #include "tables.h"
+#include "../utils/timer.h"
 
 namespace Dory {
 
@@ -75,8 +76,6 @@ namespace Dory {
             void reset() { starts.fill(0); }
         };
 
-
-
         const int MAX_ITER_DEPTH = 6;
         const int MAX_WINDOW_INCREASES = 2;
         const int ASP_WINDOW_SIZE = 20;
@@ -124,102 +123,59 @@ namespace Dory {
 
         template<bool whiteToMove>
         Result Searcher::iterativeDeepening(Board &board, int maxDepth) {
-//            reset();
             Result bestResult{};
-            int window, windowIncreases;
-            int alpha = -INF, beta = INF;
+            int alpha, beta;
+
+            Timer t;
+            t.start();
 
             for (int depth = 1; depth <= maxDepth; depth++) {
+                int window = ASP_WINDOW_SIZE;
+                alpha = (depth == 1) ? -INF : bestResult.eval - window;
+                beta  = (depth == 1) ?  INF : bestResult.eval + window;
+
                 std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
 
-                /// Aspiration Window
-                Result result;
-                window = ASP_WINDOW_SIZE;
-                windowIncreases = MAX_WINDOW_INCREASES;
-                while(windowIncreases) {
-                    result = negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
+                int windowIncreases = MAX_WINDOW_INCREASES;
+                Result result{};
+                bool doFullSearch = false;
 
-                    // Is a Mate found?
-                    if(isMateEval(result.eval)) break;
+                while (windowIncreases--) {
+                    result = negamax<whiteToMove, true>(board, 0, alpha, beta, depth);
 
-                    // Check if eval falls within aspiration window
-                    if(result.eval <= alpha) {
-                        alpha -= window;    // fail low
+                    if (isMateEval(result.eval)) break;
+
+                    if (result.eval <= alpha) {
+                        alpha -= window;
+                        doFullSearch = true;
                     } else if (result.eval >= beta) {
-                        beta += window;     // fail high
-                    } else break; // Search successful
-
+                        beta += window;
+                        doFullSearch = true;
+                    } else {
+                        doFullSearch = false;
+                        break; // within window
+                    }
                     window *= 2;
-                    windowIncreases--;
                 }
 
-                if(result.line.empty()) {
-                    // Aspiration Window failed too many times -> retry without window
-                    result = negamax<whiteToMove, true>(board, 1, -INF, INF, depth);
+                if (doFullSearch) {
+                    result = negamax<whiteToMove, true>(board, 0, -INF, INF, depth);
                 }
-
-                // adjust alpha and beta for next search
-//                if(isMateEval(result.eval)) {
-//                    alpha = result.eval; // result cannot get worse than the forced mate we already found
-//                    beta = result.eval;
-//                } else {
-                alpha = result.eval - window;
-                beta  = result.eval + window;
-//                }
 
                 bestResult = std::move(result);
-
-//                std::cout << "Line for depth " << depth << std::endl;
-//                std::cout << "Depth " << depth << " -> ";
                 Utils::printLine(bestResult.line, bestResult.eval);
+
+                auto s = t.timeSeconds() * 1000000;
+                std::cout << static_cast<double>(nodesSearched) / s << " M nodes / second\n" << std::endl;
             }
+
             return bestResult;
-        }
-
-        template<bool whiteToMove>
-        Result iterativeDeepening(Board &board, int maxDepth) {
-//            reset();
-//        repTable.reset();
-            Line bestLine;
-            int bestEval = -INF, window = 20, windowIncreases = 0;
-            int alpha = -INF, beta = INF;
-
-            for (int depth = 1; depth <= maxDepth;) {
-                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
-                auto [eval, line] = negamax<whiteToMove, true>(board, 1, alpha, beta, depth);
-
-                /// Aspiration Window
-                if (eval <= alpha || eval >= beta) {
-                    if (windowIncreases++ >= MAX_WINDOW_INCREASES) {
-                        alpha = -INF;
-                        beta = INF;
-                    } else {
-                        window *= 2;
-                        alpha = bestEval - window;
-                        beta = bestEval + window;
-                    }
-                    continue; // Search again with same depth
-                }
-                window = 20;
-                windowIncreases = 0;
-                alpha = eval - window;
-                beta = eval + window;
-
-                bestEval = eval;
-                bestLine = line;
-
-//                std::cout << "Line for depth " << depth << std::endl;
-//                std::cout << "Depth " << depth << " -> ";
-                Utils::printLine(bestLine, bestEval);
-
-                depth++;
-            }
-            return {bestEval, bestLine};
         }
 
         template<bool whiteToMove, bool topLevel>
         Result Searcher::negamax(Board &board, int depth, int alpha, int beta, int maxDepth) {
-            uint64_t boardHash = Zobrist::hash<whiteToMove>(board);
+            const uint64_t boardHash = Zobrist::hash<whiteToMove>(board);
+            nodesSearched++;
 
             /// Check for Threefold-Repetition
             if (repTable.check(boardHash)) {
@@ -228,7 +184,8 @@ namespace Dory {
 
             /// Lookup position in table
             int origAlpha = alpha;
-            auto [ttEntry, resultValid] = trTable.lookup(boardHash, alpha, beta, maxDepth - depth);
+            int remainingDepth = maxDepth - depth;
+            auto [ttEntry, resultValid] = trTable.lookup(boardHash, alpha, beta, remainingDepth);
             if (resultValid) {
                 tableLookups++;
                 return {ttEntry.value, {}};
@@ -238,7 +195,7 @@ namespace Dory {
             const PinData& pd = moveContainer.loadClh<whiteToMove>(board);
             bool inCheck = pd.inCheck();
 
-            if (!inCheck && depth > maxDepth) {
+            if (!inCheck && depth >= maxDepth) {
                 return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
             }
 
@@ -259,38 +216,17 @@ namespace Dory {
             if (moveContainer.empty(depth)) {
                 if (inCheck) {
                     // Checkmate!
-                    nodesSearched++;
                     int eval = -(INF - depth);
-                    trTable.insert(boardHash, eval, NULLMOVE, maxDepth - depth, origAlpha, beta);
+                    trTable.insert(boardHash, eval, NULLMOVE, remainingDepth, origAlpha, beta);
                     return {eval, {}};
                 } else {
                     // Stalemate!
-                    nodesSearched++;
-                    trTable.insert(boardHash, 0, NULLMOVE, maxDepth - depth, origAlpha, beta);
+                    trTable.insert(boardHash, 0, NULLMOVE, remainingDepth, origAlpha, beta);
                     return {0, {}};
                 }
             }
 
             moveContainer.sort(depth);
-
-//            for (int i = 0; i < depth; i++)
-//                std::cout << "   ";
-//            std::cout << depth << ":  " << Utils::moveNameShortNotation(priorityMove) << std::endl;
-
-//            for(WeightedMove wm: moveContainer.list(depth)) {
-//                for (int i = 0; i < depth; i++)
-//                    std::cout << "   ";
-//                std::cout << depth << ":  " << Utils::moveNameShortNotation(wm.move) << std::endl;
-//            }
-
-//                moveOrderer.sort(moves.at(depth), moveIndices.at(depth));
-
-
-
-//                for(unsigned int i = 0; i < moves.at(depth).size(); i++) {
-//                    std::cout << Utils::moveNameShortNotation(moves[depth][i].second) << "  : " << moves[depth][i].first << std::endl;
-//                }
-
 
             // Iterate all moves
             Line localBestLine;
@@ -298,8 +234,8 @@ namespace Dory {
             Board nextBoard;
             int bestEval = -INF;
 
-            int eval;
-            Line line;
+//            int eval;
+//            Line line;
 
             // Search Extensions
             int mdpt = maxDepth;
@@ -313,32 +249,36 @@ namespace Dory {
             for(auto it = moveContainer.begin(depth); it != moveContainer.end(depth); ++it) {
                 Move move = (*it).move;
 
-                repTable.insert(boardHash);
-
+                repTable.push(boardHash);
                 nextBoard = board.fork<whiteToMove>(move);
 
-                /// Principal Variation Search
-                bool doFullSearch = true;
-                if(maxDepth - depth > 2 && moveIx == NUM_FULL_DEPTH_NODES) rdpt -= 2;
-                if (moveIx >= NUM_PV_NODES && !board.isCapture<whiteToMove>(move) && !inCheck) {
-                    // not part of the principal variation and no capture -> try a zero-window search
-                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, rdpt);
-                    if (ev < -alpha && ev > -beta) {
-                        // zero-window assumption failed -> needs full search
-                    } else {
-                        eval = -ev;
-                        line = ln;
-                        doFullSearch = false;
-                    }
-                }
+                int eval;
+                Line line;
 
-                if(doFullSearch) {
+                // Principal Variation Search
+                if (moveIx == 0) {
+                    // First move: full window search
                     auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
                     eval = -ev;
                     line = ln;
+                } else {
+                    // Late move: null-window search first
+                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, mdpt);
+                    int tempEval = -ev;
+
+                    if (tempEval > alpha && tempEval < beta) {
+                        // Fail-high → full re-search needed
+                        auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
+                        eval = -ev2;
+                        line = ln2;
+                    } else {
+                        eval = tempEval;
+                        line = ln;
+                    }
                 }
 
-                repTable.remove(boardHash);
+                repTable.pop();
+
 
 //            if(Zobrist::hash<whiteToMove>(board) == 335140086) {
 //                Line l = std::vector<Move>{move};
@@ -378,15 +318,8 @@ namespace Dory {
                 moveIx++;
             } // end iterate moves
 
-//            if (bestEval == -INF) {
-//                std::cout << "ERROR!!!" << std::endl;
-//            }
-
-            assert(false);
-
-
             /// Save to lookup table
-            trTable.insert(boardHash, bestEval, localBestMove, maxDepth - depth, origAlpha, beta);
+            trTable.insert(boardHash, bestEval, localBestMove, remainingDepth, origAlpha, beta);
 
             return {bestEval, localBestLine};
         }
@@ -396,16 +329,16 @@ namespace Dory {
             /// Recursion Base Case: Max Depth reached -> return heuristic position eval
             int standPat = evaluation::evaluatePosition<whiteToMove>(board);
 
-//            if(depth > 30) {
-//                 return {alpha, {}};
-//            }
-
             if (standPat >= beta) {
                 nodesSearched++;
                 return {beta, {}};
             }
             if (alpha < standPat) {
                 alpha = standPat;
+            }
+
+            if(depth > 30) {
+                 return {alpha, {}};
             }
 
             // Reload CLH
