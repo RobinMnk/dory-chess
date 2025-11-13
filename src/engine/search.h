@@ -231,7 +231,7 @@ namespace Dory {
             // Iterate all moves
             Line localBestLine;
             Move localBestMove;
-            Board nextBoard;
+//            Board nextBoard;
             int bestEval = -INF;
 
 //            int eval;
@@ -241,7 +241,7 @@ namespace Dory {
             int mdpt = maxDepth;
             if (inCheck) mdpt++; // very important!
 //                else if (maxDepth - depth > 2) rdpt--;
-            int rdpt = maxDepth;
+//            int rdpt = maxDepth;
 
 
             /// Iterate through all moves
@@ -249,8 +249,10 @@ namespace Dory {
             for(auto it = moveContainer.begin(depth); it != moveContainer.end(depth); ++it) {
                 Move move = (*it).move;
 
-                repTable.push(boardHash);
-                nextBoard = board.fork<whiteToMove>(move);
+//                repTable.push(boardHash);
+//                nextBoard = board.fork<whiteToMove>(move);
+
+                RestoreInfo ri = board.makeMove<whiteToMove>(move);
 
                 int eval;
                 Line line;
@@ -258,17 +260,17 @@ namespace Dory {
                 // Principal Variation Search
                 if (moveIx == 0) {
                     // First move: full window search
-                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
+                    auto [ev, ln] = negamax<!whiteToMove, false>(board, depth + 1, -beta, -alpha, mdpt);
                     eval = -ev;
                     line = ln;
                 } else {
                     // Late move: null-window search first
-                    auto [ev, ln] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -alpha - 1, -alpha, mdpt);
+                    auto [ev, ln] = negamax<!whiteToMove, false>(board, depth + 1, -alpha - 1, -alpha, mdpt);
                     int tempEval = -ev;
 
                     if (tempEval > alpha && tempEval < beta) {
                         // Fail-high → full re-search needed
-                        auto [ev2, ln2] = negamax<!whiteToMove, false>(nextBoard, depth + 1, -beta, -alpha, mdpt);
+                        auto [ev2, ln2] = negamax<!whiteToMove, false>(board, depth + 1, -beta, -alpha, mdpt);
                         eval = -ev2;
                         line = ln2;
                     } else {
@@ -276,6 +278,8 @@ namespace Dory {
                         line = ln;
                     }
                 }
+
+                board.unmakeMove<whiteToMove>(move, ri);
 
                 repTable.pop();
 

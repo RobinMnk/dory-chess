@@ -238,17 +238,23 @@ namespace Dory {
         }
 
         template<bool whiteMoved, Piece_t piece, Flag_t flags=MOVEFLAG_Silent, Piece_t captured>
-        void unmakeMove(BB from, BB to, RestoreInfo ri) ;
+        void unmakeMove(BB from, BB to, RestoreInfo ri);
 
         template<bool whiteMoved, Piece_t piece, Flag_t flags>
         void unmakeMove(BB from, BB to, RestoreInfo ri);
 
-        template<bool whiteToMove>
-        void makeMove(Move move);
+        template<bool whiteMoved, Piece_t piece>
+        void unmakeMove(BB from, BB to, Flag_t flags, RestoreInfo ri);
 
-        void makeMove(Move move, bool whiteToMove) {
-            if(whiteToMove) makeMove<true>(move);
-            else makeMove<false>(move);
+        template<bool whiteMoved>
+        void unmakeMove(Move move, RestoreInfo ri);
+
+        template<bool whiteToMove>
+        RestoreInfo makeMove(Move move);
+
+        RestoreInfo makeMove(Move move, bool whiteToMove) {
+            if(whiteToMove) return makeMove<true>(move);
+            else return makeMove<false>(move);
         }
 
         bool operator==(const Board& other) const = default;
@@ -423,54 +429,54 @@ namespace Dory {
             case PIECE_Pawn:
                 switch (move.flags) {
                     case MOVEFLAG_PawnDoublePush:
-                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PawnDoublePush>(newMask(move.fromIndex),
-                                                                                      newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PawnDoublePush>(move.from(),
+                                                                                      move.to());
                     case MOVEFLAG_EnPassantCapture:
-                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(newMask(move.fromIndex),
-                                                                                        newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(move.from(),
+                                                                                        move.to());
                     case MOVEFLAG_PromoteQueen:
-                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteQueen>(newMask(move.fromIndex),
-                                                                                    newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteQueen>(move.from(),
+                                                                                    move.to());
                     case MOVEFLAG_PromoteRook:
-                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteRook>(newMask(move.fromIndex),
-                                                                                   newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteRook>(move.from(),
+                                                                                   move.to());
                     case MOVEFLAG_PromoteBishop:
-                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteBishop>(newMask(move.fromIndex),
-                                                                                     newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteBishop>(move.from(),
+                                                                                     move.to());
                     case MOVEFLAG_PromoteKnight:
-                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteKnight>(newMask(move.fromIndex),
-                                                                                     newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteKnight>(move.from(),
+                                                                                     move.to());
                 }
-                return fork<whiteToMove, PIECE_Pawn>(newMask(move.fromIndex), newMask(move.toIndex));
+                return fork<whiteToMove, PIECE_Pawn>(move.from(), move.to());
             case PIECE_Knight:
-                return fork<whiteToMove, PIECE_Knight>(newMask(move.fromIndex), newMask(move.toIndex));
+                return fork<whiteToMove, PIECE_Knight>(move.from(), move.to());
             case PIECE_Bishop:
-                return fork<whiteToMove, PIECE_Bishop>(newMask(move.fromIndex), newMask(move.toIndex));
+                return fork<whiteToMove, PIECE_Bishop>(move.from(), move.to());
             case PIECE_Rook:
                 switch (move.flags) {
                     case MOVEFLAG_RemoveShortCastling:
                         return fork<whiteToMove, PIECE_Rook, MOVEFLAG_RemoveShortCastling>(
-                                newMask(move.fromIndex), newMask(move.toIndex));
+                                move.from(), move.to());
                     case MOVEFLAG_RemoveLongCastling:
-                        return fork<whiteToMove, PIECE_Rook, MOVEFLAG_RemoveLongCastling>(newMask(move.fromIndex),
-                                                                                          newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_Rook, MOVEFLAG_RemoveLongCastling>(move.from(),
+                                                                                          move.to());
                 }
-                return fork<whiteToMove, PIECE_Rook>(newMask(move.fromIndex), newMask(move.toIndex));
+                return fork<whiteToMove, PIECE_Rook>(move.from(), move.to());
             case PIECE_Queen:
-                return fork<whiteToMove, PIECE_Queen>(newMask(move.fromIndex), newMask(move.toIndex));
+                return fork<whiteToMove, PIECE_Queen>(move.from(), move.to());
             case PIECE_King:
                 switch (move.flags) {
                     case MOVEFLAG_RemoveAllCastling:
-                        return fork<whiteToMove, PIECE_King, MOVEFLAG_RemoveAllCastling>(newMask(move.fromIndex),
-                                                                                         newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_King, MOVEFLAG_RemoveAllCastling>(move.from(),
+                                                                                         move.to());
                     case MOVEFLAG_ShortCastling:
-                        return fork<whiteToMove, PIECE_King, MOVEFLAG_ShortCastling>(newMask(move.fromIndex),
-                                                                                     newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_King, MOVEFLAG_ShortCastling>(move.from(),
+                                                                                     move.to());
                     case MOVEFLAG_LongCastling:
-                        return fork<whiteToMove, PIECE_King, MOVEFLAG_LongCastling>(newMask(move.fromIndex),
-                                                                                    newMask(move.toIndex));
+                        return fork<whiteToMove, PIECE_King, MOVEFLAG_LongCastling>(move.from(),
+                                                                                    move.to());
                 }
-                return fork<whiteToMove, PIECE_King>(newMask(move.fromIndex), newMask(move.toIndex));
+                return fork<whiteToMove, PIECE_King>(move.from(), move.to());
             default: __builtin_unreachable();
         }
     }
@@ -710,77 +716,50 @@ namespace Dory {
     }
 
     template<bool whiteToMove>
-    void Board::makeMove(Move move) {
+    RestoreInfo Board::makeMove(Move move) {
         switch (move.piece) {
             case PIECE_Pawn:
                 switch (move.flags) {
                     case MOVEFLAG_PawnDoublePush:
-                        makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PawnDoublePush>(newMask(move.fromIndex),
-                                                                                   newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PawnDoublePush>(move.from(), move.to());
                     case MOVEFLAG_EnPassantCapture:
-                        makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(newMask(move.fromIndex),
-                                                                                     newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_EnPassantCapture>(move.from(), move.to());
                     case MOVEFLAG_PromoteQueen:
-                        makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteQueen>(newMask(move.fromIndex),
-                                                                                 newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteQueen>(move.from(), move.to());
                     case MOVEFLAG_PromoteRook:
-                        makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteRook>(newMask(move.fromIndex),
-                                                                                newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteRook>(move.from(), move.to());
                     case MOVEFLAG_PromoteBishop:
-                        makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteBishop>(newMask(move.fromIndex),
-                                                                                  newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteBishop>(move.from(), move.to());
                     case MOVEFLAG_PromoteKnight:
-                        makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteKnight>(newMask(move.fromIndex),
-                                                                                  newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Pawn, MOVEFLAG_PromoteKnight>(move.from(), move.to());
                 }
-                makeMove<whiteToMove, PIECE_Pawn>(newMask(move.fromIndex), newMask(move.toIndex));
-                return;
+                return makeMove<whiteToMove, PIECE_Pawn>(move.from(), move.to());
             case PIECE_Knight:
-                makeMove<whiteToMove, PIECE_Knight>(newMask(move.fromIndex), newMask(move.toIndex));
-                return;
+                return makeMove<whiteToMove, PIECE_Knight>(move.from(), move.to());
             case PIECE_Bishop:
-                makeMove<whiteToMove, PIECE_Bishop>(newMask(move.fromIndex), newMask(move.toIndex));
-                return;
+                return makeMove<whiteToMove, PIECE_Bishop>(move.from(), move.to());
             case PIECE_Rook:
                 switch (move.flags) {
                     case MOVEFLAG_RemoveShortCastling:
-                        makeMove<whiteToMove, PIECE_Rook, MOVEFLAG_RemoveShortCastling>(newMask(move.fromIndex),
-                                                                                        newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Rook, MOVEFLAG_RemoveShortCastling>(move.from(), move.to());
                     case MOVEFLAG_RemoveLongCastling:
-                        makeMove<whiteToMove, PIECE_Rook, MOVEFLAG_RemoveLongCastling>(newMask(move.fromIndex),
-                                                                                       newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_Rook, MOVEFLAG_RemoveLongCastling>(move.from(), move.to());
                 }
-                makeMove<whiteToMove, PIECE_Rook>(newMask(move.fromIndex), newMask(move.toIndex));
-                return;
+                return makeMove<whiteToMove, PIECE_Rook>(move.from(), move.to());
             case PIECE_Queen:
-                makeMove<whiteToMove, PIECE_Queen>(newMask(move.fromIndex), newMask(move.toIndex));
-                return;
+                return makeMove<whiteToMove, PIECE_Queen>(move.from(), move.to());
             case PIECE_King:
                 switch (move.flags) {
                     case MOVEFLAG_RemoveAllCastling:
-                        makeMove<whiteToMove, PIECE_King, MOVEFLAG_RemoveAllCastling>(newMask(move.fromIndex),
-                                                                                      newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_King, MOVEFLAG_RemoveAllCastling>(move.from(), move.to());
                     case MOVEFLAG_ShortCastling:
-                        makeMove<whiteToMove, PIECE_King, MOVEFLAG_ShortCastling>(newMask(move.fromIndex),
-                                                                                  newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_King, MOVEFLAG_ShortCastling>(move.from(), move.to());
                     case MOVEFLAG_LongCastling:
-                        makeMove<whiteToMove, PIECE_King, MOVEFLAG_LongCastling>(newMask(move.fromIndex),
-                                                                                 newMask(move.toIndex));
-                        return;
+                        return makeMove<whiteToMove, PIECE_King, MOVEFLAG_LongCastling>(move.from(), move.to());
                 }
-                makeMove<whiteToMove, PIECE_King>(newMask(move.fromIndex), newMask(move.toIndex));
-                return;
+                return makeMove<whiteToMove, PIECE_King>(move.from(), move.to());
         }
+        return {};
     }
 
     template<bool whiteMoved, Piece_t piece, Flag_t flags, Piece_t captured>
@@ -942,6 +921,33 @@ namespace Dory {
             case PIECE_Rook:    unmakeMove<whiteMoved, piece, flags, PIECE_Rook>(from, to, ri); break;
             case PIECE_Queen:   unmakeMove<whiteMoved, piece, flags, PIECE_Queen>(from, to, ri); break;
             default: unmakeMove<whiteMoved, piece, flags, PIECE_None>(from, to, ri); break;
+        }
+    }
+
+    template<bool whiteMoved, Piece_t piece>
+    void Board::unmakeMove(BB from, BB to, Flag_t flags, RestoreInfo ri) {
+        switch (flags) {
+            case MOVEFLAG_LongCastling:     unmakeMove<whiteMoved, piece, MOVEFLAG_LongCastling>(from, to, ri); break;
+            case MOVEFLAG_ShortCastling:    unmakeMove<whiteMoved, piece, MOVEFLAG_ShortCastling>(from, to, ri); break;
+            case MOVEFLAG_PromoteKnight:    unmakeMove<whiteMoved, piece, MOVEFLAG_PromoteKnight>(from, to, ri); break;
+            case MOVEFLAG_PromoteBishop:    unmakeMove<whiteMoved, piece, MOVEFLAG_PromoteBishop>(from, to, ri); break;
+            case MOVEFLAG_PromoteRook:      unmakeMove<whiteMoved, piece, MOVEFLAG_PromoteRook>(from, to, ri); break;
+            case MOVEFLAG_PromoteQueen:     unmakeMove<whiteMoved, piece, MOVEFLAG_PromoteQueen>(from, to, ri); break;
+            case MOVEFLAG_EnPassantCapture: unmakeMove<whiteMoved, piece, MOVEFLAG_EnPassantCapture>(from, to, ri); break;
+            default:                        unmakeMove<whiteMoved, piece, MOVEFLAG_Silent>(from, to, ri); break;
+        }
+    }
+
+    template<bool whiteMoved>
+    void Board::unmakeMove(Move move, RestoreInfo ri) {
+        switch (move.piece) {
+            case PIECE_Pawn:    unmakeMove<whiteMoved, PIECE_Pawn>(move.from(), move.to(), move.flags, ri); break;
+            case PIECE_Knight:  unmakeMove<whiteMoved, PIECE_Knight>(move.from(), move.to(), move.flags, ri); break;
+            case PIECE_Bishop:  unmakeMove<whiteMoved, PIECE_Bishop>(move.from(), move.to(), move.flags, ri); break;
+            case PIECE_Rook:    unmakeMove<whiteMoved, PIECE_Rook>(move.from(), move.to(), move.flags, ri); break;
+            case PIECE_Queen:   unmakeMove<whiteMoved, PIECE_Queen>(move.from(), move.to(), move.flags, ri); break;
+            case PIECE_King:    unmakeMove<whiteMoved, PIECE_King>(move.from(), move.to(), move.flags, ri); break;
+            default: break;
         }
     }
 
