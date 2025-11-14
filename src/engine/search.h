@@ -97,7 +97,7 @@ namespace Dory {
 
             void reset() {
                 trTable.reset();
-//                repTable.reset();
+                repTable.reset();
                 moveOrderer.reset();
                 moveContainer.reset();
                 nodesSearched = tableLookups = 0;
@@ -125,6 +125,7 @@ namespace Dory {
         Result Searcher::iterativeDeepening(Board &board, int maxDepth) {
             Result bestResult{};
             int alpha, beta;
+            reset();
 
             Timer t;
             t.start();
@@ -165,8 +166,8 @@ namespace Dory {
                 bestResult = std::move(result);
                 Utils::printLine(bestResult.line, bestResult.eval);
 
-                auto s = t.timeSeconds() * 1000000;
-                std::cout << static_cast<double>(nodesSearched) / s << " M nodes / second\n" << std::endl;
+                auto s = t.timeSeconds();
+                std::cout << (static_cast<double>(nodesSearched) / 1000000) / s << " M nodes / second\t\t[" << nodesSearched << " nodes in " << s << " sec]\n" << std::endl;
             }
 
             return bestResult;
@@ -248,11 +249,18 @@ namespace Dory {
             int moveIx = 0;
             for(auto it = moveContainer.begin(depth); it != moveContainer.end(depth); ++it) {
                 Move move = (*it).move;
+                bool isCapture = board.isCapture<whiteToMove>(move);
 
-//                repTable.push(boardHash);
-//                nextBoard = board.fork<whiteToMove>(move);
-
+                repTable.push(boardHash);
                 RestoreInfo ri = board.makeMove<whiteToMove>(move);
+
+//                int ext = 0;
+//                if(inCheck || move.isPromotion()) ext = 1;
+////                else {
+////                    if (depth >= 3 && moveIx >= 12 && !isCapture)
+////                        ext = -1;
+////                }
+//                int mdpt = maxDepth + ext;
 
                 int eval;
                 Line line;
@@ -280,9 +288,7 @@ namespace Dory {
                 }
 
                 board.unmakeMove<whiteToMove>(move, ri);
-
                 repTable.pop();
-
 
 //            if(Zobrist::hash<whiteToMove>(board) == 335140086) {
 //                Line l = std::vector<Move>{move};
@@ -314,7 +320,7 @@ namespace Dory {
                 }
 
                 if (alpha >= beta) {
-                    if(!board.isCapture<whiteToMove>(move))
+                    if(!isCapture)
                         moveOrderer.addKillerMove(move, depth);
                     break;
                 }
@@ -330,11 +336,12 @@ namespace Dory {
 
         template<bool whiteToMove>
         Result Searcher::quiescenceSearch(Board &board, int depth, int alpha, int beta) {
+            nodesSearched++;
+
             /// Recursion Base Case: Max Depth reached -> return heuristic position eval
             int standPat = evaluation::evaluatePosition<whiteToMove>(board);
 
             if (standPat >= beta) {
-                nodesSearched++;
                 return {beta, {}};
             }
             if (alpha < standPat) {
@@ -358,7 +365,6 @@ namespace Dory {
             }
 
             if (moveContainer.empty(depth)) {
-                nodesSearched++;
                 return {alpha, {}};
             }
 
@@ -381,7 +387,6 @@ namespace Dory {
 
                 if (eval >= beta) {
                     line.push_back(move);
-                    nodesSearched++;
                     return { beta, line };
                 }
                 if (eval > alpha) {

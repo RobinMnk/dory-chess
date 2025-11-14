@@ -246,6 +246,10 @@ namespace Dory {
 //            uint32_t mask = (singleBitOf(fromBB) << 24) | (singleBitOf(toBB) << 16) | lowerMask;
             return pc == piece && fl == flags && fromIndex == singleBitOf(fromBB) && toIndex == singleBitOf(toBB);
         }
+
+        [[nodiscard]] bool isPromotion() const {
+            return flags >= MOVEFLAG_PromoteQueen && flags <= MOVEFLAG_PromoteKnight;
+        }
     };
 
     constexpr Move createMoveFromBB(BB from, BB to, Piece_t pc, Flag_t fl) {
