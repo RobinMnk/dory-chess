@@ -22,7 +22,9 @@ namespace Dory {
 
         template<bool whiteToMove>
         Result searchDepth(Board& board, int depth) {
-            return searcher.iterativeDeepening<whiteToMove>(board, depth);
+            Result res = searcher.iterativeDeepening<whiteToMove>(board, depth);
+            if constexpr (!whiteToMove) res.eval = -res.eval;
+            return res;
         }
 
         Result searchDepth(Board& board, int depth, bool whiteToMove) {

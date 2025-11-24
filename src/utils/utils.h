@@ -317,10 +317,10 @@ namespace Dory::Utils {
 
     std::string parseEval(int eval) {
         std::stringstream bss{};
-        if(eval > INF - 50) {
-            bss << "M" << (INF - eval) / 2 ;
-        } else if(eval < -INF + 50) {
-            bss << "-M" << (INF + eval) / 2;
+        if(eval > INF - 1000) {
+            bss << "M" << (INF - eval + 1) / 2 ;
+        } else if(eval < -INF + 1000) {
+            bss << "-M" << (INF + eval + 1) / 2;
         } else {
             bss << static_cast<float>(eval) / 100;
         }
@@ -328,19 +328,25 @@ namespace Dory::Utils {
     }
 
     void printLine(const std::vector<Move>& line, int eval) {
-        if (eval == INF-1) {
+        if (eval == INF) {
             std::cout << "Checkmate - White wins!" << std::endl;
             return;
         }
-        if (eval == -INF+1) {
+        if (eval == -INF) {
             std::cout << "Checkmate - Black wins!" << std::endl;
             return;
         }
-        std::cout << parseEval(eval) << ":  ";
+        std::cout << eval << " = " << parseEval(eval) << ":  ";
         for (auto& it : std::ranges::reverse_view(line)) {
             std::cout << Utils::moveNameShortNotation(it) << " ";
         }
         std::cout << std::endl;
+    }
+
+    template<bool whiteToMove>
+    void printAdjustedEvalLine(const std::vector<Move>& line, int eval) {
+        if constexpr (!whiteToMove) eval = -eval;
+        printLine(line, eval);
     }
 
 //    template<typename Collector, State state, int depth>

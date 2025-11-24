@@ -117,8 +117,8 @@ namespace Dory {
 
         }; // class Searcher
 
-        bool isMateEval(int eval) {
-            return eval > INF - 50 || eval < -(INF - 50);
+        inline bool isMateEval(int eval) {
+            return eval > MATE_THRESHOLD || eval < -MATE_THRESHOLD;
         }
 
         template<bool whiteToMove>
@@ -139,12 +139,15 @@ namespace Dory {
 
                 int windowIncreases = MAX_WINDOW_INCREASES;
                 Result result{};
-                bool doFullSearch = false;
+                bool doFullSearch = true;
 
                 while (windowIncreases--) {
                     result = negamax<whiteToMove, true>(board, 0, alpha, beta, depth);
 
-                    if (isMateEval(result.eval)) break;
+                    if (isMateEval(result.eval)) {
+                        doFullSearch = false;
+                        break;
+                    }
 
                     if (result.eval <= alpha) {
                         alpha -= window;
@@ -164,7 +167,9 @@ namespace Dory {
                 }
 
                 bestResult = std::move(result);
-                Utils::printLine(bestResult.line, bestResult.eval);
+                if constexpr (whiteToMove)
+                    Utils::printLine(bestResult.line, bestResult.eval);
+                else Utils::printLine(bestResult.line, -bestResult.eval);
 
                 auto s = t.timeSeconds();
                 std::cout << (static_cast<double>(nodesSearched) / 1000000) / s << " M nodes / second\t\t[" << nodesSearched << " nodes in " << s << " sec]\n" << std::endl;
@@ -183,21 +188,24 @@ namespace Dory {
                 return {0, {}};
             }
 
+            /// Calculate remaining search depth
+            const PinData& pd = moveContainer.loadClh<whiteToMove>(board);
+            bool inCheck = pd.inCheck();
+            int mdpt = maxDepth + (inCheck ? 1 : 0);
+            int remainingDepth = mdpt - depth;
+
             /// Lookup position in table
-            int origAlpha = alpha;
-            int remainingDepth = maxDepth - depth;
-            auto [ttEntry, resultValid] = trTable.lookup(boardHash, alpha, beta, remainingDepth);
-            if (resultValid) {
+            int origAlpha = alpha, origBeta = beta;
+            auto [ttEntry, ttValid] = trTable.lookup(boardHash, alpha, beta, remainingDepth, depth);
+            if (ttValid) {
                 tableLookups++;
                 return {ttEntry.value, {}};
             }
 
             /// Switch to Quiescence Search
-            const PinData& pd = moveContainer.loadClh<whiteToMove>(board);
-            bool inCheck = pd.inCheck();
-
             if (!inCheck && depth >= maxDepth) {
-                return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
+//                return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
+                return {evaluation::evaluatePosition<whiteToMove>(board), {}};
             }
 
             /// Generate legal moves
@@ -209,20 +217,19 @@ namespace Dory {
                 moveOrderer.priorityMove = ttEntry.move;
             }
 
-            // Setup variables before generating legal moves
+            // Generate legal moves
             moveContainer.generate<whiteToMove, GC_DEFAULT_NO_CLH>(board, depth);
 
-            /// Check for Checkmate / Stalemate
             // No legal moves available
             if (moveContainer.empty(depth)) {
                 if (inCheck) {
                     // Checkmate!
                     int eval = -(INF - depth);
-                    trTable.insert(boardHash, eval, NULLMOVE, remainingDepth, origAlpha, beta);
+                    trTable.insert(boardHash, eval, NULLMOVE, remainingDepth, origAlpha, origBeta, depth);
                     return {eval, {}};
                 } else {
                     // Stalemate!
-                    trTable.insert(boardHash, 0, NULLMOVE, remainingDepth, origAlpha, beta);
+                    trTable.insert(boardHash, 0, NULLMOVE, remainingDepth, origAlpha, origBeta, depth);
                     return {0, {}};
                 }
             }
@@ -232,35 +239,19 @@ namespace Dory {
             // Iterate all moves
             Line localBestLine;
             Move localBestMove;
-//            Board nextBoard;
             int bestEval = -INF;
 
-//            int eval;
-//            Line line;
-
-            // Search Extensions
-            int mdpt = maxDepth;
-            if (inCheck) mdpt++; // very important!
-//                else if (maxDepth - depth > 2) rdpt--;
-//            int rdpt = maxDepth;
-
-
-            /// Iterate through all moves
             int moveIx = 0;
-            for(auto it = moveContainer.begin(depth); it != moveContainer.end(depth); ++it) {
+            for (auto it = moveContainer.begin(depth); it != moveContainer.end(depth); ++it) {
                 Move move = (*it).move;
                 bool isCapture = board.isCapture<whiteToMove>(move);
 
-                repTable.push(boardHash);
+
+//                repTable.push(boardHash);
                 RestoreInfo ri = board.makeMove<whiteToMove>(move);
 
-//                int ext = 0;
-//                if(inCheck || move.isPromotion()) ext = 1;
-////                else {
-////                    if (depth >= 3 && moveIx >= 12 && !isCapture)
-////                        ext = -1;
-////                }
-//                int mdpt = maxDepth + ext;
+//                uint64_t nextHash = Zobrist::hash<!whiteToMove>(board);
+//                repTable.push(nextHash);
 
                 int eval;
                 Line line;
@@ -277,7 +268,7 @@ namespace Dory {
                     int tempEval = -ev;
 
                     if (tempEval > alpha && tempEval < beta) {
-                        // Fail-high → full re-search needed
+                        // Fail-high => full re-search needed
                         auto [ev2, ln2] = negamax<!whiteToMove, false>(board, depth + 1, -beta, -alpha, mdpt);
                         eval = -ev2;
                         line = ln2;
@@ -288,22 +279,7 @@ namespace Dory {
                 }
 
                 board.unmakeMove<whiteToMove>(move, ri);
-                repTable.pop();
-
-//            if(Zobrist::hash<whiteToMove>(board) == 335140086) {
-//                Line l = std::vector<Move>{move};
-//                std::cout << info << " for " << whiteToMove << " -> ";
-//                Utils::printLine(l,  info);
-//            }
-
-//            for (int i = 0; i < depth; i++)
-//                std::cout << "   ";
-//            std::cout << depth << " : " << Utils::moveNameShortNotation(move) << "  " << eval << std::endl;
-
-//            if constexpr (topLevel) {
-//                Line l = std::vector<Move>{move};
-//                Utils::printLine(l, info);
-//            }
+//                repTable.pop();
 
                 if (eval > alpha)
                     alpha = eval;
@@ -320,7 +296,7 @@ namespace Dory {
                 }
 
                 if (alpha >= beta) {
-                    if(!isCapture)
+                    if (!isCapture)
                         moveOrderer.addKillerMove(move, depth);
                     break;
                 }
@@ -328,8 +304,8 @@ namespace Dory {
                 moveIx++;
             } // end iterate moves
 
-            /// Save to lookup table
-            trTable.insert(boardHash, bestEval, localBestMove, remainingDepth, origAlpha, beta);
+            /// Save to transposition table
+            trTable.insert(boardHash, bestEval, localBestMove, remainingDepth, origAlpha, origBeta, depth);
 
             return {bestEval, localBestLine};
         }
@@ -348,8 +324,8 @@ namespace Dory {
                 alpha = standPat;
             }
 
-            if(depth > 30) {
-                 return {alpha, {}};
+            if(depth > 80) {
+                return {alpha, {}};
             }
 
             // Reload CLH
@@ -359,14 +335,22 @@ namespace Dory {
             if (inCheck) {
                 // if in check, any legal move is considered
                 moveContainer.generate<whiteToMove, GC_DEFAULT_NO_CLH>(board, depth);
+
+                if(moveContainer.empty(depth)) {
+                    return {-(INF - depth), {}};
+                }
             } else {
                 // if not in check, consider only captures
                 moveContainer.generate<whiteToMove, GC_QUIESCENCE_NO_CLH>(board, depth);
+
+                if(moveContainer.empty(depth)) {
+                    return {alpha, {}};
+                }
             }
 
-            if (moveContainer.empty(depth)) {
-                return {alpha, {}};
-            }
+//            if (moveContainer.empty(depth)) {
+//                return {alpha, {}};
+//            }
 
             moveContainer.sort(depth);
 
