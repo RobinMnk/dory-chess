@@ -571,7 +571,8 @@ namespace Dory {
             else {
                 bPawns &= ~from;
                 wKnights &= ~to;
-                bKnights |= to, wBishops &= ~to;
+                bKnights |= to;
+                wBishops &= ~to;
                 wRooks &= ~to;
                 wQueens &= ~to;
             }

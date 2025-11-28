@@ -204,8 +204,8 @@ namespace Dory {
 
             /// Switch to Quiescence Search
             if (!inCheck && depth >= maxDepth) {
-//                return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
-                return {evaluation::evaluatePosition<whiteToMove>(board), {}};
+                return quiescenceSearch<whiteToMove>(board, depth, alpha, beta);
+//                return {evaluation::evaluatePosition<whiteToMove>(board), {}};
             }
 
             /// Generate legal moves
