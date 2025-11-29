@@ -22,14 +22,22 @@ namespace Dory {
 
         template<bool whiteToMove>
         Result searchDepth(Board& board, int depth) {
-            Result res = searcher.iterativeDeepening<whiteToMove>(board, depth);
-            if constexpr (!whiteToMove) res.eval = -res.eval;
-            return res;
+            return searcher.iterativeDeepening<whiteToMove, Search::Depth>(board, depth);
         }
 
         Result searchDepth(Board& board, int depth, bool whiteToMove) {
             if(whiteToMove) return searchDepth<true>(board, depth);
             return searchDepth<false>(board, depth);
+        }
+
+        template<bool whiteToMove>
+        Result searchTime(Board& board, long millis) {
+            return searcher.iterativeDeepening<whiteToMove, Search::Time>(board, millis);
+        }
+
+        Result searchTime(Board& board, long millis, bool whiteToMove) {
+            if(whiteToMove) return searchTime<true>(board, millis);
+            return searchTime<false>(board, millis);
         }
 
         [[nodiscard]] uint64_t nodesSearched() const { return searcher.nodesSearched; }
@@ -70,9 +78,6 @@ namespace DoryUtils {
     void printLine(const std::vector<Dory::Move>& line, int eval) {
         Dory::Utils::printLine(line, eval);
     }
-
 }
-
-
 
 #endif //DORY_DORY_H

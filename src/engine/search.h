@@ -22,6 +22,11 @@ namespace Dory {
         Line line{};
     };
 
+    template<bool whiteToMove>
+    void adjustResult(Result& result) {
+        if constexpr (!whiteToMove) result.eval = !result.eval;
+    }
+
     namespace Search {
 
         struct WeightedMove {
@@ -82,18 +87,22 @@ namespace Dory {
         const int NUM_PV_NODES = 2;
         const int NUM_FULL_DEPTH_NODES = 4;
 
+        enum BreakingCondition {
+            Depth, Time, NodeCount
+        };
+
         class Searcher {
-            TranspositionTable trTable{};
-            RepetitionTable repTable{};
             MoveOrderer moveOrderer{};
             MoveContainer moveContainer{&moveOrderer};
+            TranspositionTable trTable{};
+            RepetitionTable repTable{};
 
         public:
             BB nodesSearched{0}, tableLookups{0};
             Move bestMove;
 
-            template<bool whiteToMove>
-            Result iterativeDeepening(Board &board, int maxDepth = MAX_ITER_DEPTH);
+            template<bool whiteToMove, BreakingCondition cond, typename T>
+            Result iterativeDeepening(Board &board, T budget);
 
             void reset() {
                 trTable.reset();
@@ -121,21 +130,27 @@ namespace Dory {
             return eval > MATE_THRESHOLD || eval < -MATE_THRESHOLD;
         }
 
-        template<bool whiteToMove>
-        Result Searcher::iterativeDeepening(Board &board, int maxDepth) {
+        template<bool whiteToMove, BreakingCondition cond, typename T>
+        Result Searcher::iterativeDeepening(Board &board, T budget) {
             Result bestResult{};
             int alpha, beta;
             reset();
 
             Timer t;
-            t.start();
+            int maxDepth = 100;
+            if constexpr (cond == Depth) {
+                maxDepth = budget;
+            }
+            if constexpr (cond == Time) {
+                t.start();
+            }
 
             for (int depth = 1; depth <= maxDepth; depth++) {
                 int window = ASP_WINDOW_SIZE;
                 alpha = (depth == 1) ? -INF : bestResult.eval - window;
                 beta  = (depth == 1) ?  INF : bestResult.eval + window;
 
-                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+//                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
 
                 int windowIncreases = MAX_WINDOW_INCREASES;
                 Result result{};
@@ -167,14 +182,22 @@ namespace Dory {
                 }
 
                 bestResult = std::move(result);
-                if constexpr (whiteToMove)
-                    Utils::printLine(bestResult.line, bestResult.eval);
-                else Utils::printLine(bestResult.line, -bestResult.eval);
+//                if constexpr (whiteToMove)
+//                    Utils::printLine(bestResult.line, bestResult.eval);
+//                else Utils::printLine(bestResult.line, -bestResult.eval);
 
-                auto s = t.timeSeconds();
-                std::cout << (static_cast<double>(nodesSearched) / 1000000) / s << " M nodes / second\t\t[" << nodesSearched << " nodes in " << s << " sec]\n" << std::endl;
+                if constexpr (cond == Time) {
+                    auto millis = t.timeMillis();
+                    if(millis > budget) break;
+                }
+
+                if constexpr (cond == NodeCount) {
+                    if(nodesSearched > budget) break;
+                }
+//                std::cout << (static_cast<double>(nodesSearched) / 1000000) / s << " M nodes / second\t\t[" << nodesSearched << " nodes in " << s << " sec]\n" << std::endl;
             }
 
+            adjustResult<whiteToMove>(bestResult);
             return bestResult;
         }
 

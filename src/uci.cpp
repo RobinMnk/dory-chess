@@ -11,7 +11,8 @@ class UciManager {
     enum UciStatus{ IDLE = 0, NEW_GAME, READY, RUNNING };
     UciStatus status{IDLE};
 
-    Dory::Board board;
+    Dory::Board board{};
+    std::unique_ptr<Dory::Engine> dory{std::make_unique<Dory::Engine>()};
     bool whiteToMove{true};
 
     void respond(std::string_view resp) {
@@ -20,8 +21,13 @@ class UciManager {
 
     void processCommand(std::string_view cmd) {
         if(cmd == "uci") respond("uciok");
-        else if(cmd == "ucinewgame") { Dory::initialize(); status = NEW_GAME; }
-        else if(cmd == "isready") respond("readyok");
+        else if(cmd == "ucinewgame") { status = NEW_GAME; }
+        else if(cmd == "isready") {
+            if (status == NEW_GAME) {
+                respond("readyok");
+                return;
+            }
+        }
 
         std::stringstream stream(cmd.data());
         std::string segment;
@@ -50,7 +56,7 @@ class UciManager {
         }
         else if (seglist.at(0) == "go") {
             status = RUNNING;
-            auto [eval, line] = Dory::searchDepth(board, 6, whiteToMove);
+            auto [eval, line] = dory->searchTime(board, 150, whiteToMove);
             std::cout << "bestmove " << Dory::Utils::moveFullNotation(line.back()) << std::endl;
             status = READY;
         }
