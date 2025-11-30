@@ -94,10 +94,12 @@ namespace Dory {
         class Searcher {
             MoveOrderer moveOrderer{};
             MoveContainer moveContainer{&moveOrderer};
-            TranspositionTable trTable{};
+            TranspositionTable trTable;
             RepetitionTable repTable{};
 
         public:
+            Searcher(size_t TTsize) : trTable() {}
+
             BB nodesSearched{0}, tableLookups{0};
             Move bestMove;
 

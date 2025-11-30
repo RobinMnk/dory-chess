@@ -86,7 +86,7 @@ int main() {
 //        return 0;
 //    }
 
-    Dory::Engine dory{};
+    Dory::Engine dory{16};
 //    auto dory = std::make_unique<Dory::Dory>();
 
     timeEvaluation(dory, board, depth, whiteToMove);

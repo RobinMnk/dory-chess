@@ -12,10 +12,10 @@
 namespace Dory {
 
     class Engine {
-        Search::Searcher searcher{};
+        Search::Searcher searcher;
 
     public:
-        Engine() {
+        Engine(size_t TTsize) : searcher(TTsize) {
             PieceSteps::load();
             Zobrist::init(23984729);
         }

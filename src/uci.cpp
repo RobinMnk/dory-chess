@@ -20,19 +20,31 @@ class UciManager {
     }
 
     void processCommand(std::string_view cmd) {
-        if(cmd == "uci") respond("uciok");
-        else if(cmd == "ucinewgame") { status = NEW_GAME; }
+        if(cmd == "uci") {
+            respond("id name Dory Engine");
+            respond("id author Robin");
+            respond("uciok");
+            return;
+        }
+        else if(cmd == "ucinewgame") {
+            status = NEW_GAME;
+            return;
+        }
         else if(cmd == "isready") {
-            if (status == NEW_GAME) {
-                respond("readyok");
-                return;
-            }
+            respond("readyok");
+            return;
         }
 
         std::stringstream stream(cmd.data());
         std::string segment;
         std::vector<std::string> seglist;
         while(std::getline(stream, segment, ' ')) seglist.push_back(segment);
+
+
+        if(seglist.at(0) == "ping") {
+            std::cout << "pong " << seglist.at(1) << std::endl;
+            return;
+        }
 
         if(seglist.at(0) == "position") {
             if(seglist.at(1) == "startpos") { board = Dory::STARTBOARD; whiteToMove = true; }
@@ -56,7 +68,7 @@ class UciManager {
         }
         else if (seglist.at(0) == "go") {
             status = RUNNING;
-            auto [eval, line] = dory->searchTime(board, 150, whiteToMove);
+            auto [eval, line] = dory->searchTime(board, 1000, whiteToMove);
             std::cout << "bestmove " << Dory::Utils::moveFullNotation(line.back()) << std::endl;
             status = READY;
         }
@@ -64,6 +76,9 @@ class UciManager {
 
 public:
     void run() {
+        std::ios::sync_with_stdio(false);
+        std::cin.tie(nullptr);
+
         std::string cmd;
         while(cmd != "quit") {
             std::getline(std::cin, cmd, '\n');
