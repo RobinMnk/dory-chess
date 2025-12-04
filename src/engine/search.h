@@ -81,6 +81,11 @@ namespace Dory {
             void reset() { starts.fill(0); }
         };
 
+//        class LineContainer {
+//            std::array<std::array<Move, 128>, 128> lines;
+//            std::array<int, 128> ranges;
+//        };
+
         const int MAX_ITER_DEPTH = 6;
         const int MAX_WINDOW_INCREASES = 2;
         const int ASP_WINDOW_SIZE = 20;
@@ -94,6 +99,7 @@ namespace Dory {
         class Searcher {
             MoveOrderer moveOrderer{};
             MoveContainer moveContainer{&moveOrderer};
+//            LineContainer lineContainer{};
             TranspositionTable trTable{};
             RepetitionTable repTable{};
 

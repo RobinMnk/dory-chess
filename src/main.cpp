@@ -86,12 +86,12 @@ int main() {
 //        return 0;
 //    }
 
-    Dory::Engine dory{16};
+    Dory::Engine dory{};
 //    auto dory = std::make_unique<Dory::Dory>();
 
     timeEvaluation(dory, board, depth, whiteToMove);
 
     std::cout << "Table lookups:\t" << dory.tableLookups() << std::endl;
-    std::cout << "Table size:\t" << dory.trTableSizeKb() << " kB" << std::endl;
+//    std::cout << "Table size:\t" << dory.() << " kB" << std::endl;
     std::cout << "Searched " << dory.nodesSearched() << " nodes";
 }

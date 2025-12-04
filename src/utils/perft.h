@@ -37,7 +37,8 @@ namespace DoryUtils {
             case 9: return perft<9>(board, whiteToMove);
             case 10: return perft<10>(board, whiteToMove);
             case 11: return perft<11>(board, whiteToMove);
-            default: throw std::runtime_error("Perft Depth not implemented!");
+//            default: throw std::runtime_error("Perft Depth not implemented!");
+            default: return {0};
         }
     }
 
@@ -70,7 +71,8 @@ namespace DoryUtils {
             case 9: return perftSingleDepth<9>(board, whiteToMove);
             case 10: return perftSingleDepth<10>(board, whiteToMove);
             case 11: return perftSingleDepth<11>(board, whiteToMove);
-            default: throw std::runtime_error("Perft Depth not implemented!");
+//            default: throw std::runtime_error("Perft Depth not implemented!");
+            default: return 0;
         }
     }
 
@@ -102,7 +104,8 @@ namespace DoryUtils {
             case 9: printDivide<9>(board, whiteToMove); break;
             case 10: printDivide<10>(board, whiteToMove); break;
             case 11: printDivide<11>(board, whiteToMove); break;
-            default: throw std::runtime_error("Divide Depth not implemented!");
+//            default: throw std::runtime_error("Divide Depth not implemented!");
+            default: return;
         }
     }
 

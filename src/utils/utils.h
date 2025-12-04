@@ -45,9 +45,10 @@ namespace Dory::Utils {
         for (int i = 0; i < 64; i++) {
             if (pieces & selector) {
                 if (byteboard[i]) {
-                    throw std::runtime_error(
-                            "two pieces on " + squarename(newMask(i)) + ": " + static_cast<char>(byteboard[i]) +
-                            " and " + letter);
+                    continue;
+//                    throw std::runtime_error(
+//                            "two pieces on " + squarename(newMask(i)) + ": " + static_cast<char>(byteboard[i]) +
+//                            " and " + letter);
                 }
                 byteboard[i] = letter;
             }
@@ -279,7 +280,8 @@ namespace Dory::Utils {
         if(board.rooks<whiteToMove>() & mask) return PIECE_Rook;
         if(board.queens<whiteToMove>() & mask) return PIECE_Queen;
         if(board.kingSquare<whiteToMove>() == ix) return PIECE_King;
-        throw std::runtime_error("Unrecognized Move!");
+//        throw std::runtime_error("Unrecognized Move!");
+        return PIECE_None;
     }
 
     template<bool whiteToMove>

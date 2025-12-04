@@ -17,8 +17,9 @@ namespace Dory::evaluation {
     void addScoresForPiece(const Board& board, int& mgScore, int& egScore, int& gamePhase) {
         BB locations = board.getPieceBB<piece, whiteToMove>();
         Bitloop(locations) {
-            mgScore += ENGINE_PARAMS.middleGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
-            egScore += ENGINE_PARAMS.endGamePieceTable<piece, whiteToMove>(firstBitOf(locations));
+            int sq = firstBitOf(locations);
+            mgScore += ENGINE_PARAMS.middleGamePieceTable<piece, whiteToMove>(sq);
+            egScore += ENGINE_PARAMS.endGamePieceTable<piece, whiteToMove>(sq);
             gamePhase += ENGINE_PARAMS.gamePhaseIncrement<piece>();
         }
     }
@@ -70,7 +71,7 @@ namespace Dory::evaluation {
 
         int distToBorder = std::min(std::min(fileOf(ks), 8- fileOf(ks)), std::min(rankOf(ks), 8- rankOf(ks)));
 
-        return gamePhase * bitCount(lines | mobility) + (24 - gamePhase) * distToBorder;
+        return gamePhase * bitCount(lines | mobility) + (24 - gamePhase) * distToBorder * 2;
     }
 
 
@@ -93,7 +94,7 @@ namespace Dory::evaluation {
 
         int kingPenalty = kingVulnerability<whiteToMove>(board, gamePhase) - kingVulnerability<!whiteToMove>(board, gamePhase);
 
-        int evalEstimate = activityScore + passedPawnsScore - 2 * kingPenalty;
+        int evalEstimate = activityScore + passedPawnsScore - 4 * kingPenalty;
 
         return evalEstimate;
     }

@@ -3,6 +3,10 @@ project(Dory)
 
 set(CMAKE_CXX_STANDARD 20)
 
+if (CMAKE_BUILD_TYPE MATCHES Release)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
         googletest
@@ -44,6 +48,7 @@ add_executable(engineTest testing/engineTest.cpp)
 target_compile_options(engineTest PUBLIC -Wall -Wextra)
 target_compile_options(engineTest PUBLIC -march=native)
 target_compile_options(engineTest PUBLIC -fomit-frame-pointer -foptimize-sibling-calls)
+target_compile_options(engineTest PUBLIC -fno-exceptions -fno-rtti)
 if (CMAKE_BUILD_TYPE MATCHES Release)
     target_compile_options(engineTest PUBLIC -O3)
 endif()
