@@ -26,7 +26,7 @@ namespace Dory::Testing {
 
         // Set up the object once for the whole suite
         static void SetUpTestSuite() {
-           dory = new Engine(16);
+           dory = new Engine();
         }
 
         // Clean up after all tests are done

@@ -12,12 +12,16 @@
 namespace Dory {
 
     class Engine {
-        Search::Searcher searcher;
+        Search::Searcher searcher{};
 
     public:
-        Engine(size_t TTsize) : searcher(TTsize) {
+        Engine() {
             PieceSteps::load();
             Zobrist::init(23984729);
+        }
+
+        void setHashTableSize(size_t tableSize) {
+            searcher.setTableSize(tableSize);
         }
 
         template<bool whiteToMove>
@@ -43,10 +47,6 @@ namespace Dory {
         [[nodiscard]] uint64_t nodesSearched() const { return searcher.nodesSearched; }
 
         [[nodiscard]] uint64_t tableLookups() const { return searcher.tableLookups; }
-
-        [[nodiscard]] size_t trTableSizeKb() const { return searcher.trTableSizeKb(); }
-
-        [[nodiscard]] size_t trTableSizeMb() const { return searcher.trTableSizeMb(); }
     };
 }
 

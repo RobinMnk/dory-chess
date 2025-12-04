@@ -93,7 +93,7 @@ namespace Dory::evaluation {
 
         int kingPenalty = kingVulnerability<whiteToMove>(board, gamePhase) - kingVulnerability<!whiteToMove>(board, gamePhase);
 
-        int evalEstimate = activityScore + passedPawnsScore - kingPenalty;
+        int evalEstimate = activityScore + passedPawnsScore - 2 * kingPenalty;
 
         return evalEstimate;
     }

@@ -16,12 +16,12 @@ namespace Dory::Search {
     class TranspositionTable {
     public:
         struct TTEntry {
-            int value;
-            Move move;
-            uint32_t keyTag;
+            int value{0};
+            Move move{NULLMOVE};
+            uint32_t keyTag{0};
             uint8_t flag{TTFlagEmpty};
-            uint8_t age;
-            uint16_t depthSearched;
+            uint8_t age{0};
+            uint16_t depthSearched{0};
         };
 
         struct alignas(64) TTCluster {
@@ -30,9 +30,24 @@ namespace Dory::Search {
 
     private:
         static constexpr TTEntry NullEntry{0, NULLMOVE, 0, 0, 0, 0};
+        static constexpr uint8_t TTFlagEmpty = 0, TTFlagExact = 1, TTFlagLowerBound = 2, TTFlagUpperBound = 3;
+
+        size_t size{}; // size in MB
         std::vector<TTCluster> lookup_table;
         uint64_t mask;
         uint8_t generation{0};
+
+        static inline constexpr size_t elementsFromSize(size_t sizeMB) {
+            return 1024 * 1024 / sizeof(TTCluster) * sizeMB;
+        }
+
+        static inline constexpr size_t makeValidSize(size_t n) {
+            if(n == 0) return 1;
+            if(n > 1024) return 1024;
+            size_t result = 1;
+            while (result < n) result <<= 1;
+            return result;
+        }
 
         static inline int decodeMateScore(int score, int depth) {
             if (score > MATE_THRESHOLD) {
@@ -52,7 +67,7 @@ namespace Dory::Search {
             return score;
         }
 
-        std::pair<TTEntry, bool> unpackEntry(TTEntry& entry, int &alpha, int &beta, int depthNeeded, int distanceFromRoot) {
+        static std::pair<TTEntry, bool> unpackEntry(TTEntry& entry, int &alpha, int &beta, int depthNeeded, int distanceFromRoot) {
             // entry not searched deep enough
             if (entry.depthSearched < depthNeeded)
                 return {entry, false};
@@ -84,7 +99,7 @@ namespace Dory::Search {
             return {result, resultValid};
         }
 
-        inline int score(const TTEntry& e) const {
+        [[nodiscard]] inline int score(const TTEntry& e) const {
             // lower = more likely to be replaced
             return ((e.flag != TTFlagEmpty) << 17)
                    | ((e.age == generation) << 16)
@@ -96,9 +111,7 @@ namespace Dory::Search {
         }
 
     public:
-        static const uint8_t TTFlagEmpty = 0, TTFlagExact = 1, TTFlagLowerBound = 2, TTFlagUpperBound = 3;
-
-        TranspositionTable(size_t sizeMB=128) : lookup_table(1024 * 16 * sizeMB), mask{1024 * 16 * sizeMB - 1} {}
+        TranspositionTable() : size{128}, lookup_table(elementsFromSize(size)), mask{elementsFromSize(size) - 1} {}
 
         void insert(uint64_t boardHash, int eval, Move move, int depthSearched, int alpha, int beta, int distanceFromRoot) {
             uint8_t flag;
@@ -134,8 +147,7 @@ namespace Dory::Search {
             size_t index = boardHash & mask;
             TTCluster& cluster = lookup_table[index];
 
-            for(int i = 0; i < 4; i++) {
-                TTEntry& entry = cluster.entries[i];
+            for(auto & entry : cluster.entries) {
                 if(entry.age == generation && entry.flag != TTFlagEmpty && extractKeyTag(boardHash) == entry.keyTag)
                     return unpackEntry(entry, alpha, beta, depthNeeded, distanceFromRoot);
             }
@@ -146,8 +158,16 @@ namespace Dory::Search {
             generation++;
         }
 
-        size_t size() const {
-            return (lookup_table.size() * sizeof(TTCluster) / 1024);
+        void resize(size_t sizeMB) {
+            size = makeValidSize(sizeMB); // size is now a power of 2 and at most 1024
+            mask = elementsFromSize(size);
+            lookup_table.resize(mask);
+            mask--;
+            reset();
+        }
+
+        [[nodiscard]] size_t getSizeMB() const {
+            return size;
         }
     };
 

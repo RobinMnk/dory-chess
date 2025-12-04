@@ -20,12 +20,12 @@ namespace Dory {
     struct Result {
         int eval{};
         Line line{};
-    };
 
-    template<bool whiteToMove>
-    void adjustResult(Result& result) {
-        if constexpr (!whiteToMove) result.eval = !result.eval;
-    }
+        template<bool whiteToMove>
+        void adjust() {
+            if constexpr (!whiteToMove) eval = !eval;
+        }
+    };
 
     namespace Search {
 
@@ -94,12 +94,10 @@ namespace Dory {
         class Searcher {
             MoveOrderer moveOrderer{};
             MoveContainer moveContainer{&moveOrderer};
-            TranspositionTable trTable;
+            TranspositionTable trTable{};
             RepetitionTable repTable{};
 
         public:
-            Searcher(size_t TTsize) : trTable() {}
-
             BB nodesSearched{0}, tableLookups{0};
             Move bestMove;
 
@@ -114,10 +112,9 @@ namespace Dory {
                 nodesSearched = tableLookups = 0;
             }
 
-            [[nodiscard]] size_t trTableSizeKb() const { return trTable.size(); }
-
-            [[nodiscard]] size_t trTableSizeMb() const { return trTable.size() / 1024; }
-
+            void setTableSize(size_t tableSize) {
+                trTable.resize(tableSize);
+            }
         private:
 
             template<bool whiteToMove, bool topLevel>
@@ -199,7 +196,7 @@ namespace Dory {
 //                std::cout << (static_cast<double>(nodesSearched) / 1000000) / s << " M nodes / second\t\t[" << nodesSearched << " nodes in " << s << " sec]\n" << std::endl;
             }
 
-            adjustResult<whiteToMove>(bestResult);
+            bestResult.adjust<whiteToMove>();
             return bestResult;
         }
 

@@ -250,7 +250,7 @@ namespace Dory {
         [[nodiscard]] inline int passedPawnScore(int square) const {
             int stepsToGo = rankOf(square);
             if constexpr (whiteToMove) stepsToGo = 7 - stepsToGo;
-            return ppScore[stepsToGo];
+            return ppScore[stepsToGo] >> 4;
         }
     };
 
