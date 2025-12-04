@@ -44,6 +44,16 @@ namespace Dory {
             return searchTime<false>(board, millis);
         }
 
+        template<bool whiteToMove>
+        Result analyze(Board& board, int millis, int inc) {
+            return searcher.analyze<whiteToMove>(board, millis, inc);
+        }
+
+        Result analyze(Board& board, bool whiteToMove, int millis, int inc) {
+            if(whiteToMove) return analyze<true>(board, millis, inc);
+            return analyze<false>(board, millis, inc);
+        }
+
         [[nodiscard]] uint64_t nodesSearched() const { return searcher.nodesSearched; }
 
         [[nodiscard]] uint64_t tableLookups() const { return searcher.tableLookups; }

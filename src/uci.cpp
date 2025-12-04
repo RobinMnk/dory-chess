@@ -11,9 +11,11 @@ class UciManager {
     enum UciStatus{ IDLE = 0, NEW_GAME, READY, RUNNING };
     UciStatus status{IDLE};
 
-    Dory::Board board{};
     Dory::Engine dory{};
+    Dory::Board board{};
     bool whiteToMove{true};
+
+    int wtime = 0, btime = 0, winc = 0, binc = 0;
 
     static void respond(std::string_view resp) {
         std::cout << resp << std::endl;
@@ -68,9 +70,35 @@ class UciManager {
             }
             status = READY;
         }
-        else if (cmd == "go") {
+        else if (cmd == "go") { // go btime 300000 wtime 298000 binc 2000 winc 2000
+            // Parse time control arguments (all values are in milliseconds)
+            for (size_t i = 1; i < seglist.size(); ++i) {
+                const auto& arg = seglist.at(i);
+                try {
+                    if (arg == "wtime" && i + 1 < seglist.size()) {
+                        wtime = std::stoi(seglist.at(i + 1));
+                        i++;
+                    } else if (arg == "btime" && i + 1 < seglist.size()) {
+                        btime = std::stoi(seglist.at(i + 1));
+                        i++;
+                    } else if (arg == "winc" && i + 1 < seglist.size()) {
+                        winc = std::stoi(seglist.at(i + 1));
+                        i++;
+                    } else if (arg == "binc" && i + 1 < seglist.size()) {
+                        binc = std::stoi(seglist.at(i + 1));
+                        i++;
+                    }
+                    // Other 'go' parameters like 'depth', 'infinite' would be handled here
+                } catch (const std::exception& e) {
+                    std::cerr << "Error parsing time value: " << e.what() << std::endl;
+                }
+            }
+
+            int time = whiteToMove ? wtime : btime;
+            int inc = whiteToMove ? winc : binc;
+
             status = RUNNING;
-            auto [eval, line] = dory.searchTime(board, 1000, whiteToMove);
+            auto [eval, line] = dory.analyze(board, whiteToMove, time, inc);
             std::cout << "bestmove " << Dory::Utils::moveFullNotation(line.back()) << std::endl;
             status = READY;
         }

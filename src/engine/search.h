@@ -101,6 +101,9 @@ namespace Dory {
             BB nodesSearched{0}, tableLookups{0};
             Move bestMove;
 
+            template<bool whiteToMove>
+            Result analyze(Board& board, int millisLeft, int inc=0);
+
             template<bool whiteToMove, BreakingCondition cond, typename T>
             Result iterativeDeepening(Board &board, T budget);
 
@@ -129,8 +132,86 @@ namespace Dory {
             return eval > MATE_THRESHOLD || eval < -MATE_THRESHOLD;
         }
 
+        inline int computeAllocatedTime(int millisLeft, int inc) {
+            return millisLeft / 32 + inc / 2;
+        }
+
+        template<bool whiteToMove>
+        Result Searcher::analyze(Board& board, int millisLeft, int inc) {
+            Result bestResult{};
+            int alpha, beta;
+            reset();
+
+            // Breaking Conditions
+            Timer t;
+            int maxMillis = computeAllocatedTime(millisLeft, inc);
+            Move prevMove = NULLMOVE;
+            int prevEval = 0;
+            int stable = 0;
+            t.start();
+
+            for (int depth = 1; depth <= 128; depth++) {
+                int window = ASP_WINDOW_SIZE;
+                alpha = (depth == 1) ? -INF : bestResult.eval - window;
+                beta  = (depth == 1) ?  INF : bestResult.eval + window;
+
+//                std::cout << "Searching Depth " << depth << "    (" << alpha << " / " << beta << ")" << std::endl;
+
+                int windowIncreases = MAX_WINDOW_INCREASES;
+                Result result{};
+                bool doFullSearch = true;
+
+                while (windowIncreases--) {
+                    result = negamax<whiteToMove, true>(board, 0, alpha, beta, depth);
+
+                    if (isMateEval(result.eval)) {
+                        doFullSearch = false;
+                        break;
+                    }
+
+                    if (result.eval <= alpha) {
+                        alpha -= window;
+                        doFullSearch = true;
+                    } else if (result.eval >= beta) {
+                        beta += window;
+                        doFullSearch = true;
+                    } else {
+                        doFullSearch = false;
+                        break; // within window
+                    }
+                    window *= 2;
+                }
+
+                if (doFullSearch) {
+                    result = negamax<whiteToMove, true>(board, 0, -INF, INF, depth);
+                }
+
+                bestResult = std::move(result);
+                Move move = bestResult.line.empty() ? NULLMOVE : bestResult.line.back();
+
+                // Check breaking conditions
+                bool isStable = (move == prevMove && abs(bestResult.eval - prevEval) < 15);
+
+                if (depth > 5 && isStable) {
+                    if (++stable >= 2) break;
+                } else stable = 0;
+
+                if (depth >= 3 && bestResult.eval < prevEval - 80) {
+                    maxMillis *= 1.5;
+                }
+
+                prevMove = move;
+                prevEval = bestResult.eval;
+
+                if(t.timeMillis() > maxMillis) break;
+            }
+
+            bestResult.adjust<whiteToMove>();
+            return bestResult;
+        }
+
         template<bool whiteToMove, BreakingCondition cond, typename T>
-        Result Searcher::iterativeDeepening(Board &board, T budget) {
+        Result Searcher::iterativeDeepening(Board& board, T budget) {
             Result bestResult{};
             int alpha, beta;
             reset();
@@ -181,9 +262,6 @@ namespace Dory {
                 }
 
                 bestResult = std::move(result);
-//                if constexpr (whiteToMove)
-//                    Utils::printLine(bestResult.line, bestResult.eval);
-//                else Utils::printLine(bestResult.line, -bestResult.eval);
 
                 if constexpr (cond == Time) {
                     auto millis = t.timeMillis();
@@ -193,7 +271,6 @@ namespace Dory {
                 if constexpr (cond == NodeCount) {
                     if(nodesSearched > budget) break;
                 }
-//                std::cout << (static_cast<double>(nodesSearched) / 1000000) / s << " M nodes / second\t\t[" << nodesSearched << " nodes in " << s << " sec]\n" << std::endl;
             }
 
             bestResult.adjust<whiteToMove>();
