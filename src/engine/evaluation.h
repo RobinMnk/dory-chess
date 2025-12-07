@@ -60,7 +60,7 @@ namespace Dory::evaluation {
                 score += ENGINE_PARAMS.passedPawnScore<whiteToMove>(ix);
             }
         }
-        return score;
+        return score / 8;
     }
 
     template<bool whiteToMove>
@@ -71,7 +71,7 @@ namespace Dory::evaluation {
 
         int distToBorder = std::min(std::min(fileOf(ks), 8- fileOf(ks)), std::min(rankOf(ks), 8- rankOf(ks)));
 
-        return gamePhase * bitCount(lines | mobility) + (24 - gamePhase) * distToBorder * 2;
+        return gamePhase * bitCount(lines | mobility) + (24 - gamePhase) * distToBorder;
     }
 
 
@@ -94,7 +94,7 @@ namespace Dory::evaluation {
 
         int kingPenalty = kingVulnerability<whiteToMove>(board, gamePhase) - kingVulnerability<!whiteToMove>(board, gamePhase);
 
-        int evalEstimate = activityScore + passedPawnsScore - 4 * kingPenalty;
+        int evalEstimate = 4 * activityScore + passedPawnsScore - 12 * kingPenalty;
 
         return evalEstimate;
     }

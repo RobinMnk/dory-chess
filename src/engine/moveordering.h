@@ -44,23 +44,24 @@ namespace Dory::Search {
             // Captures
             if (isCapture) {
                 int victimValue = 0;
-                if (board.enemyPawns<whiteToMove>() & to)        victimValue = 100;
+                if (board.enemyPawns<whiteToMove>() & to)      victimValue = 100;
                 else if (board.enemyKnights<whiteToMove>() & to) victimValue = 300;
                 else if (board.enemyBishops<whiteToMove>() & to) victimValue = 300;
                 else if (board.enemyRooks<whiteToMove>() & to)   victimValue = 500;
                 else if (board.enemyQueens<whiteToMove>() & to)  victimValue = 900;
 
                 int attackerValue = pieceValue<piece>();
-                heuristic_val += Large + 10 * (victimValue - attackerValue); // MVV-LVA
+                heuristic_val += Large + (victimValue - attackerValue); // MVV-LVA
+
                 if (victimValue - attackerValue >= 0)
-                    heuristic_val += Large / 4;
+                    heuristic_val += Large / 2;
             }
 
             // Killer moves
             if (!isCapture) {
                 for (int i = 0; i < kmPositions[depth]; i++) {
                     if (killerMoves[depth][i].is<piece, flags>(from, to)) {
-                        heuristic_val += Large / (i + 2);
+                        heuristic_val += Large / (i + 1);
                     }
                 }
             }
@@ -83,12 +84,12 @@ namespace Dory::Search {
             }
 
             if (attacks & board.enemyKing<whiteToMove>()) {
-                heuristic_val += Large;
+                heuristic_val += Large / 2;
             }
 
             // Promotions
             if constexpr (isPromotion<flags>()) {
-                static constexpr int promotionBonus[4] = {8000, 5000, 3500, 3200}; // queen, rook, bishop, knight
+                static constexpr int promotionBonus[4] = {7000, 5000, 3200, 3000}; // queen, rook, bishop, knight
                 heuristic_val += Large + promotionBonus[flags - 6];
             }
 
@@ -102,7 +103,7 @@ namespace Dory::Search {
             if (to & pd.pawnAtk) {
                 heuristic_val -= pieceValue<piece>() * 4;
             } else if (to & pd.attacked) {
-                heuristic_val -= pieceValue<piece>() * 2;
+                heuristic_val -= pieceValue<piece>();
             }
 
             return heuristic_val;

@@ -139,7 +139,7 @@ namespace Dory {
         }
 
         inline int computeAllocatedTime(int millisLeft, int inc) {
-            return millisLeft / 32 + inc / 2;
+            return millisLeft / 64 + inc / 2;
         }
 
         template<bool whiteToMove>
@@ -168,6 +168,11 @@ namespace Dory {
                 bool doFullSearch = true;
 
                 while (windowIncreases--) {
+                    if(t.timeMillis() > maxMillis) {
+                        // ran out of time
+                        break;
+                    }
+
                     result = negamax<whiteToMove, true>(board, 0, alpha, beta, depth);
 
                     if (isMateEval(result.eval)) {
@@ -188,6 +193,11 @@ namespace Dory {
                     window *= 2;
                 }
 
+                if(t.timeMillis() > maxMillis) {
+                    // ran out of time
+                    break;
+                }
+
                 if (doFullSearch) {
                     result = negamax<whiteToMove, true>(board, 0, -INF, INF, depth);
                 }
@@ -204,12 +214,11 @@ namespace Dory {
 
                 if (depth >= 3 && bestResult.eval < prevEval - 80) {
                     maxMillis *= 1.5;
+                    maxMillis = std::max(maxMillis, computeAllocatedTime(millisLeft / 2, inc));
                 }
 
                 prevMove = move;
                 prevEval = bestResult.eval;
-
-                if(t.timeMillis() > maxMillis) break;
             }
 
             bestResult.adjust<whiteToMove>();
